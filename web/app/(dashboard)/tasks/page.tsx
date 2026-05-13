@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import { mockTasks, type Task, type Priority, type Category } from "@/app/lib/mockData";
+import { type Task, type Priority, type Category } from "@/app/lib/mockData";
+import { getTasks, completeTask } from "../../../lib/api";
 
 const priorityColors: Record<Priority, string> = {
   alta: "bg-red-500/10 text-red-400 border-red-500/20",
@@ -27,7 +28,29 @@ const categoryIcons: Record<Category, string> = {
 };
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const data = await getTasks();
+        const mappedTasks = data.map((t: any) => ({
+          id: t._id,
+          title: t.titulo,
+          description: t.descripcion,
+          priority: t.prioridad,
+          category: t.categoria,
+          dueDate: t.fechaLimite ? t.fechaLimite.substring(0, 10) : "",
+          completed: t.completada,
+          createdAt: t.createdAt
+        }));
+        setTasks(mappedTasks);
+      } catch (err) {
+        console.error("Error cargando tareas:", err);
+      }
+    };
+    fetchTasks();
+  }, []);
   const [search, setSearch] = useState("");
   const [filterPriority, setFilterPriority] = useState<Priority | "todas">("todas");
   const [filterCategory, setFilterCategory] = useState<Category | "todas">("todas");
@@ -43,12 +66,27 @@ export default function TasksPage() {
     });
   }, [tasks, search, filterPriority, filterCategory]);
 
-  const toggleTask = (id: string) => {
+  const toggleTask = async (id: string) => {
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return;
+    const newStatus = !task.completed;
+
     setTasks((prev) =>
-      prev.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
+      prev.map((t) =>
+        t.id === id ? { ...t, completed: newStatus } : t
       )
     );
+
+    try {
+      await completeTask(id, newStatus);
+    } catch (err) {
+      console.error(err);
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === id ? { ...t, completed: !newStatus } : t
+        )
+      );
+    }
   };
 
   const completedCount = filteredTasks.filter((t) => t.completed).length;
