@@ -1,18 +1,58 @@
 "use client";
 
-import { useState } from "react";
-import { mockHabits, type Habit } from "@/app/lib/mockData";
+import { useState, useEffect } from "react";
+import { type Habit } from "@/app/lib/mockData";
+import { getHabits, checkHabit } from "../../../lib/api";
 
 const dayLabels = ["L", "M", "X", "J", "V", "S", "D"];
 
 export default function HabitsPage() {
-  const [habits, setHabits] = useState<Habit[]>(mockHabits);
+  const [habits, setHabits] = useState<Habit[]>([]);
 
-  const toggleHabit = (id: string) => {
+  useEffect(() => {
+    const fetchHabits = async () => {
+      try {
+        const data = await getHabits();
+        
+        const getCompletedDays = (historial: string[]) => {
+          const historyDates = historial.map(d => new Date(d).toISOString().substring(0, 10));
+          const today = new Date();
+          const dayOfWeek = today.getDay();
+          const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+          const monday = new Date(today);
+          monday.setDate(today.getDate() + diffToMonday);
+
+          return [0, 1, 2, 3, 4, 5, 6].map(i => {
+            const d = new Date(monday);
+            d.setDate(monday.getDate() + i);
+            return historyDates.includes(d.toISOString().substring(0, 10));
+          });
+        };
+
+        const mappedHabits = data.map((h: any) => ({
+          id: h._id,
+          name: h.nombre,
+          icon: h.icono,
+          streak: h.racha,
+          completedToday: h.completadoHoy,
+          completedDays: getCompletedDays(h.historial || [])
+        }));
+        setHabits(mappedHabits);
+      } catch (err) {
+        console.error("Error cargando hábitos:", err);
+      }
+    };
+    fetchHabits();
+  }, []);
+
+  const toggleHabit = async (id: string) => {
+    const habit = habits.find((h) => h.id === id);
+    if (!habit) return;
+    const nowCompleted = !habit.completedToday;
+
     setHabits((prev) =>
       prev.map((h) => {
         if (h.id !== id) return h;
-        const nowCompleted = !h.completedToday;
         return {
           ...h,
           completedToday: nowCompleted,
@@ -20,6 +60,22 @@ export default function HabitsPage() {
         };
       })
     );
+
+    try {
+      await checkHabit(id);
+    } catch (err) {
+      console.error(err);
+      setHabits((prev) =>
+        prev.map((h) => {
+          if (h.id !== id) return h;
+          return {
+            ...h,
+            completedToday: !nowCompleted,
+            streak: habit.streak,
+          };
+        })
+      );
+    }
   };
 
   const completedCount = habits.filter((h) => h.completedToday).length;

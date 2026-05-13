@@ -1,11 +1,52 @@
 "use client";
 
-import { dashboardStats, weeklyActivity, mockTasks } from "@/app/lib/mockData";
+import { useState, useEffect } from "react";
+import { weeklyActivity as defaultWeeklyActivity } from "@/app/lib/mockData";
+import { getStats, getTasks } from "../../../lib/api";
 import Link from "next/link";
 
 export default function DashboardPage() {
+  const [stats, setStats] = useState({
+    completedToday: 0,
+    totalToday: 0,
+    completedThisWeek: 0,
+    totalThisWeek: 0,
+    productivity: 0,
+    streakDays: 0,
+  });
+  const [recentTasks, setRecentTasks] = useState<any[]>([]);
+  const weeklyActivity = defaultWeeklyActivity;
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const statsData = await getStats();
+        setStats({
+          completedToday: statsData.tareasCompletadasHoy || 0,
+          totalToday: statsData.totalTareas || 0,
+          completedThisWeek: statsData.tareasCompletadasEstaSemana || 0,
+          totalThisWeek: statsData.totalTareas || 0,
+          productivity: statsData.porcentajeProductividad || 0,
+          streakDays: statsData.rachaMaximaHabitos || 0,
+        });
+
+        const tasksData = await getTasks();
+        const mappedTasks = tasksData.map((t: any) => ({
+          id: t._id,
+          title: t.titulo,
+          category: t.categoria,
+          priority: t.prioridad,
+          completed: t.completada,
+        }));
+        setRecentTasks(mappedTasks.slice(0, 5));
+      } catch (err) {
+        console.error("Error cargando dashboard:", err);
+      }
+    };
+    fetchData();
+  }, []);
+
   const maxTasks = Math.max(...weeklyActivity.map((d) => d.tasks));
-  const recentTasks = mockTasks.slice(0, 5);
 
   return (
     <div className="animate-fade-in">
@@ -32,8 +73,8 @@ export default function DashboardPage() {
             </div>
           </div>
           <p className="text-3xl font-bold text-white animate-count-up">
-            {dashboardStats.completedToday}
-            <span className="text-lg text-gray-500 font-normal">/{dashboardStats.totalToday}</span>
+            {stats.completedToday}
+            <span className="text-lg text-gray-500 font-normal">/{stats.totalToday}</span>
           </p>
           <p className="text-xs text-gray-500 mt-1">tareas completadas</p>
         </div>
@@ -49,8 +90,8 @@ export default function DashboardPage() {
             </div>
           </div>
           <p className="text-3xl font-bold text-white animate-count-up">
-            {dashboardStats.completedThisWeek}
-            <span className="text-lg text-gray-500 font-normal">/{dashboardStats.totalThisWeek}</span>
+            {stats.completedThisWeek}
+            <span className="text-lg text-gray-500 font-normal">/{stats.totalThisWeek}</span>
           </p>
           <p className="text-xs text-gray-500 mt-1">esta semana</p>
         </div>
@@ -66,13 +107,13 @@ export default function DashboardPage() {
             </div>
           </div>
           <p className="text-3xl font-bold text-white animate-count-up">
-            {dashboardStats.productivity}
+            {stats.productivity}
             <span className="text-lg text-lime-400 font-normal">%</span>
           </p>
           <div className="mt-2 h-1.5 bg-dark-600 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-lime-400 to-emerald-400 rounded-full transition-all duration-1000"
-              style={{ width: `${dashboardStats.productivity}%` }}
+              style={{ width: `${stats.productivity}%` }}
             />
           </div>
         </div>
@@ -88,7 +129,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <p className="text-3xl font-bold text-white animate-count-up">
-            {dashboardStats.streakDays}
+            {stats.streakDays}
             <span className="text-lg text-gray-500 font-normal"> días</span>
           </p>
           <p className="text-xs text-gray-500 mt-1">racha consecutiva</p>

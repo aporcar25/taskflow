@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { register } from "../../lib/api";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({});
   const [loading, setLoading] = useState(false);
@@ -31,14 +30,18 @@ export default function RegisterPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    // Simulate register
-    setTimeout(() => {
-      router.push("/dashboard");
-    }, 800);
+    try {
+      const data = await register(form.name, form.email, form.password);
+      localStorage.setItem("taskflow_token", data.token);
+      window.location.href = "/dashboard";
+    } catch (err: any) {
+      setErrors({ email: err.message || "Error al registrar" });
+      setLoading(false);
+    }
   };
 
   return (
