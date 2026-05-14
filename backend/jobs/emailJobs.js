@@ -16,7 +16,7 @@ const initJobs = () => {
 
       const tasksToRemind = await Task.find({
         completada: false,
-        fechaLimite: { $gte: now, $lte: in24Hours },
+        fechaLimite: { $exists: true, $ne: null, $gt: now, $lt: in24Hours },
         recordatorioEnviado: false
       }).populate('userId');
 
