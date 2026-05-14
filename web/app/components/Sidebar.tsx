@@ -37,18 +37,23 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname();
 
-  const [user, setUser] = useState<{ nombre: string; email: string } | null>(null);
+  const [user, setUser] = useState<{ nombre: string; email: string; foto?: string } | null>(null);
 
   useEffect(() => {
-    const userStr = localStorage.getItem('taskflow_user');
-    if (userStr) {
-      try {
-        const userData = JSON.parse(userStr);
-        setUser({ nombre: userData.nombre || 'Usuario', email: userData.email || '' });
-      } catch {
-        setUser(null);
+    const loadUser = () => {
+      const userStr = localStorage.getItem('taskflow_user');
+      if (userStr) {
+        try {
+          const userData = JSON.parse(userStr);
+          setUser({ nombre: userData.nombre || 'Usuario', email: userData.email || '', foto: userData.foto || '' });
+        } catch {
+          setUser(null);
+        }
       }
-    }
+    };
+    loadUser();
+    window.addEventListener('storage', loadUser);
+    return () => window.removeEventListener('storage', loadUser);
   }, []);
 
   return (
@@ -91,15 +96,21 @@ export default function Sidebar() {
 
         {/* User section */}
         <div className="px-4 py-4 border-t border-white/5">
-          <div className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 transition-colors cursor-pointer">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-lime-400 to-emerald-500 flex items-center justify-center text-dark-900 font-bold text-sm">
-              {user?.nombre?.[0]?.toUpperCase() || 'U'}
+          <Link href="/profile" className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-lime-400 to-emerald-500 flex items-center justify-center overflow-hidden border border-white/10 group-hover:border-lime-400/50 transition-colors">
+              {user?.foto ? (
+                <img src={user.foto} alt="Perfil" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-dark-900 font-bold text-sm">
+                  {user?.nombre?.[0]?.toUpperCase() || 'U'}
+                </span>
+              )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">{user?.nombre || 'Usuario'}</p>
+              <p className="text-sm font-medium text-white truncate group-hover:text-lime-400 transition-colors">{user?.nombre || 'Usuario'}</p>
               <p className="text-xs text-gray-500 truncate">{user?.email || ''}</p>
             </div>
-          </div>
+          </Link>
           <Link
             href="/"
             className="flex items-center gap-3 px-4 py-2.5 mt-2 rounded-xl text-sm text-gray-500 hover:text-red-400 hover:bg-red-400/5 transition-all"

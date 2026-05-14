@@ -122,3 +122,31 @@ export const getStats = async (): Promise<any> => {
   if (!res.ok) throw new Error("Error obteniendo estadísticas");
   return res.json();
 };
+
+export const updateProfile = async (data: { nombre?: string; email?: string }) => {
+  const res = await fetch(`${API_URL}/auth/profile`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Error actualizando perfil");
+  const result = await res.json();
+  if (result.id) {
+    localStorage.setItem('taskflow_user', JSON.stringify(result));
+  }
+  return result;
+};
+
+export const updateProfilePhoto = async (foto: string) => {
+  const res = await fetch(`${API_URL}/auth/profile/photo`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify({ foto }),
+  });
+  if (!res.ok) throw new Error("Error actualizando foto");
+  const result = await res.json();
+  if (result.id) {
+    localStorage.setItem('taskflow_user', JSON.stringify(result));
+  }
+  return result;
+};

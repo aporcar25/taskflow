@@ -104,4 +104,38 @@ router.get('/me', authMiddleware, async (req, res) => {
   }
 });
 
+// PUT /profile -> actualizar nombre y email del usuario
+router.put('/profile', authMiddleware, async (req, res) => {
+  try {
+    const { nombre, email } = req.body;
+    let user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+
+    if (nombre) user.nombre = nombre;
+    if (email) user.email = email;
+
+    await user.save();
+    res.json({ id: user.id, nombre: user.nombre, email: user.email, foto: user.foto });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error al actualizar perfil' });
+  }
+});
+
+// POST /profile/photo -> actualizar foto de perfil
+router.post('/profile/photo', authMiddleware, async (req, res) => {
+  try {
+    const { foto } = req.body;
+    let user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+
+    user.foto = foto;
+    await user.save();
+    res.json({ id: user.id, nombre: user.nombre, email: user.email, foto: user.foto });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error al actualizar foto de perfil' });
+  }
+});
+
 module.exports = router;
