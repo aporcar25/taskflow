@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 
 const navItems = [
   {
@@ -36,6 +37,20 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname();
 
+  const [user, setUser] = useState<{ nombre: string; email: string } | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('taskflow_token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setUser({ nombre: payload.nombre || payload.name || 'Usuario', email: payload.email || '' });
+      } catch {
+        setUser(null);
+      }
+    }
+  }, []);
+
   return (
     <>
       {/* Desktop sidebar */}
@@ -60,11 +75,10 @@ export default function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${
-                  isActive
-                    ? "bg-lime-400/10 text-lime-400 border border-lime-400/20"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                }`}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${isActive
+                  ? "bg-lime-400/10 text-lime-400 border border-lime-400/20"
+                  : "text-gray-400 hover:text-white hover:bg-white/5"
+                  }`}
               >
                 <span className={`transition-colors ${isActive ? "text-lime-400" : "text-gray-500 group-hover:text-white"}`}>
                   {item.icon}
@@ -79,11 +93,11 @@ export default function Sidebar() {
         <div className="px-4 py-4 border-t border-white/5">
           <div className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 transition-colors cursor-pointer">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-lime-400 to-emerald-500 flex items-center justify-center text-dark-900 font-bold text-sm">
-              A
+              {user?.nombre?.[0]?.toUpperCase() || 'U'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">Antón</p>
-              <p className="text-xs text-gray-500 truncate">anton@taskflow.io</p>
+              <p className="text-sm font-medium text-white truncate">{user?.nombre || 'Usuario'}</p>
+              <p className="text-xs text-gray-500 truncate">{user?.email || ''}</p>
             </div>
           </div>
           <Link
@@ -107,9 +121,8 @@ export default function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all ${
-                  isActive ? "text-lime-400" : "text-gray-500 hover:text-white"
-                }`}
+                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all ${isActive ? "text-lime-400" : "text-gray-500 hover:text-white"
+                  }`}
               >
                 {item.icon}
                 <span className="text-[10px] font-medium">{item.label}</span>
