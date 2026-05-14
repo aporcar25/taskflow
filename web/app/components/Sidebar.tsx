@@ -40,11 +40,11 @@ export default function Sidebar() {
   const [user, setUser] = useState<{ nombre: string; email: string } | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('taskflow_token');
-    if (token) {
+    const userStr = localStorage.getItem('taskflow_user');
+    if (userStr) {
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        setUser({ nombre: payload.nombre || payload.name || 'Usuario', email: payload.email || '' });
+        const userData = JSON.parse(userStr);
+        setUser({ nombre: userData.nombre || 'Usuario', email: userData.email || '' });
       } catch {
         setUser(null);
       }

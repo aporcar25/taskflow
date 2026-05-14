@@ -22,7 +22,11 @@ export const register = async (name: string, email: string, password: string) =>
     body: JSON.stringify({ nombre: name, email, password }),
   });
   if (!res.ok) throw new Error("Error en el registro");
-  return res.json();
+  const data = await res.json();
+  if (data.user) {
+    localStorage.setItem('taskflow_user', JSON.stringify(data.user));
+  }
+  return data;
 };
 
 export const login = async (email: string, password: string) => {
@@ -31,8 +35,12 @@ export const login = async (email: string, password: string) => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
-  if (!res.ok) throw new Error("Error en el login");
-  return res.json();
+  if (!res.ok) throw new Error("Credenciales incorrectas");
+  const data = await res.json();
+  if (data.user) {
+    localStorage.setItem('taskflow_user', JSON.stringify(data.user));
+  }
+  return data;
 };
 
 export const getMe = async () => {
