@@ -28,7 +28,8 @@ export default function DashboardPage() {
       }
     }
   }, []);
-  const weeklyActivity = defaultWeeklyActivity;
+
+  const [weeklyActivity, setWeeklyActivity] = useState(defaultWeeklyActivity);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -42,6 +43,11 @@ export default function DashboardPage() {
           productivity: statsData.porcentajeProductividad || 0,
           streakDays: statsData.rachaMaximaHabitos || 0,
         });
+
+
+        if (statsData.actividadSemanal) {
+          setWeeklyActivity(statsData.actividadSemanal);
+        }
 
         const tasksData = await getTasks();
         const mappedTasks = tasksData.map((t: any) => ({
@@ -196,8 +202,8 @@ export default function DashboardPage() {
                 {/* Checkbox */}
                 <div
                   className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${task.completed
-                      ? "bg-lime-400 border-lime-400"
-                      : "border-gray-600 group-hover:border-gray-400"
+                    ? "bg-lime-400 border-lime-400"
+                    : "border-gray-600 group-hover:border-gray-400"
                     }`}
                 >
                   {task.completed && (
@@ -217,10 +223,10 @@ export default function DashboardPage() {
                 {/* Priority badge */}
                 <span
                   className={`text-[10px] font-semibold px-2 py-0.5 rounded-md uppercase ${task.priority === "alta"
-                      ? "bg-red-500/10 text-red-400"
-                      : task.priority === "media"
-                        ? "bg-yellow-500/10 text-yellow-400"
-                        : "bg-blue-500/10 text-blue-400"
+                    ? "bg-red-500/10 text-red-400"
+                    : task.priority === "media"
+                      ? "bg-yellow-500/10 text-yellow-400"
+                      : "bg-blue-500/10 text-blue-400"
                     }`}
                 >
                   {task.priority}

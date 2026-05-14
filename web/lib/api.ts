@@ -115,7 +115,7 @@ export const checkHabit = async (id: string) => {
   return res.json();
 };
 
-export const getStats = async () => {
+export const getStats = async (): Promise<any> => {
   const res = await fetch(`${API_URL}/stats`, {
     headers: getHeaders(),
   });
