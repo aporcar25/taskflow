@@ -5,6 +5,21 @@ import { weeklyActivity as defaultWeeklyActivity } from "@/app/lib/mockData";
 import { getStats, getTasks } from "../../../lib/api";
 import Link from "next/link";
 
+const getDueDateColor = (dueDate: string) => {
+  if (!dueDate) return "text-gray-500";
+  const due = new Date(dueDate);
+  due.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const diffTime = due.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays <= 0) return "text-red-400 font-semibold";
+  if (diffDays <= 2) return "text-orange-400 font-medium";
+  return "text-green-400 font-medium";
+};
+
 export default function DashboardPage() {
   const [stats, setStats] = useState({
     completedToday: 0,
@@ -56,6 +71,7 @@ export default function DashboardPage() {
           category: t.categoria,
           priority: t.prioridad,
           completed: t.completada,
+          dueDate: t.fechaLimite ? t.fechaLimite.substring(0, 10) : "",
         }));
         setRecentTasks(mappedTasks.slice(0, 5));
       } catch (err) {
@@ -220,17 +236,28 @@ export default function DashboardPage() {
                   <p className="text-xs text-gray-500">{task.category}</p>
                 </div>
 
-                {/* Priority badge */}
-                <span
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-md uppercase ${task.priority === "alta"
-                    ? "bg-red-500/10 text-red-400"
-                    : task.priority === "media"
-                      ? "bg-yellow-500/10 text-yellow-400"
-                      : "bg-blue-500/10 text-blue-400"
-                    }`}
-                >
-                  {task.priority}
-                </span>
+                {/* Priority and Due Date badges */}
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
+                  <span
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-md uppercase ${task.priority === "alta"
+                      ? "bg-red-500/10 text-red-400"
+                      : task.priority === "media"
+                        ? "bg-yellow-500/10 text-yellow-400"
+                        : "bg-blue-500/10 text-blue-400"
+                      }`}
+                  >
+                    {task.priority}
+                  </span>
+                  
+                  {task.dueDate && (
+                    <span className={`text-[10px] flex items-center gap-1 ${getDueDateColor(task.dueDate)}`}>
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      {task.dueDate}
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
           </div>

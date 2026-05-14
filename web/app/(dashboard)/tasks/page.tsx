@@ -27,6 +27,21 @@ const categoryIcons: Record<Category, string> = {
   hogar: "🏠",
 };
 
+const getDueDateColor = (dueDate: string) => {
+  if (!dueDate) return "text-gray-500";
+  const due = new Date(dueDate);
+  due.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const diffTime = due.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays <= 0) return "text-red-400 font-semibold";
+  if (diffDays <= 2) return "text-orange-400 font-medium";
+  return "text-green-400 font-medium";
+};
+
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
 
@@ -222,11 +237,11 @@ export default function TasksPage() {
                     <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg ${categoryColors[task.category]}`}>
                       {categoryIcons[task.category]} {task.category}
                     </span>
-                    <span className="text-xs text-gray-500 flex items-center gap-1">
+                    <span className={`text-xs flex items-center gap-1 ${getDueDateColor(task.dueDate)}`}>
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
-                      {task.dueDate}
+                      {task.dueDate || "Sin fecha límite"}
                     </span>
                   </div>
                 </div>
