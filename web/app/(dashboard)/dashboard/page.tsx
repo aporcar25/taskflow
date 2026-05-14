@@ -15,6 +15,19 @@ export default function DashboardPage() {
     streakDays: 0,
   });
   const [recentTasks, setRecentTasks] = useState<any[]>([]);
+  const [userName, setUserName] = useState('');
+
+  useEffect(() => {
+    const userStr = localStorage.getItem('taskflow_user');
+    if (userStr) {
+      try {
+        const userData = JSON.parse(userStr);
+        setUserName(userData.nombre || '');
+      } catch {
+        setUserName('');
+      }
+    }
+  }, []);
   const weeklyActivity = defaultWeeklyActivity;
 
   useEffect(() => {
@@ -53,7 +66,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-          Buenos días, <span className="text-lime-400">Antón</span> 👋
+          Buenos días, <span className="text-lime-400">{userName || 'Usuario'}</span> 👋
         </h1>
         <p className="text-gray-400 mt-1 text-sm sm:text-base">
           Aquí tienes tu resumen de productividad
@@ -182,11 +195,10 @@ export default function DashboardPage() {
               >
                 {/* Checkbox */}
                 <div
-                  className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                    task.completed
+                  className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${task.completed
                       ? "bg-lime-400 border-lime-400"
                       : "border-gray-600 group-hover:border-gray-400"
-                  }`}
+                    }`}
                 >
                   {task.completed && (
                     <svg className="w-3 h-3 text-dark-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -204,13 +216,12 @@ export default function DashboardPage() {
 
                 {/* Priority badge */}
                 <span
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-md uppercase ${
-                    task.priority === "alta"
+                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-md uppercase ${task.priority === "alta"
                       ? "bg-red-500/10 text-red-400"
                       : task.priority === "media"
-                      ? "bg-yellow-500/10 text-yellow-400"
-                      : "bg-blue-500/10 text-blue-400"
-                  }`}
+                        ? "bg-yellow-500/10 text-yellow-400"
+                        : "bg-blue-500/10 text-blue-400"
+                    }`}
                 >
                   {task.priority}
                 </span>
