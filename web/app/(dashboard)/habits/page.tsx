@@ -2,12 +2,29 @@
 
 import { useState, useEffect } from "react";
 import { type Habit } from "@/app/lib/mockData";
-import { getHabits, checkHabit } from "../../../lib/api";
+import { getHabits, checkHabit, createHabit } from "../../../lib/api";
 
 const dayLabels = ["L", "M", "X", "J", "V", "S", "D"];
 
 export default function HabitsPage() {
   const [habits, setHabits] = useState<Habit[]>([]);
+  const [showModal, setShowModal] = useState(false);
+  const [newHabitName, setNewHabitName] = useState("");
+  const [newHabitIcon, setNewHabitIcon] = useState("✨");
+  const [isCreating, setIsCreating] = useState(false);
+
+  const handleCreateHabit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newHabitName.trim()) return;
+    setIsCreating(true);
+    try {
+      await createHabit({ nombre: newHabitName, icono: newHabitIcon });
+      window.location.href = "/habits";
+    } catch (err) {
+      console.error(err);
+      setIsCreating(false);
+    }
+  };
 
   useEffect(() => {
     const fetchHabits = async () => {
@@ -83,11 +100,22 @@ export default function HabitsPage() {
   return (
     <div className="animate-fade-in">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Hábitos diarios</h1>
-        <p className="text-gray-400 text-sm mt-1">
-          {completedCount} de {habits.length} completados hoy
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Hábitos diarios</h1>
+          <p className="text-gray-400 text-sm mt-1">
+            {completedCount} de {habits.length} completados hoy
+          </p>
+        </div>
+        <button
+          onClick={() => setShowModal(true)}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-lime-400 text-dark-900 font-semibold text-sm hover:bg-lime-400/90 transition-all hover:shadow-lg hover:shadow-lime-400/20"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          Nuevo hábito
+        </button>
       </div>
 
       {/* Progress bar */}
@@ -95,13 +123,13 @@ export default function HabitsPage() {
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-medium text-gray-300">Progreso de hoy</span>
           <span className="text-sm font-bold text-lime-400">
-            {Math.round((completedCount / habits.length) * 100)}%
+            {habits.length > 0 ? Math.round((completedCount / habits.length) * 100) : 0}%
           </span>
         </div>
         <div className="h-2.5 bg-dark-600 rounded-full overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-lime-400 to-emerald-400 rounded-full transition-all duration-700"
-            style={{ width: `${(completedCount / habits.length) * 100}%` }}
+            style={{ width: `${habits.length > 0 ? (completedCount / habits.length) * 100 : 0}%` }}
           />
         </div>
       </div>
@@ -173,6 +201,65 @@ export default function HabitsPage() {
           </div>
         ))}
       </div>
+
+      {/* Modal Crear Hábito */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-dark-800 border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-white">Nuevo hábito</h2>
+              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white transition-colors">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <form onSubmit={handleCreateHabit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Nombre del hábito</label>
+                <input
+                  type="text"
+                  value={newHabitName}
+                  onChange={(e) => setNewHabitName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-dark-700 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all"
+                  placeholder="Ej: Leer 30 minutos, Beber agua..."
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Icono (Emoji)</label>
+                <input
+                  type="text"
+                  value={newHabitIcon}
+                  onChange={(e) => setNewHabitIcon(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-dark-700 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all"
+                  placeholder="Ej: 📚, 💧, 🏃‍♂️..."
+                  required
+                />
+              </div>
+
+              <div className="flex items-center gap-3 justify-end mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="px-5 py-2.5 rounded-xl border border-white/10 text-gray-300 text-sm font-medium hover:bg-white/5 transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreating}
+                  className="px-6 py-2.5 rounded-xl bg-lime-400 text-dark-900 font-semibold text-sm hover:bg-lime-400/90 transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isCreating ? "Creando..." : "Crear hábito"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

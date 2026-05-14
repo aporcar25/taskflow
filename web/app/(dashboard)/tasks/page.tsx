@@ -36,8 +36,8 @@ export default function TasksPage() {
         const data = await getTasks();
         const mappedTasks = data.map((t: any) => ({
           id: t._id,
-          title: t.titulo,
-          description: t.descripcion,
+          title: t.titulo || "",
+          description: t.descripcion || "",
           priority: t.prioridad,
           category: t.categoria,
           dueDate: t.fechaLimite ? t.fechaLimite.substring(0, 10) : "",
@@ -57,9 +57,11 @@ export default function TasksPage() {
 
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
+      const title = task.title || "";
+      const description = task.description || "";
       const matchesSearch =
-        task.title.toLowerCase().includes(search.toLowerCase()) ||
-        task.description.toLowerCase().includes(search.toLowerCase());
+        title.toLowerCase().includes(search.toLowerCase()) ||
+        description.toLowerCase().includes(search.toLowerCase());
       const matchesPriority = filterPriority === "todas" || task.priority === filterPriority;
       const matchesCategory = filterCategory === "todas" || task.category === filterCategory;
       return matchesSearch && matchesPriority && matchesCategory;

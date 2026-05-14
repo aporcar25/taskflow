@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { Priority, Category } from "@/app/lib/mockData";
+import { createTask } from "../../../lib/api";
 
 export default function NewTaskPage() {
-  const router = useRouter();
   const [form, setForm] = useState({
     title: "", description: "", priority: "" as Priority | "",
     category: "" as Category | "", dueDate: "",
@@ -25,11 +24,23 @@ export default function NewTaskPage() {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = (ev: React.FormEvent) => {
+  const handleSubmit = async (ev: React.FormEvent) => {
     ev.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    setTimeout(() => router.push("/tasks"), 600);
+    try {
+      await createTask({
+        titulo: form.title,
+        descripcion: form.description,
+        prioridad: form.priority,
+        categoria: form.category,
+        fechaLimite: form.dueDate
+      });
+      window.location.href = "/tasks";
+    } catch (err) {
+      console.error("Error al crear tarea:", err);
+      setLoading(false);
+    }
   };
 
   const ic = (f: string) =>
