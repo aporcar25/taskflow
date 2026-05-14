@@ -30,6 +30,10 @@ const TaskSchema = new mongoose.Schema({
   },
   fechaLimite: {
     type: Date
+  },
+  recordatorioEnviado: {
+    type: Boolean,
+    default: false
   }
 }, { timestamps: true });
 

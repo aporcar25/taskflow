@@ -9,6 +9,7 @@ const habitRoutes = require('./routes/habits');
 const authMiddleware = require('./middleware/auth');
 const Task = require('./models/Task');
 const Habit = require('./models/Habit');
+const { initJobs } = require('./jobs/emailJobs');
 
 const app = express();
 
@@ -100,7 +101,10 @@ app.get('/api/stats', authMiddleware, async (req, res) => {
 
 // Database connection
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Conectado a MongoDB'))
+  .then(() => {
+    console.log('Conectado a MongoDB');
+    initJobs(); // Initialize cron jobs after DB is connected
+  })
   .catch((err) => console.error('Error al conectar a MongoDB:', err));
 
 const PORT = process.env.PORT || 5000;
