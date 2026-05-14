@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { Priority, Category } from "@/app/lib/mockData";
-import { createTask } from "../../../lib/api";
+import { createTask } from "../../../../lib/api";
 
 export default function NewTaskPage() {
   const [form, setForm] = useState({
