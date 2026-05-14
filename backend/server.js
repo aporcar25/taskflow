@@ -10,6 +10,7 @@ const authMiddleware = require('./middleware/auth');
 const Task = require('./models/Task');
 const Habit = require('./models/Habit');
 const { initJobs } = require('./jobs/emailJobs');
+const { enviarRecordatorioTarea, enviarResumenDiario } = require('./services/emailService');
 
 const app = express();
 
@@ -96,6 +97,32 @@ app.get('/api/stats', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ mensaje: 'Error al obtener estadísticas' });
+  }
+});
+
+// Endpoint temporal para probar envío de emails
+app.get('/api/test-email', authMiddleware, async (req, res) => {
+  try {
+    const User = require('./models/User');
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+    }
+
+    const tasks = await Task.find({ userId: user._id });
+
+    if (tasks.length > 0) {
+      // Prueba 1: Recordatorio (usando la primera tarea)
+      await enviarRecordatorioTarea(user, tasks[0]);
+    }
+    
+    // Prueba 2: Resumen diario (usando todas las tareas del usuario)
+    await enviarResumenDiario(user, tasks);
+
+    res.json({ mensaje: 'Emails de prueba enviados con éxito. Revisa tu bandeja de entrada.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error enviando emails de prueba' });
   }
 });
 
