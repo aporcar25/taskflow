@@ -8,6 +8,7 @@ const dayLabels = ["L", "M", "X", "J", "V", "S", "D"];
 
 export default function HabitsPage() {
   const [habits, setHabits] = useState<Habit[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [newHabitName, setNewHabitName] = useState("");
   const [newHabitIcon, setNewHabitIcon] = useState("✨");
@@ -101,6 +102,8 @@ export default function HabitsPage() {
         setHabits(mappedHabits);
       } catch (err) {
         console.error("Error cargando hábitos:", err);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchHabits();
@@ -140,6 +143,8 @@ export default function HabitsPage() {
   };
 
   const completedCount = habits.filter((h) => h.completedToday).length;
+
+  if (isLoading) return <div className="animate-pulse space-y-4"><div className="h-8 bg-gray-700 rounded w-1/3"></div><div className="h-32 bg-gray-700 rounded"></div><div className="h-32 bg-gray-700 rounded"></div></div>
 
   return (
     <div className="animate-fade-in">

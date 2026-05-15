@@ -43,6 +43,7 @@ const getDueDateColor = (dueDate: string) => {
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [createForm, setCreateForm] = useState({
@@ -193,6 +194,8 @@ export default function TasksPage() {
         setTasks(mappedTasks);
       } catch (err) {
         console.error("Error cargando tareas:", err);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchTasks();
@@ -238,6 +241,8 @@ export default function TasksPage() {
   };
 
   const completedCount = filteredTasks.filter((t) => t.completed).length;
+
+  if (isLoading) return <div className="animate-pulse space-y-4"><div className="h-8 bg-gray-700 rounded w-1/3"></div><div className="h-32 bg-gray-700 rounded"></div><div className="h-32 bg-gray-700 rounded"></div></div>
 
   return (
     <div className="animate-fade-in">

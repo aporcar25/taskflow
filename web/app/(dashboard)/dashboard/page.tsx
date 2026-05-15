@@ -33,6 +33,7 @@ export default function DashboardPage() {
   const [greeting, setGreeting] = useState("Buenos días");
   const [userName, setUserName] = useState('');
   const [weeklyActivity, setWeeklyActivity] = useState(defaultWeeklyActivity);
+  const [isLoading, setIsLoading] = useState(true);
   useEffect(() => {
     const hour = new Date().getHours();
     if (hour >= 6 && hour < 12) {
@@ -82,12 +83,16 @@ export default function DashboardPage() {
         setRecentTasks(mappedTasks.slice(0, 5));
       } catch (err) {
         console.error("Error cargando dashboard:", err);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchData();
   }, []);
 
   const maxTasks = Math.max(...weeklyActivity.map((d) => d.tasks));
+
+  if (isLoading) return <div className="animate-pulse space-y-4"><div className="h-8 bg-gray-700 rounded w-1/3"></div><div className="h-32 bg-gray-700 rounded"></div><div className="h-32 bg-gray-700 rounded"></div></div>
 
   return (
     <div className="animate-fade-in">
