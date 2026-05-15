@@ -30,8 +30,9 @@ export default function DashboardPage() {
     streakDays: 0,
   });
   const [recentTasks, setRecentTasks] = useState<any[]>([]);
-  const weeklyActivity = defaultWeeklyActivity;
-
+  const [greeting, setGreeting] = useState("Buenos días");
+  const [userName, setUserName] = useState('');
+  const [weeklyActivity, setWeeklyActivity] = useState(defaultWeeklyActivity);
   useEffect(() => {
     const hour = new Date().getHours();
     if (hour >= 6 && hour < 12) {
@@ -93,7 +94,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-          Buenos días, <span className="text-lime-400">Antón</span> 👋
+          {greeting}, <span className="text-lime-400">{userName || 'Usuario'}</span> 👋
         </h1>
         <p className="text-gray-400 mt-1 text-sm sm:text-base">
           Aquí tienes tu resumen de productividad
