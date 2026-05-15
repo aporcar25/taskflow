@@ -481,7 +481,6 @@ export default function TasksPage() {
                 <input type="date" value={createForm.dueDate} onChange={(e) => setCreateForm({ ...createForm, dueDate: e.target.value })} className={`w-full px-4 py-2.5 rounded-xl bg-dark-700 border ${createErrors.dueDate ? "border-red-500/50" : "border-white/10"} text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50`} style={{ colorScheme: "dark" }} />
                 {createErrors.dueDate && <p className="text-red-400 text-xs mt-1">{createErrors.dueDate}</p>}
               </div>
-            </div>
 
             <div className="flex gap-3 justify-end mt-6">
               <button
