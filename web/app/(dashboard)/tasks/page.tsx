@@ -242,7 +242,23 @@ export default function TasksPage() {
 
   const completedCount = filteredTasks.filter((t) => t.completed).length;
 
-  if (isLoading) return <div className="animate-pulse space-y-4"><div className="h-8 bg-gray-700 rounded w-1/3"></div><div className="h-32 bg-gray-700 rounded"></div><div className="h-32 bg-gray-700 rounded"></div></div>
+  if (isLoading) return (
+    <div className="space-y-6">
+      <div className="h-10 w-48 bg-gray-800 animate-pulse rounded-2xl mb-8"></div>
+      <div className="h-12 w-full bg-gray-800 animate-pulse rounded-2xl mb-6"></div>
+      <div className="space-y-3">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="flex items-center gap-4 p-5 bg-gray-800/50 border border-white/5 rounded-2xl animate-pulse">
+            <div className="w-6 h-6 bg-gray-800 rounded-2xl"></div>
+            <div className="flex-1 space-y-2">
+              <div className="h-4 w-1/3 bg-gray-800 rounded-2xl"></div>
+              <div className="h-3 w-1/2 bg-gray-800 rounded-2xl"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="animate-fade-in">
