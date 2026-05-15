@@ -1,4 +1,4 @@
-const API_URL = "https://taskflow-p73h.onrender.com/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://taskflow-p73h.onrender.com/api";
 
 const getToken = () => {
   if (typeof window !== "undefined") {
@@ -122,6 +122,25 @@ export const checkHabit = async (id: string) => {
     headers: getHeaders(),
   });
   if (!res.ok) throw new Error("Error marcando hábito");
+  return res.json();
+};
+
+export const updateHabit = async (id: string, data: any) => {
+  const res = await fetch(`${API_URL}/habits/${id}`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Error actualizando hábito");
+  return res.json();
+};
+
+export const deleteHabit = async (id: string) => {
+  const res = await fetch(`${API_URL}/habits/${id}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw new Error("Error eliminando hábito");
   return res.json();
 };
 

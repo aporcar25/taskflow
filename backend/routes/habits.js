@@ -101,6 +101,32 @@ router.patch('/:id/check', async (req, res) => {
   }
 });
 
+// PUT /:id -> editar hábito
+router.put('/:id', async (req, res) => {
+  try {
+    const { nombre, icono } = req.body;
+
+    let habit = await Habit.findById(req.params.id);
+
+    if (!habit) {
+      return res.status(404).json({ mensaje: 'Hábito no encontrado' });
+    }
+
+    if (habit.userId.toString() !== req.user.id) {
+      return res.status(401).json({ mensaje: 'No autorizado' });
+    }
+
+    if (nombre) habit.nombre = nombre;
+    if (icono) habit.icono = icono;
+
+    await habit.save();
+    res.json(habit);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error al actualizar el hábito' });
+  }
+});
+
 // DELETE /:id -> eliminar hábito
 router.delete('/:id', async (req, res) => {
   try {

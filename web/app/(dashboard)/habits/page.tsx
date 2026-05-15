@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { type Habit } from "@/app/lib/mockData";
-import { getHabits, checkHabit, createHabit } from "../../../lib/api";
+import { getHabits, checkHabit, createHabit, updateHabit, deleteHabit } from "../../../lib/api";
 
 const dayLabels = ["L", "M", "X", "J", "V", "S", "D"];
 
@@ -12,6 +12,50 @@ export default function HabitsPage() {
   const [newHabitName, setNewHabitName] = useState("");
   const [newHabitIcon, setNewHabitIcon] = useState("✨");
   const [isCreating, setIsCreating] = useState(false);
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+  const [editHabitName, setEditHabitName] = useState("");
+  const [editHabitIcon, setEditHabitIcon] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [habitToDelete, setHabitToDelete] = useState<string | null>(null);
+
+  const openEditModal = (habit: Habit) => {
+    setEditingHabit(habit);
+    setEditHabitName(habit.name);
+    setEditHabitIcon(habit.icon);
+    setIsEditModalOpen(true);
+  };
+
+  const saveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingHabit || !editHabitName.trim()) return;
+    setIsSaving(true);
+    try {
+      const updated = await updateHabit(editingHabit.id, { nombre: editHabitName, icono: editHabitIcon });
+      setHabits(habits.map(h => h.id === editingHabit.id ? { ...h, name: updated.nombre, icon: updated.icono } : h));
+      setIsEditModalOpen(false);
+      setEditingHabit(null);
+    } catch (err) {
+      console.error("Error editando hábito", err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!habitToDelete) return;
+    try {
+      await deleteHabit(habitToDelete);
+      setHabits(habits.filter(h => h.id !== habitToDelete));
+      setIsDeleteModalOpen(false);
+      setHabitToDelete(null);
+    } catch (err) {
+      console.error("Error eliminando hábito", err);
+    }
+  };
 
   const handleCreateHabit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,7 +183,7 @@ export default function HabitsPage() {
         {habits.map((habit) => (
           <div
             key={habit.id}
-            className={`bg-dark-800 border rounded-2xl p-5 transition-all duration-300 ${
+            className={`group bg-dark-800 border rounded-2xl p-5 transition-all duration-300 ${
               habit.completedToday
                 ? "border-lime-400/20 bg-lime-400/[0.03]"
                 : "border-white/5 hover:border-white/10"
@@ -166,19 +210,38 @@ export default function HabitsPage() {
                 </div>
               </div>
 
-              {/* Right: toggle button */}
-              <button
-                onClick={() => toggleHabit(habit.id)}
-                className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
-                  habit.completedToday
-                    ? "bg-lime-400 text-dark-900 shadow-lg shadow-lime-400/20"
-                    : "bg-dark-600 text-gray-500 hover:bg-dark-500 hover:text-white"
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </button>
+              {/* Action buttons + toggle */}
+              <div className="flex items-center gap-2">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 sm:gap-2 mr-2">
+                  <button
+                    onClick={() => openEditModal(habit)}
+                    className="p-2 rounded-xl bg-dark-700 hover:bg-lime-500/10 text-gray-400 hover:text-lime-400 transition-colors"
+                    title="Editar hábito"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                  </button>
+                  <button
+                    onClick={() => { setHabitToDelete(habit.id); setIsDeleteModalOpen(true); }}
+                    className="p-2 rounded-xl bg-dark-700 hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-colors"
+                    title="Eliminar hábito"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => toggleHabit(habit.id)}
+                  className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
+                    habit.completedToday
+                      ? "bg-lime-400 text-dark-900 shadow-lg shadow-lime-400/20"
+                      : "bg-dark-600 text-gray-500 hover:bg-dark-500 hover:text-white"
+                  }`}
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {/* Weekly dots */}
@@ -254,6 +317,89 @@ export default function HabitsPage() {
                   className="px-6 py-2.5 rounded-xl bg-lime-400 text-dark-900 font-semibold text-sm hover:bg-lime-400/90 transition-all disabled:opacity-50 flex items-center gap-2"
                 >
                   {isCreating ? "Creando..." : "Crear hábito"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-dark-800 border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <h3 className="text-xl font-bold text-white mb-2">Eliminar hábito</h3>
+            <p className="text-gray-400 text-sm mb-6">¿Estás seguro de que deseas eliminar este hábito? Se perderá todo el historial de rachas.</p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => { setIsDeleteModalOpen(false); setHabitToDelete(null); }}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-gray-300 hover:bg-white/5 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-dark-800 border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-white">Editar hábito</h2>
+              <button onClick={() => setIsEditModalOpen(false)} className="text-gray-400 hover:text-white transition-colors">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <form onSubmit={saveEdit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Nombre del hábito</label>
+                <input
+                  type="text"
+                  value={editHabitName}
+                  onChange={(e) => setEditHabitName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-dark-700 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all"
+                  placeholder="Ej: Leer 30 minutos..."
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Icono (Emoji)</label>
+                <input
+                  type="text"
+                  value={editHabitIcon}
+                  onChange={(e) => setEditHabitIcon(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-dark-700 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all"
+                  placeholder="Ej: 📚..."
+                  required
+                />
+              </div>
+
+              <div className="flex items-center gap-3 justify-end mt-6">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="px-5 py-2.5 rounded-xl border border-white/10 text-gray-300 text-sm font-medium hover:bg-white/5 transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-6 py-2.5 rounded-xl bg-lime-400 text-dark-900 font-semibold text-sm hover:bg-lime-400/90 transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isSaving ? "Guardando..." : "Guardar cambios"}
                 </button>
               </div>
             </form>
