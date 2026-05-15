@@ -30,23 +30,28 @@ export default function DashboardPage() {
     streakDays: 0,
   });
   const [recentTasks, setRecentTasks] = useState<any[]>([]);
-  const [userName, setUserName] = useState('');
+  const weeklyActivity = defaultWeeklyActivity;
 
   useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour >= 6 && hour < 12) {
+      setGreeting("Buenos días");
+    } else if (hour >= 12 && hour < 21) {
+      setGreeting("Buenas tardes");
+    } else {
+      setGreeting("Buenas noches");
+    }
+
     const userStr = localStorage.getItem('taskflow_user');
     if (userStr) {
       try {
-        const userData = JSON.parse(userStr);
-        setUserName(userData.nombre || '');
-      } catch {
-        setUserName('');
-      }
+        const user = JSON.parse(userStr);
+        if (user && user.nombre) {
+          setUserName(user.nombre.split(' ')[0]);
+        }
+      } catch (e) {}
     }
-  }, []);
 
-  const [weeklyActivity, setWeeklyActivity] = useState(defaultWeeklyActivity);
-
-  useEffect(() => {
     const fetchData = async () => {
       try {
         const statsData = await getStats();
@@ -88,7 +93,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-          Buenos días, <span className="text-lime-400">{userName || 'Usuario'}</span> 👋
+          Buenos días, <span className="text-lime-400">Antón</span> 👋
         </h1>
         <p className="text-gray-400 mt-1 text-sm sm:text-base">
           Aquí tienes tu resumen de productividad
