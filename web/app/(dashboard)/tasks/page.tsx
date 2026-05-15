@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import Link from "next/link";
 import { type Task, type Priority, type Category } from "@/app/lib/mockData";
-import { getTasks, completeTask, deleteTask, updateTask } from "../../../lib/api";
+import { getTasks, completeTask, deleteTask, updateTask, createTask } from "../../../lib/api";
 
 const priorityColors: Record<Priority, string> = {
   alta: "bg-red-500/10 text-red-400 border-red-500/20",
@@ -45,8 +44,64 @@ const getDueDateColor = (dueDate: string) => {
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
 
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    title: "", description: "", priority: "" as Priority | "",
+    category: "" as Category | "", dueDate: "",
+  });
+  const [createErrors, setCreateErrors] = useState<Record<string, string>>({});
+  const [isCreating, setIsCreating] = useState(false);
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+
+  const validateCreate = () => {
+    const e: Record<string, string> = {};
+    if (!createForm.title.trim()) e.title = "El título es obligatorio";
+    if (!createForm.description.trim()) e.description = "La descripción es obligatoria";
+    if (!createForm.priority) e.priority = "Selecciona una prioridad";
+    if (!createForm.category) e.category = "Selecciona una categoría";
+    if (!createForm.dueDate) e.dueDate = "La fecha límite es obligatoria";
+    setCreateErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const saveCreate = async () => {
+    if (!validateCreate()) return;
+    setIsCreating(true);
+    try {
+      const newTask = await createTask({
+        titulo: createForm.title,
+        descripcion: createForm.description,
+        prioridad: createForm.priority,
+        categoria: createForm.category,
+        fechaLimite: createForm.dueDate
+      });
+
+      const mappedNewTask = {
+        id: (newTask as any)._id,
+        title: (newTask as any).titulo || "",
+        description: (newTask as any).descripcion || "",
+        priority: (newTask as any).prioridad,
+        category: (newTask as any).categoria,
+        dueDate: (newTask as any).fechaLimite ? (newTask as any).fechaLimite.substring(0, 10) : "",
+        completed: (newTask as any).completada,
+        createdAt: (newTask as any).createdAt
+      };
+
+      setTasks([mappedNewTask, ...tasks]);
+      setIsCreateModalOpen(false);
+      setCreateForm({
+        title: "", description: "", priority: "" as Priority | "",
+        category: "" as Category | "", dueDate: "",
+      });
+      setCreateErrors({});
+    } catch (err) {
+      console.error("Error al crear tarea:", err);
+    } finally {
+      setIsCreating(false);
+    }
+  };
   const [editForm, setEditForm] = useState({
     title: "", description: "", priority: "" as Priority | "",
     category: "" as Category | "", dueDate: "",
@@ -125,7 +180,7 @@ export default function TasksPage() {
     const fetchTasks = async () => {
       try {
         const data = await getTasks();
-        const mappedTasks = data.map((t: any) => ({
+        const mappedTasks = data.map((t: { _id: string; titulo?: string; descripcion?: string; prioridad: Priority; categoria: Category; fechaLimite?: string; completada: boolean; createdAt: string }) => ({
           id: t._id,
           title: t.titulo || "",
           description: t.descripcion || "",
@@ -194,15 +249,15 @@ export default function TasksPage() {
             {completedCount} de {filteredTasks.length} completadas
           </p>
         </div>
-        <Link
-          href="/tasks/new"
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-lime-400 text-dark-900 font-semibold text-sm hover:bg-lime-400/90 transition-all hover:shadow-lg hover:shadow-lime-400/20"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
           </svg>
           Nueva tarea
-        </Link>
+        </button>
       </div>
 
       {/* Search + Filters */}
@@ -364,6 +419,96 @@ export default function TasksPage() {
                 Eliminar
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Modal */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto pt-20 pb-10">
+          <div className="bg-dark-800 border border-white/10 rounded-2xl p-6 max-w-lg w-full shadow-2xl animate-fade-in my-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-white">Nueva tarea</h3>
+              <button onClick={() => {
+                setIsCreateModalOpen(false);
+                setCreateForm({
+                  title: "", description: "", priority: "" as Priority | "",
+                  category: "" as Category | "", dueDate: "",
+                });
+                setCreateErrors({});
+              }} className="text-gray-400 hover:text-white transition-colors">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            <form onSubmit={(e) => { e.preventDefault(); saveCreate(); }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Título</label>
+                <input type="text" value={createForm.title} onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })} placeholder="¿Qué necesitas hacer?" className={`w-full px-4 py-2.5 rounded-xl bg-dark-700 border ${createErrors.title ? "border-red-500/50" : "border-white/10"} text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all`} />
+                {createErrors.title && <p className="text-red-400 text-xs mt-1">{createErrors.title}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Descripción</label>
+                <textarea rows={3} value={createForm.description} onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })} placeholder="Describe los detalles..." className={`w-full px-4 py-2.5 rounded-xl bg-dark-700 border ${createErrors.description ? "border-red-500/50" : "border-white/10"} text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all resize-none`} />
+                {createErrors.description && <p className="text-red-400 text-xs mt-1">{createErrors.description}</p>}
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Prioridad</label>
+                  <select value={createForm.priority} onChange={(e) => setCreateForm({ ...createForm, priority: e.target.value as Priority })} className={`w-full px-4 py-2.5 rounded-xl bg-dark-700 border ${createErrors.priority ? "border-red-500/50" : "border-white/10"} text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 appearance-none`} style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em' }}>
+                    <option value="">Seleccionar</option>
+                    <option value="alta">🔴 Alta</option>
+                    <option value="media">🟡 Media</option>
+                    <option value="baja">🔵 Baja</option>
+                  </select>
+                  {createErrors.priority && <p className="text-red-400 text-xs mt-1">{createErrors.priority}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Categoría</label>
+                  <select value={createForm.category} onChange={(e) => setCreateForm({ ...createForm, category: e.target.value as Category })} className={`w-full px-4 py-2.5 rounded-xl bg-dark-700 border ${createErrors.category ? "border-red-500/50" : "border-white/10"} text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 appearance-none`} style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em' }}>
+                    <option value="">Seleccionar</option>
+                    <option value="trabajo">💼 Trabajo</option>
+                    <option value="personal">👤 Personal</option>
+                    <option value="salud">❤️ Salud</option>
+                    <option value="estudio">📖 Estudio</option>
+                    <option value="hogar">🏠 Hogar</option>
+                  </select>
+                  {createErrors.category && <p className="text-red-400 text-xs mt-1">{createErrors.category}</p>}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Fecha límite</label>
+                <input type="date" value={createForm.dueDate} onChange={(e) => setCreateForm({ ...createForm, dueDate: e.target.value })} className={`w-full px-4 py-2.5 rounded-xl bg-dark-700 border ${createErrors.dueDate ? "border-red-500/50" : "border-white/10"} text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50`} style={{ colorScheme: "dark" }} />
+                {createErrors.dueDate && <p className="text-red-400 text-xs mt-1">{createErrors.dueDate}</p>}
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-end mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCreateModalOpen(false);
+                  setCreateForm({
+                    title: "", description: "", priority: "" as Priority | "",
+                    category: "" as Category | "", dueDate: "",
+                  });
+                  setCreateErrors({});
+                }}
+                className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:bg-white/5 transition-colors border border-white/10"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={isCreating}
+                className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-lime-400 text-dark-900 hover:bg-lime-400/90 transition-colors shadow-lg shadow-lime-400/20 disabled:opacity-50 flex items-center gap-2"
+              >
+                {isCreating ? (
+                  <><svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Creando...</>
+                ) : (<>Crear tarea</>)}
+              </button>
+            </div>
+            </form>
           </div>
         </div>
       )}
