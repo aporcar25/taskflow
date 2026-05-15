@@ -77,7 +77,7 @@ export default function TasksPage() {
         categoria: createForm.category,
         fechaLimite: createForm.dueDate
       });
-
+      
       const mappedNewTask = {
         id: (newTask as any)._id,
         title: (newTask as any).titulo || "",
@@ -440,7 +440,7 @@ export default function TasksPage() {
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-
+            
             <form onSubmit={(e) => { e.preventDefault(); saveCreate(); }} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1.5">Título</label>
@@ -481,7 +481,6 @@ export default function TasksPage() {
                 <input type="date" value={createForm.dueDate} onChange={(e) => setCreateForm({ ...createForm, dueDate: e.target.value })} className={`w-full px-4 py-2.5 rounded-xl bg-dark-700 border ${createErrors.dueDate ? "border-red-500/50" : "border-white/10"} text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50`} style={{ colorScheme: "dark" }} />
                 {createErrors.dueDate && <p className="text-red-400 text-xs mt-1">{createErrors.dueDate}</p>}
               </div>
-            </div>
 
             <div className="flex gap-3 justify-end mt-6">
               <button
