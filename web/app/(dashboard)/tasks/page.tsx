@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { type Task, type Priority, type Category } from "@/app/lib/mockData";
-import { getTasks, completeTask } from "../../../lib/api";
+import { getTasks, completeTask, deleteTask, updateTask } from "../../../lib/api";
 
 const priorityColors: Record<Priority, string> = {
   alta: "bg-red-500/10 text-red-400 border-red-500/20",
@@ -44,6 +44,82 @@ const getDueDateColor = (dueDate: string) => {
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editForm, setEditForm] = useState({
+    title: "", description: "", priority: "" as Priority | "",
+    category: "" as Category | "", dueDate: "",
+  });
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
+  const [isSaving, setIsSaving] = useState(false);
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
+
+  const confirmDelete = async () => {
+    if (!taskToDelete) return;
+    try {
+      await deleteTask(taskToDelete);
+      setTasks(tasks.filter(t => t.id !== taskToDelete));
+      setIsDeleteModalOpen(false);
+      setTaskToDelete(null);
+    } catch (err) {
+      console.error("Error eliminando tarea", err);
+    }
+  };
+
+  const openEditModal = (task: Task) => {
+    setEditingTask(task);
+    setEditForm({
+      title: task.title || "",
+      description: task.description || "",
+      priority: task.priority,
+      category: task.category,
+      dueDate: task.dueDate || "",
+    });
+    setEditErrors({});
+    setIsEditModalOpen(true);
+  };
+
+  const validateEdit = () => {
+    const e: Record<string, string> = {};
+    if (!editForm.title.trim()) e.title = "El título es obligatorio";
+    if (!editForm.description.trim()) e.description = "La descripción es obligatoria";
+    if (!editForm.priority) e.priority = "Selecciona una prioridad";
+    if (!editForm.category) e.category = "Selecciona una categoría";
+    if (!editForm.dueDate) e.dueDate = "La fecha límite es obligatoria";
+    setEditErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const saveEdit = async () => {
+    if (!editingTask || !validateEdit()) return;
+    setIsSaving(true);
+    try {
+      const updated = await updateTask(editingTask.id, {
+        titulo: editForm.title,
+        descripcion: editForm.description,
+        prioridad: editForm.priority,
+        categoria: editForm.category,
+        fechaLimite: editForm.dueDate
+      });
+      setTasks(tasks.map(t => t.id === editingTask.id ? {
+        ...t,
+        title: updated.titulo || "",
+        description: updated.descripcion || "",
+        priority: updated.prioridad,
+        category: updated.categoria,
+        dueDate: updated.fechaLimite ? updated.fechaLimite.substring(0, 10) : "",
+      } : t));
+      setIsEditModalOpen(false);
+      setEditingTask(null);
+    } catch (err) {
+      console.error("Error editando tarea", err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -227,6 +303,23 @@ export default function TasksPage() {
                         {task.description}
                       </p>
                     </div>
+                    {/* Buttons Edit & Delete */}
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => openEditModal(task)}
+                        className="p-2 rounded-lg bg-dark-700 hover:bg-lime-500/10 text-gray-400 hover:text-lime-400 transition-colors"
+                        title="Editar tarea"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                      </button>
+                      <button
+                        onClick={() => { setTaskToDelete(task.id); setIsDeleteModalOpen(true); }}
+                        className="p-2 rounded-lg bg-dark-700 hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-colors"
+                        title="Eliminar tarea"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Tags */}
@@ -248,6 +341,102 @@ export default function TasksPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-dark-800 border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <h3 className="text-xl font-bold text-white mb-2">Eliminar tarea</h3>
+            <p className="text-gray-400 text-sm mb-6">¿Estás seguro de que deseas eliminar esta tarea? Esta acción no se puede deshacer.</p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => { setIsDeleteModalOpen(false); setTaskToDelete(null); }}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-gray-300 hover:bg-white/5 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto pt-20 pb-10">
+          <div className="bg-dark-800 border border-white/10 rounded-2xl p-6 max-w-lg w-full shadow-2xl animate-fade-in my-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-white">Editar tarea</h3>
+              <button onClick={() => setIsEditModalOpen(false)} className="text-gray-400 hover:text-white transition-colors">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Título</label>
+                <input type="text" value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} className={`w-full px-4 py-2.5 rounded-xl bg-dark-700 border ${editErrors.title ? "border-red-500/50" : "border-white/10"} text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all`} />
+                {editErrors.title && <p className="text-red-400 text-xs mt-1">{editErrors.title}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Descripción</label>
+                <textarea rows={3} value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} className={`w-full px-4 py-2.5 rounded-xl bg-dark-700 border ${editErrors.description ? "border-red-500/50" : "border-white/10"} text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all resize-none`} />
+                {editErrors.description && <p className="text-red-400 text-xs mt-1">{editErrors.description}</p>}
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Prioridad</label>
+                  <select value={editForm.priority} onChange={(e) => setEditForm({ ...editForm, priority: e.target.value as Priority })} className={`w-full px-4 py-2.5 rounded-xl bg-dark-700 border ${editErrors.priority ? "border-red-500/50" : "border-white/10"} text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 appearance-none`} style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em' }}>
+                    <option value="">Seleccionar</option>
+                    <option value="alta">🔴 Alta</option>
+                    <option value="media">🟡 Media</option>
+                    <option value="baja">🔵 Baja</option>
+                  </select>
+                  {editErrors.priority && <p className="text-red-400 text-xs mt-1">{editErrors.priority}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Categoría</label>
+                  <select value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value as Category })} className={`w-full px-4 py-2.5 rounded-xl bg-dark-700 border ${editErrors.category ? "border-red-500/50" : "border-white/10"} text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 appearance-none`} style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em' }}>
+                    <option value="">Seleccionar</option>
+                    <option value="trabajo">💼 Trabajo</option>
+                    <option value="personal">👤 Personal</option>
+                    <option value="salud">❤️ Salud</option>
+                    <option value="estudio">📖 Estudio</option>
+                    <option value="hogar">🏠 Hogar</option>
+                  </select>
+                  {editErrors.category && <p className="text-red-400 text-xs mt-1">{editErrors.category}</p>}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Fecha límite</label>
+                <input type="date" value={editForm.dueDate} onChange={(e) => setEditForm({ ...editForm, dueDate: e.target.value })} className={`w-full px-4 py-2.5 rounded-xl bg-dark-700 border ${editErrors.dueDate ? "border-red-500/50" : "border-white/10"} text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50`} style={{ colorScheme: "dark" }} />
+                {editErrors.dueDate && <p className="text-red-400 text-xs mt-1">{editErrors.dueDate}</p>}
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-end mt-6">
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:bg-white/5 transition-colors border border-white/10"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={saveEdit}
+                disabled={isSaving}
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-lime-400 text-dark-900 hover:bg-lime-400/90 transition-colors shadow-lg shadow-lime-400/20 disabled:opacity-50 flex items-center gap-2"
+              >
+                {isSaving ? "Guardando..." : "Guardar cambios"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -69,6 +69,16 @@ export const createTask = async (data: any) => {
   return res.json();
 };
 
+export const updateTask = async (id: string, data: any) => {
+  const res = await fetch(`${API_URL}/tasks/${id}`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Error actualizando tarea");
+  return res.json();
+};
+
 export const completeTask = async (id: string, completada: boolean) => {
   const res = await fetch(`${API_URL}/tasks/${id}/complete`, {
     method: "PATCH",
