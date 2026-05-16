@@ -166,4 +166,26 @@ router.put('/change-password', authMiddleware, async (req, res) => {
   }
 });
 
+// PUT /preferences -> actualizar preferencias del usuario
+router.put('/preferences', authMiddleware, async (req, res) => {
+  try {
+    const { emailReminders, dailySummary } = req.body;
+    let user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+
+    if (user.preferences === undefined) {
+      user.preferences = {};
+    }
+
+    if (typeof emailReminders === 'boolean') user.preferences.emailReminders = emailReminders;
+    if (typeof dailySummary === 'boolean') user.preferences.dailySummary = dailySummary;
+
+    await user.save();
+    res.json(user.preferences);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error al actualizar preferencias' });
+  }
+});
+
 module.exports = router;

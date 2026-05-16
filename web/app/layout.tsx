@@ -14,7 +14,24 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className="bg-dark-900 text-white antialiased">{children}</body>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                  document.documentElement.classList.add('dark')
+                } else {
+                  document.documentElement.classList.remove('dark')
+                }
+              } catch (_) {}
+            `,
+          }}
+        />
+      </head>
+      <body className="bg-white dark:bg-dark-900 text-dark-900 dark:text-white antialiased transition-colors duration-200">
+        {children}
+      </body>
     </html>
   );
 }

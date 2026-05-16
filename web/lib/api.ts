@@ -166,6 +166,25 @@ export const updateProfile = async (data: { nombre?: string; email?: string }) =
   return result;
 };
 
+export const updatePreferences = async (data: { emailReminders?: boolean; dailySummary?: boolean }) => {
+  const res = await fetch(`${API_URL}/auth/preferences`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Error actualizando preferencias");
+  return res.json();
+};
+
+export const getPreferences = async () => {
+  const res = await fetch(`${API_URL}/auth/me`, {
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw new Error("Error obteniendo preferencias");
+  const user = await res.json();
+  return user.preferences || { emailReminders: true, dailySummary: true };
+};
+
 export const changePassword = async (data: { currentPassword?: string; newPassword?: string }) => {
   const res = await fetch(`${API_URL}/auth/change-password`, {
     method: "PUT",

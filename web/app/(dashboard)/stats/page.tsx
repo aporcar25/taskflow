@@ -215,17 +215,17 @@ export default function StatsPage() {
     <div className="animate-fade-in space-y-8 pb-10">
       {/* Header */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-dark-900 dark:text-white">
           Tus <span className="text-lime-400">Estadísticas</span> 📊
         </h1>
-        <p className="text-gray-400 mt-1 text-sm sm:text-base">
+        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm sm:text-base">
           Visualiza tu progreso y rendimiento semanal
         </p>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-dark-800 border border-white/5 rounded-2xl p-6 hover:border-lime-400/20 transition-all group">
+        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 hover:border-lime-400/20 transition-all group">
           <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Total Creadas</p>
           <p className="text-4xl font-bold text-white">{stats.totalTareas}</p>
           <div className="mt-4 flex items-center text-xs text-gray-500">
@@ -233,7 +233,7 @@ export default function StatsPage() {
             Desde que te uniste
           </div>
         </div>
-        <div className="bg-dark-800 border border-white/5 rounded-2xl p-6 hover:border-lime-400/20 transition-all group">
+        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 hover:border-lime-400/20 transition-all group">
           <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Completadas</p>
           <p className="text-4xl font-bold text-lime-400">{stats.tareasCompletadas}</p>
           <div className="mt-4 flex items-center text-xs text-gray-500">
@@ -241,7 +241,7 @@ export default function StatsPage() {
             Tareas finalizadas
           </div>
         </div>
-        <div className="bg-dark-800 border border-white/5 rounded-2xl p-6 hover:border-lime-400/20 transition-all group">
+        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 hover:border-lime-400/20 transition-all group">
           <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Pendientes</p>
           <p className="text-4xl font-bold text-orange-400">{stats.tareasPendientes}</p>
           <div className="mt-4 flex items-center text-xs text-gray-500">
@@ -253,7 +253,7 @@ export default function StatsPage() {
 
       {/* Tareas por Prioridad & Progreso Mensual */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="md:col-span-3 bg-dark-800 border border-white/5 rounded-2xl p-6 flex flex-col justify-center">
+        <div className="md:col-span-3 bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 flex flex-col justify-center">
           <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-6">Tareas por Prioridad</h3>
           <div className="grid grid-cols-3 gap-4">
             <div className="flex flex-col items-center p-4 rounded-xl bg-red-500/10 border border-red-500/20">
@@ -270,7 +270,7 @@ export default function StatsPage() {
             </div>
           </div>
         </div>
-        <div className="bg-dark-800 border border-white/5 rounded-2xl p-6 flex flex-col justify-between group overflow-hidden relative">
+        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 flex flex-col justify-between group overflow-hidden relative">
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-lime-400/5 rounded-full blur-2xl"></div>
           <div>
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Este Mes</p>
@@ -290,10 +290,16 @@ export default function StatsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Productivity Circular Chart */}
-        <div className="bg-dark-800 border border-white/5 rounded-2xl p-8 flex flex-col items-center justify-center text-center">
-          <h2 className="text-lg font-semibold mb-8 self-start">Productividad Global</h2>
+        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8 flex flex-col items-center justify-center text-center">
+          <h2 className="text-lg font-semibold mb-8 self-start text-dark-900 dark:text-white">Productividad Global</h2>
           <div className="relative w-48 h-48">
             <svg className="w-full h-full -rotate-90">
+              <defs>
+                <linearGradient id="limeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#a3e635" />
+                  <stop offset="100%" stopColor="#34d399" />
+                </linearGradient>
+              </defs>
               <circle
                 cx="96"
                 cy="96"
@@ -301,19 +307,19 @@ export default function StatsPage() {
                 fill="transparent"
                 stroke="currentColor"
                 strokeWidth="12"
-                className="text-white/5"
+                className="text-gray-100 dark:text-white/5"
               />
               <circle
                 cx="96"
                 cy="96"
                 r="80"
                 fill="transparent"
-                stroke="currentColor"
+                stroke="url(#limeGradient)"
                 strokeWidth="12"
                 strokeDasharray={2 * Math.PI * 80}
                 strokeDashoffset={2 * Math.PI * 80 * (1 - productivity / 100)}
                 strokeLinecap="round"
-                className="text-lime-400 transition-all duration-1000 ease-out"
+                className="transition-all duration-1000 ease-out"
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -327,20 +333,20 @@ export default function StatsPage() {
         </div>
 
         {/* Tareas por Categoría - Horizontal Bar Chart */}
-        <div className="bg-dark-800 border border-white/5 rounded-2xl p-8">
-          <h2 className="text-lg font-semibold mb-8">Tareas por Categoría</h2>
+        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8">
+          <h2 className="text-lg font-semibold mb-8 text-dark-900 dark:text-white">Tareas por Categoría</h2>
           <div className="space-y-6">
             {categoriesData.map((cat, i) => {
               const maxCount = Math.max(...categoriesData.map(c => c.count), 1);
               return (
                 <div key={i} className="space-y-2">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-400 capitalize">{cat.name}</span>
-                    <span className="font-bold text-white">{cat.count}</span>
+                    <span className="text-gray-500 dark:text-gray-400 capitalize">{cat.name}</span>
+                    <span className="font-bold text-dark-900 dark:text-white">{cat.count}</span>
                   </div>
-                  <div className="h-3 bg-dark-700 rounded-full overflow-hidden">
+                  <div className="h-3 bg-gray-100 dark:bg-dark-700 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-lime-400 transition-all duration-1000"
+                      className="h-full bg-gradient-to-r from-lime-400 to-emerald-400 transition-all duration-1000"
                       style={{ width: `${(cat.count / maxCount) * 100}%` }}
                     ></div>
                   </div>
@@ -352,9 +358,9 @@ export default function StatsPage() {
 
         {/* Habits this week & Streak comparison */}
         <div className="flex flex-col gap-8">
-          <div className="bg-dark-800 border border-white/5 rounded-2xl p-8 flex-1">
-            <h2 className="text-lg font-semibold mb-6">Hábitos esta Semana</h2>
-            <div className="flex justify-between items-center bg-dark-700/50 p-6 rounded-2xl border border-white/5">
+          <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8 flex-1">
+            <h2 className="text-lg font-semibold mb-6 text-dark-900 dark:text-white">Hábitos esta Semana</h2>
+            <div className="flex justify-between items-center bg-gray-50 dark:bg-dark-700/50 p-6 rounded-2xl border border-gray-100 dark:border-white/5">
               {weeklyHabits.map((day, i) => (
                 <div key={i} className="flex flex-col items-center gap-3">
                   <span className={`text-xs font-bold ${day.isToday ? 'text-lime-400' : 'text-gray-500'}`}>{day.label}</span>
@@ -383,7 +389,7 @@ export default function StatsPage() {
             </p>
           </div>
 
-          <div className="bg-dark-800 border border-white/5 rounded-2xl p-8 flex items-center justify-between group overflow-hidden relative">
+          <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8 flex items-center justify-between group overflow-hidden relative">
             <div className="absolute right-0 top-0 w-32 h-32 bg-lime-400/10 rounded-full blur-3xl group-hover:bg-lime-400/20 transition-all"></div>
             <div className="space-y-4">
               <h2 className="text-lg font-semibold leading-tight">Racha Actual vs<br/><span className="text-lime-400">Mejor Racha</span></h2>
@@ -410,8 +416,8 @@ export default function StatsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Habit Streaks */}
-        <div className="lg:col-span-2 bg-dark-800 border border-white/5 rounded-2xl p-8">
-          <h2 className="text-lg font-semibold mb-6">Racha de Hábitos</h2>
+        <div className="lg:col-span-2 bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8">
+          <h2 className="text-lg font-semibold mb-6 text-dark-900 dark:text-white">Racha de Hábitos</h2>
           <div className="space-y-6">
             {stats.habitosDetalles && stats.habitosDetalles.length > 0 ? (
               stats.habitosDetalles.map((habit: HabitDetail, i: number) => (
@@ -419,7 +425,7 @@ export default function StatsPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <span className="text-xl">{habit.icono}</span>
-                      <span className="text-sm font-medium text-white">{habit.nombre}</span>
+                      <span className="text-sm font-medium text-dark-900 dark:text-white">{habit.nombre}</span>
                     </div>
                     <div className="flex gap-4">
                       <div className="text-right">
@@ -428,13 +434,13 @@ export default function StatsPage() {
                       </div>
                       <div className="text-right">
                         <p className="text-[10px] text-gray-500 uppercase tracking-wider">Máxima</p>
-                        <p className="text-sm font-bold text-white">{habit.rachaMaxima}🏆</p>
+                        <p className="text-sm font-bold text-dark-900 dark:text-white">{habit.rachaMaxima}🏆</p>
                       </div>
                     </div>
                   </div>
-                  <div className="h-1.5 bg-dark-700 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-gray-100 dark:bg-dark-700 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-lime-400 transition-all duration-1000"
+                      className="h-full bg-gradient-to-r from-lime-400 to-emerald-400 transition-all duration-1000"
                       style={{ width: `${Math.min(100, (habit.rachaActual / (habit.rachaMaxima || 1)) * 100)}%` }}
                     ></div>
                   </div>
@@ -447,7 +453,7 @@ export default function StatsPage() {
         </div>
 
         {/* Best Day & Ranking Card */}
-        <div className="bg-dark-800 border border-white/5 rounded-2xl p-8 flex flex-col">
+        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8 flex flex-col">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 rounded-xl bg-yellow-400/10 flex items-center justify-center text-yellow-400">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -467,12 +473,12 @@ export default function StatsPage() {
           <div className="space-y-3">
             <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Ranking semanal</p>
             {dayRanking.slice(0, 3).map((day, i) => (
-              <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-dark-700/30 border border-white/5">
+              <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-dark-700/30 border border-gray-100 dark:border-white/5">
                 <div className="flex items-center gap-3">
-                  <span className={`w-5 h-5 flex items-center justify-center rounded-lg text-[10px] font-bold ${i === 0 ? 'bg-lime-400 text-dark-900' : 'bg-dark-600 text-gray-400'}`}>
+                  <span className={`w-5 h-5 flex items-center justify-center rounded-lg text-[10px] font-bold ${i === 0 ? 'bg-lime-400 text-dark-900' : 'bg-gray-200 dark:bg-dark-600 text-gray-400'}`}>
                     {i + 1}
                   </span>
-                  <span className="text-sm font-medium text-white">{day.name}</span>
+                  <span className="text-sm font-medium text-dark-900 dark:text-white">{day.name}</span>
                 </div>
                 <span className="text-xs text-gray-500">{day.count} tareas</span>
               </div>
