@@ -70,7 +70,7 @@ export default function StatsPage() {
 
   // New calculations
   const categoriesData = useMemo(() => {
-    const counts: Record<string, number> = { personal: 0, trabajo: 0, salud: 0, estudio: 0 };
+    const counts: Record<string, number> = { personal: 0, trabajo: 0, salud: 0, estudios: 0 };
     tasks.forEach((t: TaskData) => {
       if (Object.prototype.hasOwnProperty.call(counts, t.categoria)) {
         counts[t.categoria]++;
@@ -154,7 +154,8 @@ export default function StatsPage() {
       return {
         label: ['L', 'M', 'X', 'J', 'V', 'S', 'D'][date.getDay() === 0 ? 6 : date.getDay() - 1],
         completed: allCompleted,
-        isFuture: date > today
+        isFuture: date > today,
+        isToday: date.toDateString() === today.toDateString()
       };
     });
   }, [habits]);
@@ -352,13 +353,15 @@ export default function StatsPage() {
             <div className="flex justify-between items-center bg-dark-700/50 p-6 rounded-2xl border border-white/5">
               {weeklyHabits.map((day, i) => (
                 <div key={i} className="flex flex-col items-center gap-3">
-                  <span className="text-xs font-bold text-gray-500">{day.label}</span>
+                  <span className={`text-xs font-bold ${day.isToday ? 'text-lime-400' : 'text-gray-500'}`}>{day.label}</span>
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                     day.completed
                       ? 'bg-lime-400 text-dark-900 shadow-lg shadow-lime-400/20'
-                      : day.isFuture
-                        ? 'bg-white/5 border border-white/5'
-                        : 'bg-white/10 text-gray-500'
+                      : day.isToday
+                        ? 'bg-lime-400/20 border border-lime-400 text-lime-400'
+                        : day.isFuture
+                          ? 'bg-white/5 border border-white/5'
+                          : 'bg-white/10 text-gray-500'
                   }`}>
                     {day.completed ? (
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>

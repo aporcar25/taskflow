@@ -110,8 +110,8 @@ app.get('/api/stats', authMiddleware, async (req, res) => {
 
     // Actividad semanal (Lun-Dom)
     const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-    let maxTasksInADay = -1;
-    let bestDay = 'N/A';
+    let maxTasksInADay = 0;
+    let bestDay = 'Ninguno';
 
     const actividadSemanal = diasSemana.map((dia, i) => {
       const diaInicio = new Date(startOfWeek);
@@ -143,7 +143,7 @@ app.get('/api/stats', authMiddleware, async (req, res) => {
       rachaMaximaHabitos,
       actividadSemanal,
       habitosDetalles,
-      mejorDia: bestDay === 'N/A' && completedTasks === 0 ? 'Ninguno' : bestDay
+      mejorDia: bestDay
     });
 
   } catch (error) {
