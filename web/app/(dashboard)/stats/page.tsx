@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { getStats } from "../../../lib/api";
+import { useState, useEffect, useMemo } from "react";
+import { getStats, getTasks, getHabits } from "../../../lib/api";
 
 interface HabitDetail {
   nombre: string;
@@ -28,23 +28,162 @@ interface StatsData {
   mejorDia: string;
 }
 
+interface TaskData {
+  _id: string;
+  categoria: string;
+  prioridad: string;
+  completada: boolean;
+  updatedAt: string;
+}
+
+interface HabitData {
+  _id: string;
+  racha: number;
+  historial: string[];
+}
+
 export default function StatsPage() {
   const [stats, setStats] = useState<StatsData | null>(null);
+  const [tasks, setTasks] = useState<TaskData[]>([]);
+  const [habits, setHabits] = useState<HabitData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getStats();
-        setStats(data);
+        const [statsData, tasksData, habitsData] = await Promise.all([
+          getStats(),
+          getTasks(),
+          getHabits()
+        ]);
+        setStats(statsData);
+        setTasks(tasksData);
+        setHabits(habitsData);
       } catch (error) {
         console.error("Error fetching stats:", error);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchStats();
+    fetchData();
   }, []);
+
+  // New calculations
+  const categoriesData = useMemo(() => {
+    const counts: Record<string, number> = { personal: 0, trabajo: 0, salud: 0, estudio: 0 };
+    tasks.forEach((t: TaskData) => {
+      if (Object.prototype.hasOwnProperty.call(counts, t.categoria)) {
+        counts[t.categoria]++;
+      } else {
+        counts[t.categoria] = (counts[t.categoria] || 0) + 1;
+      }
+    });
+    return Object.entries(counts).map(([name, count]) => ({ name, count }));
+  }, [tasks]);
+
+  const prioritiesData = useMemo(() => {
+    return {
+      alta: tasks.filter(t => t.prioridad === 'alta').length,
+      media: tasks.filter(t => t.prioridad === 'media').length,
+      baja: tasks.filter(t => t.prioridad === 'baja').length,
+    };
+  }, [tasks]);
+
+  const streaksData = useMemo(() => {
+    let currentMax = 0;
+    let historicalMax = 0;
+    habits.forEach((h: HabitData) => {
+      if (h.racha > currentMax) currentMax = h.racha;
+
+      let maxH = 0;
+      let currentH = 0;
+      const sortedHistory = [...h.historial].sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+
+      if (sortedHistory.length > 0) {
+        currentH = 1;
+        maxH = 1;
+        for (let i = 1; i < sortedHistory.length; i++) {
+          const d1 = new Date(sortedHistory[i-1]);
+          const d2 = new Date(sortedHistory[i]);
+          d1.setHours(0,0,0,0);
+          d2.setHours(0,0,0,0);
+          const diff = (d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24);
+          if (diff === 1) {
+            currentH++;
+          } else if (diff > 1) {
+            currentH = 1;
+          }
+          if (currentH > maxH) maxH = currentH;
+        }
+      }
+      if (maxH > historicalMax) historicalMax = maxH;
+    });
+    return { currentMax, historicalMax };
+  }, [habits]);
+
+  const dayRanking = useMemo(() => {
+    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+    tasks.filter((t: TaskData) => t.completada && t.updatedAt).forEach((t: TaskData) => {
+      const date = new Date(t.updatedAt);
+      counts[date.getDay()]++;
+    });
+    return days.map((name, i) => ({ name, count: counts[i] }))
+      .sort((a, b) => b.count - a.count);
+  }, [tasks]);
+
+  const weeklyHabits = useMemo(() => {
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 is Sun, 1 is Mon
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+    monday.setHours(0, 0, 0, 0);
+
+    const weekDays = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      weekDays.push(d);
+    }
+
+    return weekDays.map(date => {
+      const dateStr = date.toISOString().split('T')[0];
+      const allCompleted = habits.length > 0 && habits.every((h: HabitData) =>
+        h.historial.some((hd: string) => hd.split('T')[0] === dateStr)
+      );
+      return {
+        label: ['L', 'M', 'X', 'J', 'V', 'S', 'D'][date.getDay() === 0 ? 6 : date.getDay() - 1],
+        completed: allCompleted,
+        isFuture: date > today
+      };
+    });
+  }, [habits]);
+
+  const monthlyProgress = useMemo(() => {
+    const now = new Date();
+    const thisMonth = now.getMonth();
+    const thisYear = now.getFullYear();
+
+    const lastMonth = thisMonth === 0 ? 11 : thisMonth - 1;
+    const lastMonthYear = thisMonth === 0 ? thisYear - 1 : thisYear;
+
+    const completedThisMonth = tasks.filter((t: TaskData) => {
+      if (!t.completada || !t.updatedAt) return false;
+      const d = new Date(t.updatedAt);
+      return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+    }).length;
+
+    const completedLastMonth = tasks.filter((t: TaskData) => {
+      if (!t.completada || !t.updatedAt) return false;
+      const d = new Date(t.updatedAt);
+      return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear;
+    }).length;
+
+    const diff = completedThisMonth - completedLastMonth;
+    const improvement = completedLastMonth === 0 ? 100 : Math.round((diff / completedLastMonth) * 100);
+
+    return { thisMonth: completedThisMonth, lastMonth: completedLastMonth, improvement, diff };
+  }, [tasks]);
 
   if (isLoading) {
     return (
@@ -65,7 +204,6 @@ export default function StatsPage() {
 
   if (!stats) return <div className="text-white text-center py-10">Error al cargar estadísticas</div>;
 
-  const maxTasks = Math.max(...(stats.actividadSemanal?.map((d: DayActivity) => d.tasks) || []), 1);
   const productivity = stats.porcentajeProductividad || 0;
 
   return (
@@ -108,6 +246,43 @@ export default function StatsPage() {
         </div>
       </div>
 
+      {/* Tareas por Prioridad & Progreso Mensual */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="md:col-span-3 bg-dark-800 border border-white/5 rounded-2xl p-6 flex flex-col justify-center">
+          <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-6">Tareas por Prioridad</h3>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="flex flex-col items-center p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+              <span className="text-2xl font-bold text-red-500">{prioritiesData.alta}</span>
+              <span className="text-[10px] uppercase tracking-widest text-red-400/70 mt-1 font-bold">Alta</span>
+            </div>
+            <div className="flex flex-col items-center p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
+              <span className="text-2xl font-bold text-yellow-500">{prioritiesData.media}</span>
+              <span className="text-[10px] uppercase tracking-widest text-yellow-400/70 mt-1 font-bold">Media</span>
+            </div>
+            <div className="flex flex-col items-center p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+              <span className="text-2xl font-bold text-blue-500">{prioritiesData.baja}</span>
+              <span className="text-[10px] uppercase tracking-widest text-blue-400/70 mt-1 font-bold">Baja</span>
+            </div>
+          </div>
+        </div>
+        <div className="bg-dark-800 border border-white/5 rounded-2xl p-6 flex flex-col justify-between group overflow-hidden relative">
+          <div className="absolute -right-4 -top-4 w-24 h-24 bg-lime-400/5 rounded-full blur-2xl"></div>
+          <div>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Este Mes</p>
+            <p className="text-4xl font-bold text-white">{monthlyProgress.thisMonth}</p>
+          </div>
+          <div className="mt-4 flex items-center gap-2">
+            <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold ${monthlyProgress.diff >= 0 ? 'bg-lime-400/10 text-lime-400' : 'bg-red-400/10 text-red-400'}`}>
+              <svg className={`w-3 h-3 ${monthlyProgress.diff < 0 ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+              </svg>
+              {Math.abs(monthlyProgress.improvement)}%
+            </div>
+            <span className="text-[10px] text-gray-500">vs mes pasado</span>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Productivity Circular Chart */}
         <div className="bg-dark-800 border border-white/5 rounded-2xl p-8 flex flex-col items-center justify-center text-center">
@@ -146,33 +321,82 @@ export default function StatsPage() {
           </p>
         </div>
 
-        {/* Weekly Activity Bar Chart */}
+        {/* Tareas por Categoría - Horizontal Bar Chart */}
         <div className="bg-dark-800 border border-white/5 rounded-2xl p-8">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-lg font-semibold">Actividad Semanal</h2>
-            <div className="flex items-center gap-4 text-xs text-gray-500">
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-sm bg-lime-400"></span>
-                Completadas
-              </div>
-            </div>
-          </div>
-          <div className="flex items-end justify-between gap-2 sm:gap-4 h-56 mt-4">
-            {stats.actividadSemanal?.map((day: DayActivity, i: number) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-3 group h-full">
-                <div className="w-full relative flex items-end justify-center flex-1">
-                  <div
-                    className="w-full max-w-[32px] sm:max-w-[40px] rounded-t-lg bg-gradient-to-t from-lime-400/40 to-lime-400 transition-all duration-500 group-hover:from-lime-400 group-hover:to-emerald-400 relative"
-                    style={{ height: `${Math.max((day.tasks / maxTasks) * 100, 2)}%` }}
-                  >
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-dark-700 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                      {day.tasks}
-                    </div>
+          <h2 className="text-lg font-semibold mb-8">Tareas por Categoría</h2>
+          <div className="space-y-6">
+            {categoriesData.map((cat, i) => {
+              const maxCount = Math.max(...categoriesData.map(c => c.count), 1);
+              return (
+                <div key={i} className="space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-400 capitalize">{cat.name}</span>
+                    <span className="font-bold text-white">{cat.count}</span>
+                  </div>
+                  <div className="h-3 bg-dark-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-lime-400 transition-all duration-1000"
+                      style={{ width: `${(cat.count / maxCount) * 100}%` }}
+                    ></div>
                   </div>
                 </div>
-                <span className="text-xs text-gray-500 font-medium">{day.day}</span>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Habits this week & Streak comparison */}
+        <div className="flex flex-col gap-8">
+          <div className="bg-dark-800 border border-white/5 rounded-2xl p-8 flex-1">
+            <h2 className="text-lg font-semibold mb-6">Hábitos esta Semana</h2>
+            <div className="flex justify-between items-center bg-dark-700/50 p-6 rounded-2xl border border-white/5">
+              {weeklyHabits.map((day, i) => (
+                <div key={i} className="flex flex-col items-center gap-3">
+                  <span className="text-xs font-bold text-gray-500">{day.label}</span>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                    day.completed
+                      ? 'bg-lime-400 text-dark-900 shadow-lg shadow-lime-400/20'
+                      : day.isFuture
+                        ? 'bg-white/5 border border-white/5'
+                        : 'bg-white/10 text-gray-500'
+                  }`}>
+                    {day.completed ? (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <div className="w-1.5 h-1.5 rounded-full bg-current opacity-20"></div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-[10px] text-gray-500 mt-4 text-center">
+              Días donde completaste todos tus hábitos programados
+            </p>
+          </div>
+
+          <div className="bg-dark-800 border border-white/5 rounded-2xl p-8 flex items-center justify-between group overflow-hidden relative">
+            <div className="absolute right-0 top-0 w-32 h-32 bg-lime-400/10 rounded-full blur-3xl group-hover:bg-lime-400/20 transition-all"></div>
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold leading-tight">Racha Actual vs<br/><span className="text-lime-400">Mejor Racha</span></h2>
+              <div className="flex items-end gap-6">
+                <div>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Actual</p>
+                  <p className="text-3xl font-bold text-white">{streaksData.currentMax}🔥</p>
+                </div>
+                <div className="w-px h-8 bg-white/10 mb-1"></div>
+                <div>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Mejor</p>
+                  <p className="text-3xl font-bold text-lime-400">{streaksData.historicalMax}🏆</p>
+                </div>
               </div>
-            ))}
+            </div>
+            <div className="relative z-10 w-16 h-16 rounded-2xl bg-lime-400 flex items-center justify-center text-dark-900 shadow-xl shadow-lime-400/20 transform -rotate-12 group-hover:rotate-0 transition-transform">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
           </div>
         </div>
       </div>
@@ -215,18 +439,38 @@ export default function StatsPage() {
           </div>
         </div>
 
-        {/* Best Day Card */}
-        <div className="bg-dark-800 border border-white/5 rounded-2xl p-8 flex flex-col items-center justify-center text-center">
-          <div className="w-16 h-16 rounded-2xl bg-yellow-400/10 flex items-center justify-center text-yellow-400 mb-6">
-            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-7.714 2.143L11 21l-2.286-6.857L1 12l7.714-2.143L11 3z" />
-            </svg>
+        {/* Best Day & Ranking Card */}
+        <div className="bg-dark-800 border border-white/5 rounded-2xl p-8 flex flex-col">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 rounded-xl bg-yellow-400/10 flex items-center justify-center text-yellow-400">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-7.714 2.143L11 21l-2.286-6.857L1 12l7.714-2.143L11 3z" />
+              </svg>
+            </div>
+            <h2 className="text-lg font-semibold">Día más Productivo</h2>
           </div>
-          <h2 className="text-lg font-semibold mb-2">Día más Productivo</h2>
-          <p className="text-4xl font-bold text-white mb-2">{stats.mejorDia}</p>
-          <p className="text-sm text-gray-500">
-            Es el día en el que sueles completar más tareas. ¡Aprovecha esa energía!
-          </p>
+
+          <div className="flex-1 flex flex-col justify-center items-center text-center mb-8">
+            <p className="text-5xl font-bold text-white mb-2">{dayRanking[0]?.name || stats.mejorDia}</p>
+            <p className="text-sm text-gray-500 max-w-[180px]">
+              Tu pico de productividad suele ser los <span className="text-white font-medium">{dayRanking[0]?.name || stats.mejorDia}</span>
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Ranking semanal</p>
+            {dayRanking.slice(0, 3).map((day, i) => (
+              <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-dark-700/30 border border-white/5">
+                <div className="flex items-center gap-3">
+                  <span className={`w-5 h-5 flex items-center justify-center rounded-lg text-[10px] font-bold ${i === 0 ? 'bg-lime-400 text-dark-900' : 'bg-dark-600 text-gray-400'}`}>
+                    {i + 1}
+                  </span>
+                  <span className="text-sm font-medium text-white">{day.name}</span>
+                </div>
+                <span className="text-xs text-gray-500">{day.count} tareas</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
