@@ -59,17 +59,60 @@ app.get('/api/stats', authMiddleware, async (req, res) => {
 
     const porcentajeProductividad = totalTareas > 0 ? Math.round((completedTasks / totalTareas) * 100) : 0;
 
-    // Racha máxima de hábitos
+    // Hábitos y sus rachas
     const habits = await Habit.find({ userId });
+
+    const calculateMaxStreak = (historial) => {
+      if (!historial || historial.length === 0) return 0;
+      const sortedDates = historial
+        .map(d => {
+          const date = new Date(d);
+          return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+        })
+        .sort((a, b) => a - b);
+
+      const uniqueDates = [...new Set(sortedDates)];
+
+      let max = 0;
+      let current = 0;
+      let lastDate = null;
+
+      uniqueDates.forEach(date => {
+        if (lastDate) {
+          const diff = (date - lastDate) / (1000 * 60 * 60 * 24);
+          if (Math.round(diff) === 1) {
+            current++;
+          } else {
+            current = 1;
+          }
+        } else {
+          current = 1;
+        }
+        if (current > max) max = current;
+        lastDate = date;
+      });
+      return max;
+    };
+
+    const habitosDetalles = habits.map(h => ({
+      nombre: h.nombre,
+      icono: h.icono,
+      rachaActual: h.racha,
+      rachaMaxima: calculateMaxStreak(h.historial)
+    }));
+
     let rachaMaximaHabitos = 0;
-    habits.forEach(habit => {
-      if (habit.racha > rachaMaximaHabitos) {
-        rachaMaximaHabitos = habit.racha;
+    habitosDetalles.forEach(h => {
+      if (h.rachaActual > rachaMaximaHabitos) {
+        rachaMaximaHabitos = h.rachaActual;
       }
     });
 
     // Actividad semanal (Lun-Dom)
     const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    let maxTasksInADay = -1;
+    let bestDay = 'N/A';
+
     const actividadSemanal = diasSemana.map((dia, i) => {
       const diaInicio = new Date(startOfWeek);
       diaInicio.setDate(diaInicio.getDate() + i);
@@ -82,6 +125,11 @@ app.get('/api/stats', authMiddleware, async (req, res) => {
         return updated >= diaInicio && updated < diaFin;
       }).length;
 
+      if (completadasEseDia > maxTasksInADay) {
+        maxTasksInADay = completadasEseDia;
+        bestDay = dia;
+      }
+
       return { day: dia, tasks: completadasEseDia };
     });
 
@@ -89,9 +137,13 @@ app.get('/api/stats', authMiddleware, async (req, res) => {
       tareasCompletadasHoy,
       tareasCompletadasEstaSemana,
       totalTareas,
+      tareasCompletadas: completedTasks,
+      tareasPendientes: totalTareas - completedTasks,
       porcentajeProductividad,
       rachaMaximaHabitos,
-      actividadSemanal
+      actividadSemanal,
+      habitosDetalles,
+      mejorDia: bestDay === 'N/A' && completedTasks === 0 ? 'Ninguno' : bestDay
     });
 
   } catch (error) {
