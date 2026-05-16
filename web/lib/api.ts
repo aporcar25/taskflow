@@ -166,6 +166,19 @@ export const updateProfile = async (data: { nombre?: string; email?: string }) =
   return result;
 };
 
+export const changePassword = async (data: { currentPassword?: string; newPassword?: string }) => {
+  const res = await fetch(`${API_URL}/auth/change-password`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.mensaje || "Error al cambiar la contraseña");
+  }
+  return res.json();
+};
+
 export const updateProfilePhoto = async (foto: string) => {
   const res = await fetch(`${API_URL}/auth/profile/photo`, {
     method: "POST",
