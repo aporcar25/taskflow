@@ -225,25 +225,25 @@ export default function StatsPage() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 hover:border-lime-400/20 transition-all group">
+        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 hover:border-lime-400/20 transition-all group shadow-sm dark:shadow-none">
           <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Total Creadas</p>
-          <p className="text-4xl font-bold text-white">{stats.totalTareas}</p>
+          <p className="text-4xl font-bold text-dark-900 dark:text-white">{stats.totalTareas}</p>
           <div className="mt-4 flex items-center text-xs text-gray-500">
             <span className="w-2 h-2 rounded-full bg-blue-400 mr-2"></span>
             Desde que te uniste
           </div>
         </div>
-        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 hover:border-lime-400/20 transition-all group">
+        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 hover:border-lime-400/20 transition-all group shadow-sm dark:shadow-none">
           <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Completadas</p>
-          <p className="text-4xl font-bold text-lime-400">{stats.tareasCompletadas}</p>
+          <p className="text-4xl font-bold text-lime-500 dark:text-lime-400">{stats.tareasCompletadas}</p>
           <div className="mt-4 flex items-center text-xs text-gray-500">
             <span className="w-2 h-2 rounded-full bg-lime-400 mr-2"></span>
             Tareas finalizadas
           </div>
         </div>
-        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 hover:border-lime-400/20 transition-all group">
+        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 hover:border-lime-400/20 transition-all group shadow-sm dark:shadow-none">
           <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Pendientes</p>
-          <p className="text-4xl font-bold text-orange-400">{stats.tareasPendientes}</p>
+          <p className="text-4xl font-bold text-orange-500 dark:text-orange-400">{stats.tareasPendientes}</p>
           <div className="mt-4 flex items-center text-xs text-gray-500">
             <span className="w-2 h-2 rounded-full bg-orange-400 mr-2"></span>
             Por completar
@@ -253,7 +253,7 @@ export default function StatsPage() {
 
       {/* Tareas por Prioridad & Progreso Mensual */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="md:col-span-3 bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 flex flex-col justify-center">
+        <div className="md:col-span-3 bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 flex flex-col justify-center shadow-sm dark:shadow-none">
           <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-6">Tareas por Prioridad</h3>
           <div className="grid grid-cols-3 gap-4">
             <div className="flex flex-col items-center p-4 rounded-xl bg-red-500/10 border border-red-500/20">
@@ -270,11 +270,11 @@ export default function StatsPage() {
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 flex flex-col justify-between group overflow-hidden relative">
+        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 flex flex-col justify-between group overflow-hidden relative shadow-sm dark:shadow-none">
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-lime-400/5 rounded-full blur-2xl"></div>
           <div>
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Este Mes</p>
-            <p className="text-4xl font-bold text-white">{monthlyProgress.thisMonth}</p>
+            <p className="text-4xl font-bold text-dark-900 dark:text-white">{monthlyProgress.thisMonth}</p>
           </div>
           <div className="mt-4 flex items-center gap-2">
             <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold ${monthlyProgress.diff >= 0 ? 'bg-lime-400/10 text-lime-400' : 'bg-red-400/10 text-red-400'}`}>
@@ -290,7 +290,7 @@ export default function StatsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Productivity Circular Chart */}
-        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8 flex flex-col items-center justify-center text-center">
+        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-sm dark:shadow-none">
           <h2 className="text-lg font-semibold mb-8 self-start text-dark-900 dark:text-white">Productividad Global</h2>
           <div className="relative w-48 h-48">
             <svg className="w-full h-full -rotate-90">
@@ -323,7 +323,7 @@ export default function StatsPage() {
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-4xl font-bold text-white">{productivity}%</span>
+              <span className="text-4xl font-bold text-dark-900 dark:text-white">{productivity}%</span>
               <span className="text-xs text-gray-500 uppercase tracking-widest mt-1">Éxito</span>
             </div>
           </div>
@@ -333,7 +333,7 @@ export default function StatsPage() {
         </div>
 
         {/* Tareas por Categoría - Horizontal Bar Chart */}
-        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8">
+        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8 shadow-sm dark:shadow-none">
           <h2 className="text-lg font-semibold mb-8 text-dark-900 dark:text-white">Tareas por Categoría</h2>
           <div className="space-y-6">
             {categoriesData.map((cat, i) => {
@@ -358,7 +358,7 @@ export default function StatsPage() {
 
         {/* Habits this week & Streak comparison */}
         <div className="flex flex-col gap-8">
-          <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8 flex-1">
+          <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8 flex-1 shadow-sm dark:shadow-none">
             <h2 className="text-lg font-semibold mb-6 text-dark-900 dark:text-white">Hábitos esta Semana</h2>
             <div className="flex justify-between items-center bg-gray-50 dark:bg-dark-700/50 p-6 rounded-2xl border border-gray-100 dark:border-white/5">
               {weeklyHabits.map((day, i) => (
@@ -389,19 +389,19 @@ export default function StatsPage() {
             </p>
           </div>
 
-          <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8 flex items-center justify-between group overflow-hidden relative">
+          <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8 flex items-center justify-between group overflow-hidden relative shadow-sm dark:shadow-none">
             <div className="absolute right-0 top-0 w-32 h-32 bg-lime-400/10 rounded-full blur-3xl group-hover:bg-lime-400/20 transition-all"></div>
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold leading-tight">Racha Actual vs<br/><span className="text-lime-400">Mejor Racha</span></h2>
+              <h2 className="text-lg font-semibold leading-tight text-dark-900 dark:text-white">Racha Actual vs<br/><span className="text-lime-500 dark:text-lime-400">Mejor Racha</span></h2>
               <div className="flex items-end gap-6">
                 <div>
                   <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Actual</p>
-                  <p className="text-3xl font-bold text-white">{streaksData.currentMax}🔥</p>
+                  <p className="text-3xl font-bold text-dark-900 dark:text-white">{streaksData.currentMax}🔥</p>
                 </div>
-                <div className="w-px h-8 bg-white/10 mb-1"></div>
+                <div className="w-px h-8 bg-gray-200 dark:bg-white/10 mb-1"></div>
                 <div>
                   <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Mejor</p>
-                  <p className="text-3xl font-bold text-lime-400">{streaksData.historicalMax}🏆</p>
+                  <p className="text-3xl font-bold text-lime-500 dark:text-lime-400">{streaksData.historicalMax}🏆</p>
                 </div>
               </div>
             </div>
@@ -416,7 +416,7 @@ export default function StatsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Habit Streaks */}
-        <div className="lg:col-span-2 bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8">
+        <div className="lg:col-span-2 bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8 shadow-sm dark:shadow-none">
           <h2 className="text-lg font-semibold mb-6 text-dark-900 dark:text-white">Racha de Hábitos</h2>
           <div className="space-y-6">
             {stats.habitosDetalles && stats.habitosDetalles.length > 0 ? (
@@ -453,7 +453,7 @@ export default function StatsPage() {
         </div>
 
         {/* Best Day & Ranking Card */}
-        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8 flex flex-col">
+        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8 flex flex-col shadow-sm dark:shadow-none">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 rounded-xl bg-yellow-400/10 flex items-center justify-center text-yellow-400">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -464,9 +464,9 @@ export default function StatsPage() {
           </div>
 
           <div className="flex-1 flex flex-col justify-center items-center text-center mb-8">
-            <p className="text-5xl font-bold text-white mb-2">{dayRanking[0]?.name || stats.mejorDia}</p>
+            <p className="text-5xl font-bold text-dark-900 dark:text-white mb-2">{dayRanking[0]?.name || stats.mejorDia}</p>
             <p className="text-sm text-gray-500 max-w-[180px]">
-              Tu pico de productividad suele ser los <span className="text-white font-medium">{dayRanking[0]?.name || stats.mejorDia}</span>
+              Tu pico de productividad suele ser los <span className="text-dark-900 dark:text-white font-medium">{dayRanking[0]?.name || stats.mejorDia}</span>
             </p>
           </div>
 

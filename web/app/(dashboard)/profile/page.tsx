@@ -130,26 +130,26 @@ export default function ProfilePage() {
   return (
     <div className="animate-fade-in max-w-3xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Mi Perfil</h1>
-        <p className="text-gray-400 text-sm mt-1">Gestiona tu información personal y foto de perfil</p>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-dark-900 dark:text-white">Mi Perfil</h1>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Gestiona tu información personal y foto de perfil</p>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+        <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="mb-6 p-4 rounded-xl bg-lime-400/10 border border-lime-400/20 text-lime-400 text-sm">
+        <div className="mb-6 p-4 rounded-xl bg-lime-400/10 border border-lime-400/20 text-lime-500 dark:text-lime-400 text-sm">
           {success}
         </div>
       )}
 
-      <div className="bg-dark-800 border border-white/5 rounded-2xl p-6 sm:p-8">
+      <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-none">
         <div className="flex flex-col sm:flex-row items-center gap-6 mb-10">
           <div className="relative group">
-            <div className="w-24 h-24 rounded-full overflow-hidden bg-dark-700 border-2 border-white/10 flex items-center justify-center">
+            <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 dark:bg-dark-700 border-2 border-gray-200 dark:border-white/10 flex items-center justify-center">
               {user.foto ? (
                 <img src={user.foto} alt="Profile" className="w-full h-full object-cover" />
               ) : (
@@ -184,8 +184,8 @@ export default function ProfilePage() {
             />
           </div>
           <div>
-            <h3 className="text-xl font-semibold text-white">{user.nombre}</h3>
-            <p className="text-gray-400">{user.email}</p>
+            <h3 className="text-xl font-semibold text-dark-900 dark:text-white">{user.nombre}</h3>
+            <p className="text-gray-500 dark:text-gray-400">{user.email}</p>
             <button 
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
@@ -199,28 +199,28 @@ export default function ProfilePage() {
         <form onSubmit={handleUpdateProfile} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Nombre</label>
+              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Nombre</label>
               <input
                 type="text"
                 value={form.nombre}
                 onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl bg-dark-700 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all"
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-white/10 text-dark-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Email</label>
+              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Email</label>
               <input
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl bg-dark-700 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all"
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-white/10 text-dark-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all"
                 required
               />
             </div>
           </div>
 
-          <div className="flex justify-end pt-4 border-t border-white/5">
+          <div className="flex justify-end pt-4 border-t border-gray-100 dark:border-white/5">
             <button
               type="submit"
               disabled={saving}
@@ -242,10 +242,10 @@ export default function ProfilePage() {
         </form>
       </div>
 
-      <div className="mt-6 bg-dark-800 border border-white/5 rounded-2xl overflow-hidden">
+      <div className="mt-6 bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm dark:shadow-none">
         <button
           onClick={() => setIsPasswordSectionOpen(!isPasswordSectionOpen)}
-          className="w-full px-6 py-4 flex items-center justify-between hover:bg-white/5 transition-colors"
+          className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-lime-400/10 flex items-center justify-center text-lime-400">
@@ -254,8 +254,8 @@ export default function ProfilePage() {
               </svg>
             </div>
             <div className="text-left">
-              <h3 className="text-sm font-semibold text-white">Cambiar contraseña</h3>
-              <p className="text-xs text-gray-400">Actualiza tus credenciales de acceso</p>
+              <h3 className="text-sm font-semibold text-dark-900 dark:text-white">Cambiar contraseña</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Actualiza tus credenciales de acceso</p>
             </div>
           </div>
           <svg
@@ -283,36 +283,36 @@ export default function ProfilePage() {
             )}
             <form onSubmit={handleChangePassword} className="space-y-4">
               <div>
-                <label htmlFor="currentPassword" className="block text-xs font-medium text-gray-400 mb-1.5">Contraseña actual</label>
+                <label htmlFor="currentPassword" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Contraseña actual</label>
                 <input
                   id="currentPassword"
                   type="password"
                   value={passwordForm.currentPassword}
                   onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl bg-dark-700 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all"
+                  className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-white/10 text-dark-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all"
                   required
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="newPassword" className="block text-xs font-medium text-gray-400 mb-1.5">Nueva contraseña</label>
+                  <label htmlFor="newPassword" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Nueva contraseña</label>
                   <input
                     id="newPassword"
                     type="password"
                     value={passwordForm.newPassword}
                     onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl bg-dark-700 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all"
+                    className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-white/10 text-dark-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all"
                     required
                   />
                 </div>
                 <div>
-                  <label htmlFor="confirmPassword" className="block text-xs font-medium text-gray-400 mb-1.5">Confirmar nueva contraseña</label>
+                  <label htmlFor="confirmPassword" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Confirmar nueva contraseña</label>
                   <input
                     id="confirmPassword"
                     type="password"
                     value={passwordForm.confirmPassword}
                     onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl bg-dark-700 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all"
+                    className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-white/10 text-dark-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all"
                     required
                   />
                 </div>

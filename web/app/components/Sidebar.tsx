@@ -181,16 +181,16 @@ export default function Sidebar() {
                 </span>
               )}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-dark-900 dark:text-white truncate group-hover:text-lime-400 transition-colors">{user?.nombre || 'Usuario'}</p>
-              <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0 flex items-center justify-between">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-dark-900 dark:text-white truncate group-hover:text-lime-400 transition-colors">{user?.nombre || 'Usuario'}</p>
                 <p className="text-xs text-gray-500 truncate">{user?.email || ''}</p>
-                {streak > 0 && (
-                  <span className="flex items-center gap-0.5 text-[10px] font-bold text-orange-500 bg-orange-500/10 px-1.5 py-0.5 rounded-full">
-                    {streak}🔥
-                  </span>
-                )}
               </div>
+              {streak > 0 && (
+                <span className="flex-shrink-0 flex items-center gap-0.5 text-[10px] font-bold text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded-full border border-orange-500/10">
+                  {streak}🔥
+                </span>
+              )}
             </div>
           </Link>
           <Link

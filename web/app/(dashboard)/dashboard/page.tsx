@@ -114,10 +114,10 @@ export default function DashboardPage() {
     <div className="animate-fade-in">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-dark-900 dark:text-white">
           {greeting}, <span className="text-lime-400">{userName || 'Usuario'}</span> 👋
         </h1>
-        <p className="text-gray-400 mt-1 text-sm sm:text-base">
+        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm sm:text-base">
           Aquí tienes tu resumen de productividad
         </p>
       </div>
@@ -125,7 +125,7 @@ export default function DashboardPage() {
       {/* Stats cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {/* Completed today */}
-        <div className="bg-dark-800 border border-white/5 rounded-2xl p-5 hover:border-lime-400/20 transition-all duration-300 group">
+        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-5 hover:border-lime-400/20 transition-all duration-300 group shadow-sm dark:shadow-none">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Hoy</span>
             <div className="w-8 h-8 rounded-lg bg-lime-400/10 flex items-center justify-center text-lime-400 group-hover:bg-lime-400/20 transition-colors">
@@ -134,7 +134,7 @@ export default function DashboardPage() {
               </svg>
             </div>
           </div>
-          <p className="text-3xl font-bold text-white animate-count-up">
+          <p className="text-3xl font-bold text-dark-900 dark:text-white animate-count-up">
             {stats.completedToday}
             <span className="text-lg text-gray-500 font-normal">/{stats.totalToday}</span>
           </p>
@@ -142,7 +142,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Completed this week */}
-        <div className="bg-dark-800 border border-white/5 rounded-2xl p-5 hover:border-lime-400/20 transition-all duration-300 group">
+        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-5 hover:border-lime-400/20 transition-all duration-300 group shadow-sm dark:shadow-none">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Semana</span>
             <div className="w-8 h-8 rounded-lg bg-emerald-400/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-400/20 transition-colors">
@@ -151,7 +151,7 @@ export default function DashboardPage() {
               </svg>
             </div>
           </div>
-          <p className="text-3xl font-bold text-white animate-count-up">
+          <p className="text-3xl font-bold text-dark-900 dark:text-white animate-count-up">
             {stats.completedThisWeek}
             <span className="text-lg text-gray-500 font-normal">/{stats.totalThisWeek}</span>
           </p>
@@ -159,7 +159,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Productivity */}
-        <div className="bg-dark-800 border border-white/5 rounded-2xl p-5 hover:border-lime-400/20 transition-all duration-300 group">
+        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-5 hover:border-lime-400/20 transition-all duration-300 group shadow-sm dark:shadow-none">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Productividad</span>
             <div className="w-8 h-8 rounded-lg bg-yellow-400/10 flex items-center justify-center text-yellow-400 group-hover:bg-yellow-400/20 transition-colors">
@@ -168,11 +168,11 @@ export default function DashboardPage() {
               </svg>
             </div>
           </div>
-          <p className="text-3xl font-bold text-white animate-count-up">
+          <p className="text-3xl font-bold text-dark-900 dark:text-white animate-count-up">
             {stats.productivity}
             <span className="text-lg text-lime-400 font-normal">%</span>
           </p>
-          <div className="mt-2 h-1.5 bg-dark-600 rounded-full overflow-hidden">
+          <div className="mt-2 h-1.5 bg-gray-100 dark:bg-dark-600 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-lime-400 to-emerald-400 rounded-full transition-all duration-1000"
               style={{ width: `${stats.productivity}%` }}
@@ -181,7 +181,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Streak */}
-        <div className="bg-dark-800 border border-white/5 rounded-2xl p-5 hover:border-lime-400/20 transition-all duration-300 group">
+        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-5 hover:border-lime-400/20 transition-all duration-300 group shadow-sm dark:shadow-none">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Racha</span>
             <div className="w-8 h-8 rounded-lg bg-orange-400/10 flex items-center justify-center text-orange-400 group-hover:bg-orange-400/20 transition-colors">
@@ -190,7 +190,7 @@ export default function DashboardPage() {
               </svg>
             </div>
           </div>
-          <p className="text-3xl font-bold text-white animate-count-up">
+          <p className="text-3xl font-bold text-dark-900 dark:text-white animate-count-up">
             {stats.streakDays}
             <span className="text-lg text-gray-500 font-normal"> días</span>
           </p>
@@ -201,10 +201,10 @@ export default function DashboardPage() {
       {/* Activity chart + Recent tasks */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Weekly activity chart */}
-        <div className="lg:col-span-3 bg-dark-800 border border-white/5 rounded-2xl p-6">
+        <div className="lg:col-span-3 bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 shadow-sm dark:shadow-none">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold">Actividad semanal</h2>
-            <span className="text-xs text-gray-500 bg-dark-700 px-3 py-1 rounded-lg">Esta semana</span>
+            <h2 className="text-lg font-semibold text-dark-900 dark:text-white">Actividad semanal</h2>
+            <span className="text-xs text-gray-500 bg-gray-50 dark:bg-dark-700 px-3 py-1 rounded-lg border border-gray-100 dark:border-transparent">Esta semana</span>
           </div>
 
           {/* Chart */}
@@ -228,9 +228,9 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent tasks */}
-        <div className="lg:col-span-2 bg-dark-800 border border-white/5 rounded-2xl p-6">
+        <div className="lg:col-span-2 bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 shadow-sm dark:shadow-none">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold">Tareas recientes</h2>
+            <h2 className="text-lg font-semibold text-dark-900 dark:text-white">Tareas recientes</h2>
             <Link href="/tasks" className="text-xs text-lime-400 hover:text-lime-300 transition-colors font-medium">
               Ver todas →
             </Link>
@@ -240,7 +240,7 @@ export default function DashboardPage() {
             {recentTasks.map((task) => (
               <div
                 key={task.id}
-                className="flex items-center gap-3 p-3 rounded-xl hover:bg-dark-700 transition-colors group"
+                className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-700 transition-colors group"
               >
                 {/* Checkbox */}
                 <div
@@ -257,7 +257,7 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium truncate ${task.completed ? "line-through text-gray-500" : "text-white"}`}>
+                  <p className={`text-sm font-medium truncate ${task.completed ? "line-through text-gray-400" : "text-dark-900 dark:text-white"}`}>
                     {task.title}
                   </p>
                   <p className="text-xs text-gray-500">{task.category}</p>

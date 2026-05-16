@@ -33,7 +33,7 @@ export default function QuickSummary() {
         <div className="absolute bottom-16 right-0 w-64 bg-white dark:bg-dark-800 border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl p-4 animate-slide-up transition-colors">
           <h3 className="text-sm font-bold text-dark-900 dark:text-white mb-3 flex items-center justify-between">
             Resumen de Hoy 📋
-            <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-white">
+            <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-dark-900 dark:hover:text-white">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
