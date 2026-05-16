@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-dark-900 flex flex-col items-center justify-center p-4 relative overflow-hidden text-white">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-900 transition-colors flex flex-col items-center justify-center p-4 relative overflow-hidden text-dark-900 dark:text-white">
       {/* Background decorative effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-lime-400/10 rounded-full blur-[120px]" />
@@ -13,16 +13,16 @@ export default function NotFound() {
       <div className="relative text-center space-y-8 max-w-md animate-fade-in">
         <div className="space-y-4">
           <div className="inline-block">
-            <div className="text-lime-400 font-black text-9xl tracking-tighter animate-pulse-glow px-8 py-2 rounded-full">
+            <div className="text-lime-500 dark:text-lime-400 font-black text-9xl tracking-tighter animate-pulse-glow px-8 py-2 rounded-full">
               404
             </div>
           </div>
           <h1 className="text-4xl font-extrabold tracking-tight">
-            Página <span className="text-transparent bg-clip-text bg-gradient-to-r from-lime-400 to-emerald-400">no encontrada</span>
+            Página <span className="text-transparent bg-clip-text bg-gradient-to-r from-lime-500 to-emerald-500 dark:from-lime-400 dark:to-emerald-400">no encontrada</span>
           </h1>
         </div>
 
-        <p className="text-gray-400 text-lg leading-relaxed">
+        <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed">
           Lo sentimos, parece que te has perdido en el flujo. La página que buscas no existe o ha sido movida a otra dimensión.
         </p>
 
@@ -46,7 +46,7 @@ export default function NotFound() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
         </div>
-        <span className="text-sm font-bold tracking-tight">
+        <span className="text-sm font-bold tracking-tight text-dark-900 dark:text-white">
           Task<span className="text-lime-400">Flow</span>
         </span>
       </div>

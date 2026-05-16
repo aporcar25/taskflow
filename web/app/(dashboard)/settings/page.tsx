@@ -74,7 +74,7 @@ export default function SettingsPage() {
 
       <div className="space-y-4">
         {/* Email Reminders */}
-        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 flex items-center justify-between group transition-all hover:border-lime-400/20">
+        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 flex items-center justify-between group transition-all hover:border-lime-400/20 shadow-sm dark:shadow-none">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -102,7 +102,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Daily Summary */}
-        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 flex items-center justify-between group transition-all hover:border-lime-400/20">
+        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 flex items-center justify-between group transition-all hover:border-lime-400/20 shadow-sm dark:shadow-none">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-lime-400/10 flex items-center justify-center text-lime-400">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

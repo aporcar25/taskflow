@@ -59,9 +59,9 @@ const features = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-dark-900">
+    <div className="min-h-screen bg-white dark:bg-dark-900 transition-colors">
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-dark-900/80 backdrop-blur-xl border-b border-white/5">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-dark-900/80 backdrop-blur-xl border-b border-gray-100 dark:border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2">
@@ -70,14 +70,14 @@ export default function LandingPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <span className="text-lg font-bold tracking-tight">
+              <span className="text-lg font-bold tracking-tight text-dark-900 dark:text-white">
                 Task<span className="text-lime-400">Flow</span>
               </span>
             </div>
             <div className="flex items-center gap-3">
               <Link
                 href="/login"
-                className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-dark-900 dark:hover:text-white transition-colors"
               >
                 Iniciar sesión
               </Link>
@@ -107,15 +107,15 @@ export default function LandingPage() {
             Productividad redefinida
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] mb-6">
+          <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] mb-6 text-dark-900 dark:text-white">
             Organiza tu vida,{" "}
             <br className="hidden sm:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-lime-400 via-emerald-400 to-lime-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-lime-500 via-emerald-400 to-lime-500 dark:from-lime-400 dark:via-emerald-400 dark:to-lime-400">
               maximiza tu potencial
             </span>
           </h1>
 
-          <p className="max-w-2xl mx-auto text-lg sm:text-xl text-gray-400 leading-relaxed mb-10">
+          <p className="max-w-2xl mx-auto text-lg sm:text-xl text-gray-600 dark:text-gray-400 leading-relaxed mb-10">
             TaskFlow te ayuda a gestionar tareas, construir hábitos y visualizar tu productividad. Todo en un solo lugar, con un diseño que inspira acción.
           </p>
 
@@ -128,7 +128,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/login"
-              className="w-full sm:w-auto px-8 py-3.5 rounded-xl border border-white/10 text-white font-medium text-base hover:bg-white/5 hover:border-white/20 transition-all"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-xl border border-gray-200 dark:border-white/10 text-dark-900 dark:text-white font-medium text-base hover:bg-gray-50 dark:hover:bg-white/5 hover:border-gray-300 dark:hover:border-white/20 transition-all"
             >
               Ya tengo cuenta
             </Link>
@@ -154,11 +154,11 @@ export default function LandingPage() {
       <section className="py-20 sm:py-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4 text-dark-900 dark:text-white">
               Todo lo que necesitas para ser{" "}
-              <span className="text-lime-400">más productivo</span>
+              <span className="text-lime-500 dark:text-lime-400">más productivo</span>
             </h2>
-            <p className="max-w-2xl mx-auto text-gray-400 text-lg">
+            <p className="max-w-2xl mx-auto text-gray-600 dark:text-gray-400 text-lg">
               Herramientas diseñadas para ayudarte a enfocarte en lo que realmente importa.
             </p>
           </div>
@@ -167,13 +167,13 @@ export default function LandingPage() {
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="group p-6 rounded-2xl bg-dark-800 border border-white/5 hover:border-lime-400/20 hover:bg-dark-700 transition-all duration-300"
+                className="group p-6 rounded-2xl bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 hover:border-lime-400/20 hover:bg-gray-50 dark:hover:bg-dark-700 transition-all duration-300 shadow-sm dark:shadow-none"
               >
                 <div className="w-12 h-12 rounded-xl bg-lime-400/10 flex items-center justify-center text-lime-400 mb-4 group-hover:bg-lime-400/20 transition-colors">
                   {feature.icon}
                 </div>
-                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
+                <h3 className="text-lg font-semibold mb-2 text-dark-900 dark:text-white">{feature.title}</h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -187,10 +187,10 @@ export default function LandingPage() {
             <div className="absolute inset-0 bg-gradient-to-br from-lime-400/10 via-emerald-500/5 to-transparent" />
             <div className="absolute inset-0 border border-lime-400/10 rounded-3xl" />
             <div className="relative px-8 py-16 sm:px-16 sm:py-20 text-center">
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+              <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-dark-900 dark:text-white">
                 ¿Listo para transformar tu productividad?
               </h2>
-              <p className="text-gray-400 text-lg mb-8 max-w-xl mx-auto">
+              <p className="text-gray-600 dark:text-gray-400 text-lg mb-8 max-w-xl mx-auto">
                 Únete a miles de personas que ya usan TaskFlow para alcanzar sus metas.
               </p>
               <Link
@@ -205,7 +205,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 py-8">
+      <footer className="border-t border-gray-100 dark:border-white/5 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-lime-400 flex items-center justify-center">
@@ -213,7 +213,7 @@ export default function LandingPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <span className="text-sm font-semibold">TaskFlow</span>
+            <span className="text-sm font-semibold text-dark-900 dark:text-white">TaskFlow</span>
           </div>
           <p className="text-sm text-gray-500">© 2026 TaskFlow. Todos los derechos reservados.</p>
         </div>

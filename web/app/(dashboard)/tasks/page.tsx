@@ -267,8 +267,8 @@ export default function TasksPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Tareas</h1>
-          <p className="text-gray-400 text-sm mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-dark-900 dark:text-white">Tareas</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
             {completedCount} de {filteredTasks.length} completadas
           </p>
         </div>
@@ -301,7 +301,7 @@ export default function TasksPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar tareas..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-dark-800 border border-white/5 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400/30 transition-all"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 text-dark-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/30 focus:border-lime-400/30 transition-all shadow-sm dark:shadow-none"
           />
         </div>
 
@@ -309,7 +309,7 @@ export default function TasksPage() {
         <select
           value={filterPriority}
           onChange={(e) => setFilterPriority(e.target.value as Priority | "todas")}
-          className="px-4 py-2.5 rounded-xl bg-dark-800 border border-white/5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/30 cursor-pointer appearance-none"
+          className="px-4 py-2.5 rounded-xl bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 text-dark-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/30 cursor-pointer appearance-none shadow-sm dark:shadow-none"
           style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em 1.25em', paddingRight: '2.5rem' }}
         >
           <option value="todas">Todas las prioridades</option>
@@ -322,7 +322,7 @@ export default function TasksPage() {
         <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value as Category | "todas")}
-          className="px-4 py-2.5 rounded-xl bg-dark-800 border border-white/5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/30 cursor-pointer appearance-none"
+          className="px-4 py-2.5 rounded-xl bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 text-dark-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/30 cursor-pointer appearance-none shadow-sm dark:shadow-none"
           style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em 1.25em', paddingRight: '2.5rem' }}
         >
           <option value="todas">Todas las categorías</option>
@@ -337,20 +337,20 @@ export default function TasksPage() {
       {/* Tasks list */}
       {filteredTasks.length === 0 ? (
         <div className="text-center py-16">
-          <div className="w-16 h-16 rounded-2xl bg-dark-800 border border-white/5 flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <div className="w-16 h-16 rounded-2xl bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 flex items-center justify-center mx-auto mb-4 shadow-sm dark:shadow-none">
+            <svg className="w-8 h-8 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
           </div>
-          <p className="text-gray-400 font-medium">No se encontraron tareas</p>
-          <p className="text-gray-600 text-sm mt-1">Prueba a cambiar los filtros o crea una nueva tarea</p>
+          <p className="text-gray-500 dark:text-gray-400 font-medium">No se encontraron tareas</p>
+          <p className="text-gray-400 dark:text-gray-600 text-sm mt-1">Prueba a cambiar los filtros o crea una nueva tarea</p>
         </div>
       ) : (
         <div className="space-y-3">
           {filteredTasks.map((task, index) => (
             <div
               key={task.id}
-              className="group bg-dark-800 border border-white/5 rounded-2xl p-4 sm:p-5 hover:border-white/10 transition-all duration-200"
+              className="group bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-4 sm:p-5 hover:border-gray-200 dark:hover:border-white/10 transition-all duration-200 shadow-sm dark:shadow-none"
               style={{ animationDelay: `${index * 50}ms` }}
             >
               <div className="flex items-start gap-4">
@@ -374,10 +374,10 @@ export default function TasksPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <h3 className={`font-semibold text-sm sm:text-base ${task.completed ? "line-through text-gray-500" : "text-white"}`}>
+                      <h3 className={`font-semibold text-sm sm:text-base ${task.completed ? "line-through text-gray-400" : "text-dark-900 dark:text-white"}`}>
                         {task.title}
                       </h3>
-                      <p className={`text-sm mt-1 ${task.completed ? "text-gray-600" : "text-gray-400"}`}>
+                      <p className={`text-sm mt-1 ${task.completed ? "text-gray-500 dark:text-gray-600" : "text-gray-600 dark:text-gray-400"}`}>
                         {task.description}
                       </p>
                     </div>
@@ -449,9 +449,9 @@ export default function TasksPage() {
       {/* Create Modal */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto pt-20 pb-10">
-          <div className="bg-dark-800 border border-white/10 rounded-2xl p-6 max-w-lg w-full shadow-2xl animate-fade-in my-auto">
+          <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/10 rounded-2xl p-6 max-w-lg w-full shadow-2xl animate-fade-in my-auto">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-white">Nueva tarea</h3>
+              <h3 className="text-xl font-bold text-dark-900 dark:text-white">Nueva tarea</h3>
               <button onClick={() => {
                 setIsCreateModalOpen(false);
                 setCreateForm({
@@ -466,19 +466,19 @@ export default function TasksPage() {
             
             <form onSubmit={(e) => { e.preventDefault(); saveCreate(); }} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Título</label>
-                <input type="text" value={createForm.title} onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })} placeholder="¿Qué necesitas hacer?" className={`w-full px-4 py-2.5 rounded-xl bg-dark-700 border ${createErrors.title ? "border-red-500/50" : "border-white/10"} text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all`} />
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Título</label>
+                <input type="text" value={createForm.title} onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })} placeholder="¿Qué necesitas hacer?" className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border ${createErrors.title ? "border-red-500/50" : "border-gray-200 dark:border-white/10"} text-dark-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all`} />
                 {createErrors.title && <p className="text-red-400 text-xs mt-1">{createErrors.title}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Descripción</label>
-                <textarea rows={3} value={createForm.description} onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })} placeholder="Describe los detalles..." className={`w-full px-4 py-2.5 rounded-xl bg-dark-700 border ${createErrors.description ? "border-red-500/50" : "border-white/10"} text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all resize-none`} />
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Descripción</label>
+                <textarea rows={3} value={createForm.description} onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })} placeholder="Describe los detalles..." className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border ${createErrors.description ? "border-red-500/50" : "border-gray-200 dark:border-white/10"} text-dark-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all resize-none`} />
                 {createErrors.description && <p className="text-red-400 text-xs mt-1">{createErrors.description}</p>}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Prioridad</label>
-                  <select value={createForm.priority} onChange={(e) => setCreateForm({ ...createForm, priority: e.target.value as Priority })} className={`w-full px-4 py-2.5 rounded-xl bg-dark-700 border ${createErrors.priority ? "border-red-500/50" : "border-white/10"} text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 appearance-none`} style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em' }}>
+                  <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Prioridad</label>
+                  <select value={createForm.priority} onChange={(e) => setCreateForm({ ...createForm, priority: e.target.value as Priority })} className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border ${createErrors.priority ? "border-red-500/50" : "border-gray-200 dark:border-white/10"} text-dark-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 appearance-none`} style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em' }}>
                     <option value="">Seleccionar</option>
                     <option value="alta">🔴 Alta</option>
                     <option value="media">🟡 Media</option>
@@ -487,8 +487,8 @@ export default function TasksPage() {
                   {createErrors.priority && <p className="text-red-400 text-xs mt-1">{createErrors.priority}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Categoría</label>
-                  <select value={createForm.category} onChange={(e) => setCreateForm({ ...createForm, category: e.target.value as Category })} className={`w-full px-4 py-2.5 rounded-xl bg-dark-700 border ${createErrors.category ? "border-red-500/50" : "border-white/10"} text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 appearance-none`} style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em' }}>
+                  <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Categoría</label>
+                  <select value={createForm.category} onChange={(e) => setCreateForm({ ...createForm, category: e.target.value as Category })} className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border ${createErrors.category ? "border-red-500/50" : "border-gray-200 dark:border-white/10"} text-dark-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 appearance-none`} style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em' }}>
                     <option value="">Seleccionar</option>
                     <option value="trabajo">💼 Trabajo</option>
                     <option value="personal">👤 Personal</option>
@@ -500,8 +500,8 @@ export default function TasksPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Fecha límite</label>
-                <input type="date" value={createForm.dueDate} onChange={(e) => setCreateForm({ ...createForm, dueDate: e.target.value })} className={`w-full px-4 py-2.5 rounded-xl bg-dark-700 border ${createErrors.dueDate ? "border-red-500/50" : "border-white/10"} text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50`} style={{ colorScheme: "dark" }} />
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Fecha límite</label>
+                <input type="date" value={createForm.dueDate} onChange={(e) => setCreateForm({ ...createForm, dueDate: e.target.value })} className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border ${createErrors.dueDate ? "border-red-500/50" : "border-gray-200 dark:border-white/10"} text-dark-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50`} />
                 {createErrors.dueDate && <p className="text-red-400 text-xs mt-1">{createErrors.dueDate}</p>}
               </div>
 
@@ -538,29 +538,29 @@ export default function TasksPage() {
       {/* Edit Modal */}
       {isEditModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto pt-20 pb-10">
-          <div className="bg-dark-800 border border-white/10 rounded-2xl p-6 max-w-lg w-full shadow-2xl animate-fade-in my-auto">
+          <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/10 rounded-2xl p-6 max-w-lg w-full shadow-2xl animate-fade-in my-auto">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-white">Editar tarea</h3>
-              <button onClick={() => setIsEditModalOpen(false)} className="text-gray-400 hover:text-white transition-colors">
+              <h3 className="text-xl font-bold text-dark-900 dark:text-white">Editar tarea</h3>
+              <button onClick={() => setIsEditModalOpen(false)} className="text-gray-400 hover:text-dark-900 dark:hover:text-white transition-colors">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Título</label>
-                <input type="text" value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} className={`w-full px-4 py-2.5 rounded-xl bg-dark-700 border ${editErrors.title ? "border-red-500/50" : "border-white/10"} text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all`} />
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Título</label>
+                <input type="text" value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border ${editErrors.title ? "border-red-500/50" : "border-gray-200 dark:border-white/10"} text-dark-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all`} />
                 {editErrors.title && <p className="text-red-400 text-xs mt-1">{editErrors.title}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Descripción</label>
-                <textarea rows={3} value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} className={`w-full px-4 py-2.5 rounded-xl bg-dark-700 border ${editErrors.description ? "border-red-500/50" : "border-white/10"} text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all resize-none`} />
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Descripción</label>
+                <textarea rows={3} value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border ${editErrors.description ? "border-red-500/50" : "border-gray-200 dark:border-white/10"} text-dark-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all resize-none`} />
                 {editErrors.description && <p className="text-red-400 text-xs mt-1">{editErrors.description}</p>}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Prioridad</label>
-                  <select value={editForm.priority} onChange={(e) => setEditForm({ ...editForm, priority: e.target.value as Priority })} className={`w-full px-4 py-2.5 rounded-xl bg-dark-700 border ${editErrors.priority ? "border-red-500/50" : "border-white/10"} text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 appearance-none`} style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em' }}>
+                  <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Prioridad</label>
+                  <select value={editForm.priority} onChange={(e) => setEditForm({ ...editForm, priority: e.target.value as Priority })} className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border ${editErrors.priority ? "border-red-500/50" : "border-gray-200 dark:border-white/10"} text-dark-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 appearance-none`} style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em' }}>
                     <option value="">Seleccionar</option>
                     <option value="alta">🔴 Alta</option>
                     <option value="media">🟡 Media</option>
@@ -569,8 +569,8 @@ export default function TasksPage() {
                   {editErrors.priority && <p className="text-red-400 text-xs mt-1">{editErrors.priority}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Categoría</label>
-                  <select value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value as Category })} className={`w-full px-4 py-2.5 rounded-xl bg-dark-700 border ${editErrors.category ? "border-red-500/50" : "border-white/10"} text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 appearance-none`} style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em' }}>
+                  <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Categoría</label>
+                  <select value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value as Category })} className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border ${editErrors.category ? "border-red-500/50" : "border-gray-200 dark:border-white/10"} text-dark-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 appearance-none`} style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em' }}>
                     <option value="">Seleccionar</option>
                     <option value="trabajo">💼 Trabajo</option>
                     <option value="personal">👤 Personal</option>
@@ -582,8 +582,8 @@ export default function TasksPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Fecha límite</label>
-                <input type="date" value={editForm.dueDate} onChange={(e) => setEditForm({ ...editForm, dueDate: e.target.value })} className={`w-full px-4 py-2.5 rounded-xl bg-dark-700 border ${editErrors.dueDate ? "border-red-500/50" : "border-white/10"} text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50`} style={{ colorScheme: "dark" }} />
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Fecha límite</label>
+                <input type="date" value={editForm.dueDate} onChange={(e) => setEditForm({ ...editForm, dueDate: e.target.value })} className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border ${editErrors.dueDate ? "border-red-500/50" : "border-gray-200 dark:border-white/10"} text-dark-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50`} />
                 {editErrors.dueDate && <p className="text-red-400 text-xs mt-1">{editErrors.dueDate}</p>}
               </div>
             </div>

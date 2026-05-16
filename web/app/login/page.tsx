@@ -40,7 +40,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-dark-900 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-900 transition-colors flex items-center justify-center px-4">
       {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-lime-400/5 rounded-full blur-[120px]" />
@@ -54,22 +54,22 @@ export default function LoginPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <span className="text-2xl font-bold tracking-tight">
+          <span className="text-2xl font-bold tracking-tight text-dark-900 dark:text-white">
             Task<span className="text-lime-400">Flow</span>
           </span>
         </Link>
 
         {/* Card */}
-        <div className="bg-dark-800 border border-white/5 rounded-2xl p-8">
+        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8 shadow-sm dark:shadow-none">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold mb-2">Bienvenido de vuelta</h1>
-            <p className="text-gray-400 text-sm">Inicia sesión para continuar con tu productividad</p>
+            <h1 className="text-2xl font-bold mb-2 text-dark-900 dark:text-white">Bienvenido de vuelta</h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">Inicia sesión para continuar con tu productividad</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1.5">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">
                 Email
               </label>
               <input
@@ -78,18 +78,18 @@ export default function LoginPage() {
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 placeholder="tu@email.com"
-                className={`w-full px-4 py-3 rounded-xl bg-dark-700 border text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 focus:border-lime-400/50 transition-all ${
-                  errors.email ? "border-red-500/50" : "border-white/10"
+                className={`w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-dark-700 border text-dark-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all ${
+                  errors.email ? "border-red-500/50" : "border-gray-200 dark:border-white/10"
                 }`}
               />
               {errors.email && (
-                <p className="text-red-400 text-xs mt-1.5">{errors.email}</p>
+                <p className="text-red-500 text-xs mt-1.5">{errors.email}</p>
               )}
             </div>
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1.5">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">
                 Contraseña
               </label>
               <input
@@ -98,8 +98,8 @@ export default function LoginPage() {
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 placeholder="••••••••"
-                className={`w-full px-4 py-3 rounded-xl bg-dark-700 border text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 focus:border-lime-400/50 transition-all ${
-                  errors.password ? "border-red-500/50" : "border-white/10"
+                className={`w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-dark-700 border text-dark-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all ${
+                  errors.password ? "border-red-500/50" : "border-gray-200 dark:border-white/10"
                 }`}
               />
               {errors.password && (
