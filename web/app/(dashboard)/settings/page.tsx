@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getPreferences, updatePreferences } from "../../lib/api";
+import { getPreferences, updatePreferences } from "../../../lib/api";
 
 export default function SettingsPage() {
   const [preferences, setPreferences] = useState({

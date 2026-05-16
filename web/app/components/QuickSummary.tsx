@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getStats } from "../lib/api";
+import { getStats } from "../../lib/api";
 
 export default function QuickSummary() {
   const [isOpen, setIsOpen] = useState(false);
