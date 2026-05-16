@@ -147,15 +147,19 @@ export default function StatsPage() {
     }
 
     return weekDays.map(date => {
-      const dateStr = date.toISOString().split('T')[0];
-      const allCompleted = habits.length > 0 && habits.every((h: HabitData) =>
-        h.historial.some((hd: string) => hd.split('T')[0] === dateStr)
+      const dateStr = date.toDateString();
+      const isToday = dateStr === today.toDateString();
+      const isFuture = date > today && !isToday;
+
+      const allCompleted = !isFuture && habits.length > 0 && habits.every((h: HabitData) =>
+        h.historial.some((hd: string) => new Date(hd).toDateString() === dateStr)
       );
+
       return {
         label: ['L', 'M', 'X', 'J', 'V', 'S', 'D'][date.getDay() === 0 ? 6 : date.getDay() - 1],
         completed: allCompleted,
-        isFuture: date > today,
-        isToday: date.toDateString() === today.toDateString()
+        isFuture,
+        isToday
       };
     });
   }, [habits]);
