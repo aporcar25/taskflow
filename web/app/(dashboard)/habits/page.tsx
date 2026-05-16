@@ -150,15 +150,15 @@ export default function HabitsPage() {
       <div className="h-24 w-full shimmer rounded-2xl mb-6"></div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="flex items-start justify-between p-5 bg-gray-800/50 border border-white/5 rounded-2xl shimmer">
+          <div key={i} className="flex items-start justify-between p-5 bg-dark-800 border border-white/5 rounded-2xl">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gray-800 rounded-2xl"></div>
+              <div className="w-12 h-12 shimmer rounded-2xl"></div>
               <div className="space-y-2">
-                <div className="h-4 w-32 bg-gray-800 rounded-2xl"></div>
-                <div className="h-3 w-24 bg-gray-800 rounded-2xl"></div>
+                <div className="h-4 w-32 shimmer rounded-2xl"></div>
+                <div className="h-3 w-24 shimmer rounded-2xl"></div>
               </div>
             </div>
-            <div className="w-11 h-11 bg-gray-800 rounded-2xl"></div>
+            <div className="w-11 h-11 shimmer rounded-2xl"></div>
           </div>
         ))}
       </div>
