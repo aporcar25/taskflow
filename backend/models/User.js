@@ -20,6 +20,16 @@ const UserSchema = new mongoose.Schema({
   foto: {
     type: String,
     default: ''
+  },
+  preferences: {
+    emailReminders: {
+      type: Boolean,
+      default: true
+    },
+    dailySummary: {
+      type: Boolean,
+      default: true
+    }
   }
 }, { timestamps: true });
 
