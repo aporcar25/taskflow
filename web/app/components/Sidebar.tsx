@@ -162,7 +162,7 @@ export default function Sidebar() {
                   : "text-gray-500 dark:text-gray-400 hover:text-dark-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
                   }`}
               >
-                <span className={`transition-colors ${isActive ? "text-lime-400" : "text-gray-500 group-hover:text-white"}`}>
+                <span className={`transition-colors ${isActive ? "text-lime-400" : "text-gray-500 group-hover:text-dark-900 dark:group-hover:text-white"}`}>
                   {item.icon}
                 </span>
                 {item.label}

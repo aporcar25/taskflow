@@ -250,7 +250,7 @@ export default function TasksPage() {
       <div className="h-12 w-full shimmer rounded-2xl mb-6"></div>
       <div className="space-y-3">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="flex items-center gap-4 p-5 bg-dark-800 border border-white/5 rounded-2xl">
+          <div key={i} className="flex items-center gap-4 p-5 bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl shadow-sm dark:shadow-none">
             <div className="w-6 h-6 shimmer rounded-2xl"></div>
             <div className="flex-1 space-y-2">
               <div className="h-4 w-1/3 shimmer rounded-2xl"></div>
