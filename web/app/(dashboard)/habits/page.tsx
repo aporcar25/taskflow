@@ -146,11 +146,11 @@ export default function HabitsPage() {
 
   if (isLoading) return (
     <div className="space-y-6">
-      <div className="h-10 w-48 bg-gray-800 animate-pulse rounded-2xl mb-8"></div>
-      <div className="h-24 w-full bg-gray-800 animate-pulse rounded-2xl mb-6"></div>
+      <div className="h-10 w-48 shimmer rounded-2xl mb-8"></div>
+      <div className="h-24 w-full shimmer rounded-2xl mb-6"></div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="flex items-start justify-between p-5 bg-gray-800/50 border border-white/5 rounded-2xl animate-pulse">
+          <div key={i} className="flex items-start justify-between p-5 bg-gray-800/50 border border-white/5 rounded-2xl shimmer">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-gray-800 rounded-2xl"></div>
               <div className="space-y-2">
