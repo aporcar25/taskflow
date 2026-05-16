@@ -138,4 +138,32 @@ router.post('/profile/photo', authMiddleware, async (req, res) => {
   }
 });
 
+// PUT /change-password -> cambiar contraseña
+router.put('/change-password', authMiddleware, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ mensaje: 'Por favor, incluye la contraseña actual y la nueva' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ mensaje: 'La contraseña actual es incorrecta' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+
+    await user.save();
+    res.json({ mensaje: 'Contraseña actualizada con éxito' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error al cambiar la contraseña' });
+  }
+});
+
 module.exports = router;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { getMe, updateProfile, updateProfilePhoto } from "../../../lib/api";
+import { getMe, updateProfile, updateProfilePhoto, changePassword } from "../../../lib/api";
 
 export default function ProfilePage() {
   const [user, setUser] = useState({ nombre: "", email: "", foto: "" });
@@ -11,6 +11,11 @@ export default function ProfilePage() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isPasswordSectionOpen, setIsPasswordSectionOpen] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -28,6 +33,37 @@ export default function ProfilePage() {
     };
     fetchUser();
   }, []);
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError("");
+    setPasswordSuccess("");
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError("Las contraseñas nuevas no coinciden.");
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+      setPasswordError("La nueva contraseña debe tener al menos 6 caracteres.");
+      return;
+    }
+
+    setPasswordSaving(true);
+    try {
+      await changePassword({
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      });
+      setPasswordSuccess("Contraseña actualizada con éxito.");
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setTimeout(() => setIsPasswordSectionOpen(false), 2000);
+    } catch (err: any) {
+      setPasswordError(err.message || "Error al actualizar la contraseña.");
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -204,6 +240,95 @@ export default function ProfilePage() {
             </button>
           </div>
         </form>
+      </div>
+
+      <div className="mt-6 bg-dark-800 border border-white/5 rounded-2xl overflow-hidden">
+        <button
+          onClick={() => setIsPasswordSectionOpen(!isPasswordSectionOpen)}
+          className="w-full px-6 py-4 flex items-center justify-between hover:bg-white/5 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-lime-400/10 flex items-center justify-center text-lime-400">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <div className="text-left">
+              <h3 className="text-sm font-semibold text-white">Cambiar contraseña</h3>
+              <p className="text-xs text-gray-400">Actualiza tus credenciales de acceso</p>
+            </div>
+          </div>
+          <svg
+            className={`w-5 h-5 text-gray-500 transition-transform ${isPasswordSectionOpen ? 'rotate-180' : ''}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        {isPasswordSectionOpen && (
+          <div className="px-6 pb-6 pt-2 animate-slide-down">
+            {passwordError && (
+              <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
+                {passwordError}
+              </div>
+            )}
+            {passwordSuccess && (
+              <div className="mb-4 p-3 rounded-xl bg-lime-400/10 border border-lime-400/20 text-lime-400 text-xs">
+                {passwordSuccess}
+              </div>
+            )}
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                <label htmlFor="currentPassword" className="block text-xs font-medium text-gray-400 mb-1.5">Contraseña actual</label>
+                <input
+                  id="currentPassword"
+                  type="password"
+                  value={passwordForm.currentPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl bg-dark-700 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="newPassword" className="block text-xs font-medium text-gray-400 mb-1.5">Nueva contraseña</label>
+                  <input
+                    id="newPassword"
+                    type="password"
+                    value={passwordForm.newPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl bg-dark-700 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="confirmPassword" className="block text-xs font-medium text-gray-400 mb-1.5">Confirmar nueva contraseña</label>
+                  <input
+                    id="confirmPassword"
+                    type="password"
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl bg-dark-700 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end pt-2">
+                <button
+                  type="submit"
+                  disabled={passwordSaving}
+                  className="px-6 py-2 rounded-xl bg-lime-400 text-dark-900 font-semibold text-sm hover:bg-lime-400/90 transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  {passwordSaving ? "Actualizando..." : "Actualizar contraseña"}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   );
