@@ -191,7 +191,9 @@ export default function TasksPage() {
           completed: t.completada,
           createdAt: t.createdAt
         }));
-        setTasks(mappedTasks);
+        const priorityOrder = { alta: 0, media: 1, baja: 2 };
+        const sorted = mappedTasks.sort((a, b) => (priorityOrder[a.priority] ?? 3) - (priorityOrder[b.priority] ?? 3));
+        setTasks(sorted);
       } catch (err) {
         console.error("Error cargando tareas:", err);
       } finally {
