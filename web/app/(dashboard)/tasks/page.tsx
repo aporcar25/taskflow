@@ -34,7 +34,8 @@ function TaskCard({
   setTaskToDelete,
   setIsDeleteModalOpen,
   isKanban = false,
-  archiveTask
+  archiveTask,
+  isAnimating = false
 }: {
   task: Task,
   index: number,
@@ -43,7 +44,8 @@ function TaskCard({
   setTaskToDelete: (id: string) => void,
   setIsDeleteModalOpen: (open: boolean) => void,
   isKanban?: boolean,
-  archiveTask: (id: string) => void
+  archiveTask: (id: string) => void,
+  isAnimating?: boolean
 }) {
   return (
     <div
@@ -52,20 +54,31 @@ function TaskCard({
     >
       <div className="flex items-start gap-3">
         {/* Checkbox */}
-        <button
-          onClick={() => toggleTask(task.id)}
-          className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
-            task.completed
-              ? "bg-lime-400 border-lime-400 text-dark-900"
-              : "border-gray-200 dark:border-white/10 hover:border-lime-400/50"
-          }`}
-        >
-          {task.completed && (
-            <svg className="w-3 h-3 text-dark-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
+        <div className="relative">
+          <button
+            onClick={() => toggleTask(task.id)}
+            className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
+              task.completed
+                ? "bg-lime-400 border-lime-400 text-dark-900"
+                : "border-gray-200 dark:border-white/10 hover:border-lime-400/50"
+            }`}
+          >
+            {task.completed && (
+              <svg className="w-3 h-3 text-dark-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </button>
+
+          {isAnimating && (
+            <div className="absolute -inset-2 flex items-center justify-center pointer-events-none z-10">
+              <div className="absolute inset-0 bg-lime-400/20 rounded-full animate-sparkle" />
+              <svg className="w-8 h-8 text-lime-400 animate-checkmark-pop" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
           )}
-        </button>
+        </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
@@ -142,6 +155,7 @@ function TaskCard({
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [animatingTasks, setAnimatingTasks] = useState<Set<string>>(new Set());
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [createForm, setCreateForm] = useState({
@@ -307,6 +321,12 @@ export default function TasksPage() {
   };
 
   useEffect(() => {
+    if ("Notification" in window) {
+      if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+        Notification.requestPermission();
+      }
+    }
+
     const fetchData = async () => {
       try {
         const [tasksData, catsData] = await Promise.all([getTasks(), getCustomCategories()]);
@@ -328,6 +348,23 @@ export default function TasksPage() {
         const sorted = mappedTasks.sort((a: Task, b: Task) => (priorityOrder[a.priority] ?? 3) - (priorityOrder[b.priority] ?? 3));
         setTasks(sorted);
         setCustomCategories(catsData || []);
+
+        if ("Notification" in window && Notification.permission === "granted") {
+          const now = new Date();
+          const next24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+          mappedTasks.forEach((t: Task) => {
+            if (!t.completed && t.dueDate) {
+              const due = new Date(t.dueDate);
+              if (due > now && due <= next24h) {
+                new Notification("Tarea por vencer", {
+                  body: `La tarea "${t.title}" vence pronto.`,
+                  icon: "/favicon.ico"
+                });
+              }
+            }
+          });
+        }
       } catch (err) {
         console.error("Error cargando datos:", err);
       } finally {
@@ -359,6 +396,17 @@ export default function TasksPage() {
     if (!task) return;
     const newStatus = !task.completed;
     const newEstado = newStatus ? "completada" : "pendiente";
+
+    if (newStatus) {
+      setAnimatingTasks(prev => new Set(prev).add(id));
+      setTimeout(() => {
+        setAnimatingTasks(prev => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      }, 1000);
+    }
 
     setTasks((prev) =>
       prev.map((t) =>
@@ -395,6 +443,18 @@ export default function TasksPage() {
     const task = tasks.find(t => t.id === id);
     if (!task) return;
     const isCompleted = newEstado === "completada";
+
+    if (isCompleted && !task.completed) {
+      setAnimatingTasks(prev => new Set(prev).add(id));
+      setTimeout(() => {
+        setAnimatingTasks(prev => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      }, 1000);
+    }
+
     setTasks(prev => prev.map(t => t.id === id ? { ...t, estado: newEstado, completed: isCompleted } : t));
     try {
       await updateTask(id, { estado: newEstado, completada: isCompleted });
@@ -553,6 +613,7 @@ export default function TasksPage() {
               setTaskToDelete={setTaskToDelete}
               setIsDeleteModalOpen={setIsDeleteModalOpen}
               archiveTask={archiveTask}
+              isAnimating={animatingTasks.has(task.id)}
             />
           ))}
         </div>
@@ -593,6 +654,7 @@ export default function TasksPage() {
                         setIsDeleteModalOpen={setIsDeleteModalOpen}
                         isKanban
                         archiveTask={archiveTask}
+                        isAnimating={animatingTasks.has(task.id)}
                       />
                     </div>
                   ))}
