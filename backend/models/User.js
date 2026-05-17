@@ -21,6 +21,10 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  categoriasPersonalizadas: {
+    type: [String],
+    default: []
+  },
   preferences: {
     emailReminders: {
       type: Boolean,

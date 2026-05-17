@@ -24,7 +24,7 @@ export default function ProfilePage() {
         const userData = await getMe();
         setUser({ nombre: userData.nombre || "", email: userData.email || "", foto: userData.foto || "" });
         setForm({ nombre: userData.nombre || "", email: userData.email || "" });
-      } catch (err) {
+      } catch {
         console.error("Error loading profile", err);
         setError("No se pudo cargar el perfil.");
       } finally {
@@ -58,7 +58,7 @@ export default function ProfilePage() {
       setPasswordSuccess("Contraseña actualizada con éxito.");
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
       setTimeout(() => setIsPasswordSectionOpen(false), 2000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setPasswordError(err.message || "Error al actualizar la contraseña.");
     } finally {
       setPasswordSaving(false);
@@ -77,7 +77,7 @@ export default function ProfilePage() {
       
       // Update local storage so Sidebar updates if needed (Sidebar reads from localstorage, though a page reload might be needed to reflect changes)
       window.dispatchEvent(new Event("storage"));
-    } catch (err) {
+    } catch {
       setError("Error al actualizar el perfil.");
     } finally {
       setSaving(false);
@@ -107,7 +107,7 @@ export default function ProfilePage() {
         
         // Dispatch storage event
         window.dispatchEvent(new Event("storage"));
-      } catch (err) {
+      } catch {
         setError("Error al actualizar la foto.");
       } finally {
         setUploading(false);

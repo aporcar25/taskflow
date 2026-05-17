@@ -1,8 +1,24 @@
 "use client";
 
+interface ApiTask {
+  _id: string;
+  titulo?: string;
+  descripcion?: string;
+  prioridad: string;
+  categoria: string;
+  fechaLimite?: string;
+  completada: boolean;
+  estado?: string;
+  archivada?: boolean;
+  tags?: string[];
+  recurrencia?: string;
+  createdAt: string;
+}
+
+
 import { useState, useMemo, useEffect } from "react";
 import { type Task, type Priority, type Category } from "@/app/lib/mockData";
-import { getTasks, completeTask, deleteTask, updateTask, createTask } from "../../../lib/api";
+import { getTasks, deleteTask, updateTask, createTask, getCustomCategories } from "../../../lib/api";
 
 const priorityColors: Record<Priority, string> = {
   alta: "bg-red-500/10 text-red-400 border-red-500/20",
@@ -10,36 +26,118 @@ const priorityColors: Record<Priority, string> = {
   baja: "bg-blue-500/10 text-blue-400 border-blue-500/20",
 };
 
-const categoryColors: Record<Category, string> = {
-  trabajo: "bg-purple-500/10 text-purple-400",
-  personal: "bg-pink-500/10 text-pink-400",
-  salud: "bg-green-500/10 text-green-400",
-  estudio: "bg-cyan-500/10 text-cyan-400",
-  hogar: "bg-orange-500/10 text-orange-400",
-};
+function TaskCard({
+  task,
+  index,
+  toggleTask,
+  openEditModal,
+  setTaskToDelete,
+  setIsDeleteModalOpen,
+  isKanban = false,
+  archiveTask
+}: {
+  task: Task,
+  index: number,
+  toggleTask: (id: string) => void,
+  openEditModal: (task: Task) => void,
+  setTaskToDelete: (id: string) => void,
+  setIsDeleteModalOpen: (open: boolean) => void,
+  isKanban?: boolean,
+  archiveTask: (id: string) => void
+}) {
+  return (
+    <div
+      className={`group bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-4 hover:border-gray-200 dark:hover:border-white/10 transition-all duration-200 shadow-sm dark:shadow-none ${isKanban ? "mb-3" : ""}`}
+      style={{ animationDelay: `${index * 50}ms` }}
+    >
+      <div className="flex items-start gap-3">
+        {/* Checkbox */}
+        <button
+          onClick={() => toggleTask(task.id)}
+          className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
+            task.completed
+              ? "bg-lime-400 border-lime-400 text-dark-900"
+              : "border-gray-200 dark:border-white/10 hover:border-lime-400/50"
+          }`}
+        >
+          {task.completed && (
+            <svg className="w-3 h-3 text-dark-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          )}
+        </button>
 
-const categoryIcons: Record<Category, string> = {
-  trabajo: "💼",
-  personal: "👤",
-  salud: "❤️",
-  estudio: "📖",
-  hogar: "🏠",
-};
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h3 className={`text-sm font-bold truncate transition-all ${task.completed ? "text-gray-400 line-through" : "text-dark-900 dark:text-white"}`}>
+                {task.title}
+              </h3>
+              {!isKanban && (
+                <p className={`text-xs mt-1 truncate ${task.completed ? "text-gray-500 dark:text-gray-600" : "text-gray-600 dark:text-gray-400"}`}>
+                  {task.description}
+                </p>
+              )}
+            </div>
+            {/* Buttons */}
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 flex-shrink-0">
+              <button
+                onClick={() => archiveTask(task.id)}
+                className="p-1.5 rounded-lg bg-gray-100 dark:bg-dark-700 hover:bg-lime-500/10 text-gray-400 hover:text-lime-400 transition-colors"
+                title={task.archivada ? "Desarchivar" : "Archivar"}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                </svg>
+              </button>
+              <button
+                onClick={() => openEditModal(task)}
+                className="p-1.5 rounded-lg bg-gray-100 dark:bg-dark-700 hover:bg-lime-500/10 text-gray-400 hover:text-lime-400 transition-colors"
+                title="Editar"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+              </button>
+              <button
+                onClick={() => { setTaskToDelete(task.id); setIsDeleteModalOpen(true); }}
+                className="p-1.5 rounded-lg bg-gray-100 dark:bg-dark-700 hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-colors"
+                title="Eliminar"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              </button>
+            </div>
+          </div>
 
-const getDueDateColor = (dueDate: string) => {
-  if (!dueDate) return "text-gray-500";
-  const due = new Date(dueDate);
-  due.setHours(0, 0, 0, 0);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  const diffTime = due.getTime() - today.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  if (diffDays <= 0) return "text-red-400 font-semibold";
-  if (diffDays <= 2) return "text-orange-400 font-medium";
-  return "text-green-400 font-medium";
-};
+          <div className="flex flex-wrap items-center gap-2 mt-2">
+            <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded border ${priorityColors[task.priority]}`}>
+              {task.priority}
+            </span>
+            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400`}>
+              {task.category}
+            </span>
+            {task.recurrencia !== "ninguna" && (
+              <span className="text-[10px] font-medium text-lime-400 flex items-center gap-0.5">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                {task.recurrencia}
+              </span>
+            )}
+          </div>
+
+          {task.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {task.tags.map(tag => (
+                <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-lime-400/10 text-lime-400 border border-lime-400/20">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -49,11 +147,27 @@ export default function TasksPage() {
   const [createForm, setCreateForm] = useState({
     title: "", description: "", priority: "" as Priority | "",
     category: "" as Category | "", dueDate: "",
+    estado: "pendiente" as "pendiente" | "en_progreso" | "completada",
+    tags: "" as string,
+    recurrencia: "ninguna" as "ninguna" | "diaria" | "semanal" | "mensual"
   });
   const [createErrors, setCreateErrors] = useState<Record<string, string>>({});
   const [isCreating, setIsCreating] = useState(false);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: "", description: "", priority: "" as Priority,
+    category: "" as Category | string, dueDate: "",
+    estado: "pendiente" as "pendiente" | "en_progreso" | "completada",
+    tags: "" as string,
+    recurrencia: "ninguna" as "ninguna" | "diaria" | "semanal" | "mensual"
+  });
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
+  const [isSaving, setIsSaving] = useState(false);
+
+  const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
+  const [showArchived, setShowArchived] = useState(false);
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const validateCreate = () => {
@@ -76,18 +190,25 @@ export default function TasksPage() {
         descripcion: createForm.description,
         prioridad: createForm.priority,
         categoria: createForm.category,
-        fechaLimite: createForm.dueDate
+        fechaLimite: createForm.dueDate,
+        estado: createForm.estado,
+        tags: createForm.tags.split(",").map(t => t.trim()).filter(Boolean),
+        recurrencia: createForm.recurrencia
       });
       
-      const mappedNewTask = {
-        id: (newTask as any)._id,
-        title: (newTask as any).titulo || "",
-        description: (newTask as any).descripcion || "",
-        priority: (newTask as any).prioridad,
-        category: (newTask as any).categoria,
-        dueDate: (newTask as any).fechaLimite ? (newTask as any).fechaLimite.substring(0, 10) : "",
-        completed: (newTask as any).completada,
-        createdAt: (newTask as any).createdAt
+      const mappedNewTask: Task = {
+        id: (newTask as ApiTask /* eslint-disable-line @typescript-eslint/no-explicit-any */)._id,
+        title: (newTask as ApiTask).titulo || "",
+        description: (newTask as ApiTask).descripcion || "",
+        priority: (newTask as ApiTask).prioridad,
+        category: (newTask as ApiTask).categoria,
+        dueDate: (newTask as ApiTask).fechaLimite ? (newTask as ApiTask).fechaLimite.substring(0, 10) : "",
+        completed: (newTask as ApiTask).completada,
+        estado: (newTask as ApiTask).estado || "pendiente",
+        archivada: !!(newTask as ApiTask).archivada,
+        tags: (newTask as ApiTask).tags || [],
+        recurrencia: (newTask as ApiTask).recurrencia || "ninguna",
+        createdAt: (newTask as ApiTask).createdAt
       };
 
       setTasks([mappedNewTask, ...tasks]);
@@ -95,6 +216,9 @@ export default function TasksPage() {
       setCreateForm({
         title: "", description: "", priority: "" as Priority | "",
         category: "" as Category | "", dueDate: "",
+        estado: "pendiente",
+        tags: "",
+        recurrencia: "ninguna"
       });
       setCreateErrors({});
     } catch (err) {
@@ -103,12 +227,6 @@ export default function TasksPage() {
       setIsCreating(false);
     }
   };
-  const [editForm, setEditForm] = useState({
-    title: "", description: "", priority: "" as Priority | "",
-    category: "" as Category | "", dueDate: "",
-  });
-  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
-  const [isSaving, setIsSaving] = useState(false);
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
@@ -133,6 +251,9 @@ export default function TasksPage() {
       priority: task.priority,
       category: task.category,
       dueDate: task.dueDate || "",
+      estado: task.estado,
+      tags: task.tags.join(", "),
+      recurrencia: task.recurrencia
     });
     setEditErrors({});
     setIsEditModalOpen(true);
@@ -158,7 +279,10 @@ export default function TasksPage() {
         descripcion: editForm.description,
         prioridad: editForm.priority,
         categoria: editForm.category,
-        fechaLimite: editForm.dueDate
+        fechaLimite: editForm.dueDate,
+        estado: editForm.estado,
+        tags: editForm.tags.split(",").map(t => t.trim()).filter(Boolean),
+        recurrencia: editForm.recurrencia
       });
       setTasks(tasks.map(t => t.id === editingTask.id ? {
         ...t,
@@ -167,6 +291,11 @@ export default function TasksPage() {
         priority: updated.prioridad,
         category: updated.categoria,
         dueDate: updated.fechaLimite ? updated.fechaLimite.substring(0, 10) : "",
+        completed: updated.completada,
+        estado: updated.estado,
+        archivada: !!updated.archivada,
+        tags: updated.tags || [],
+        recurrencia: updated.recurrencia
       } : t));
       setIsEditModalOpen(false);
       setEditingTask(null);
@@ -178,10 +307,10 @@ export default function TasksPage() {
   };
 
   useEffect(() => {
-    const fetchTasks = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getTasks();
-        const mappedTasks = data.map((t: { _id: string; titulo?: string; descripcion?: string; prioridad: Priority; categoria: Category; fechaLimite?: string; completada: boolean; createdAt: string }) => ({
+        const [tasksData, catsData] = await Promise.all([getTasks(), getCustomCategories()]);
+        const mappedTasks = tasksData.map((t: ApiTask) => ({
           id: t._id,
           title: t.titulo || "",
           description: t.descripcion || "",
@@ -189,18 +318,23 @@ export default function TasksPage() {
           category: t.categoria,
           dueDate: t.fechaLimite ? t.fechaLimite.substring(0, 10) : "",
           completed: t.completada,
+          estado: t.estado || (t.completada ? "completada" : "pendiente"),
+          archivada: !!t.archivada,
+          tags: t.tags || [],
+          recurrencia: t.recurrencia || "ninguna",
           createdAt: t.createdAt
         }));
         const priorityOrder = { alta: 0, media: 1, baja: 2 };
-        const sorted = mappedTasks.sort((a, b) => (priorityOrder[a.priority] ?? 3) - (priorityOrder[b.priority] ?? 3));
+        const sorted = mappedTasks.sort((a: Task, b: Task) => (priorityOrder[a.priority] ?? 3) - (priorityOrder[b.priority] ?? 3));
         setTasks(sorted);
+        setCustomCategories(catsData || []);
       } catch (err) {
-        console.error("Error cargando tareas:", err);
+        console.error("Error cargando datos:", err);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchTasks();
+    fetchData();
   }, []);
   const [search, setSearch] = useState("");
   const [filterPriority, setFilterPriority] = useState<Priority | "todas">("todas");
@@ -215,30 +349,58 @@ export default function TasksPage() {
         description.toLowerCase().includes(search.toLowerCase());
       const matchesPriority = filterPriority === "todas" || task.priority === filterPriority;
       const matchesCategory = filterCategory === "todas" || task.category === filterCategory;
-      return matchesSearch && matchesPriority && matchesCategory;
+      const matchesArchived = task.archivada === showArchived;
+      return matchesSearch && matchesPriority && matchesCategory && matchesArchived;
     });
-  }, [tasks, search, filterPriority, filterCategory]);
+  }, [tasks, search, filterPriority, filterCategory, showArchived]);
 
   const toggleTask = async (id: string) => {
     const task = tasks.find((t) => t.id === id);
     if (!task) return;
     const newStatus = !task.completed;
+    const newEstado = newStatus ? "completada" : "pendiente";
 
     setTasks((prev) =>
       prev.map((t) =>
-        t.id === id ? { ...t, completed: newStatus } : t
+        t.id === id ? { ...t, completed: newStatus, estado: newEstado } : t
       )
     );
 
     try {
-      await completeTask(id, newStatus);
+      await updateTask(id, { completada: newStatus, estado: newEstado });
     } catch (err) {
       console.error(err);
       setTasks((prev) =>
         prev.map((t) =>
-          t.id === id ? { ...t, completed: !newStatus } : t
+          t.id === id ? { ...t, completed: !newStatus, estado: !newStatus ? "completada" : "pendiente" } : t
         )
       );
+    }
+  };
+
+  const archiveTask = async (id: string) => {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+    const newArchived = !task.archivada;
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, archivada: newArchived } : t));
+    try {
+      await updateTask(id, { archivada: newArchived });
+    } catch (err) {
+      console.error(err);
+      setTasks(prev => prev.map(t => t.id === id ? { ...t, archivada: !newArchived } : t));
+    }
+  };
+
+  const moveTask = async (id: string, newEstado: "pendiente" | "en_progreso" | "completada") => {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+    const isCompleted = newEstado === "completada";
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, estado: newEstado, completed: isCompleted } : t));
+    try {
+      await updateTask(id, { estado: newEstado, completada: isCompleted });
+    } catch (err) {
+      console.error(err);
+      setTasks(prev => prev.map(t => t.id === id ? { ...t, estado: task.estado, completed: task.completed } : t));
     }
   };
 
@@ -263,24 +425,55 @@ export default function TasksPage() {
   );
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in pb-10">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-dark-900 dark:text-white">Tareas</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-            {completedCount} de {filteredTasks.length} completadas
+            {completedCount} de {filteredTasks.length} {showArchived ? "archivadas" : "activas"}
           </p>
         </div>
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-lime-400 text-dark-900 font-semibold text-sm hover:bg-lime-400/90 transition-all hover:shadow-lg hover:shadow-lime-400/20"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          Nueva tarea
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center bg-gray-100 dark:bg-white/5 rounded-xl p-1">
+            <button
+              onClick={() => setViewMode("list")}
+              className={`p-2 rounded-lg transition-all ${viewMode === "list" ? "bg-white dark:bg-dark-700 text-lime-400 shadow-sm" : "text-gray-400 hover:text-white"}`}
+              title="Vista de lista"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setViewMode("kanban")}
+              className={`p-2 rounded-lg transition-all ${viewMode === "kanban" ? "bg-white dark:bg-dark-700 text-lime-400 shadow-sm" : "text-gray-400 hover:text-white"}`}
+              title="Vista Kanban"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+              </svg>
+            </button>
+          </div>
+          <button
+            onClick={() => setShowArchived(!showArchived)}
+            className={`p-2.5 rounded-xl border transition-all ${showArchived ? "bg-lime-400/10 border-lime-400/30 text-lime-400" : "bg-white dark:bg-white/5 border-gray-100 dark:border-white/10 text-gray-400 hover:text-white"}`}
+            title={showArchived ? "Ocultar archivadas" : "Mostrar archivadas"}
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+            </svg>
+          </button>
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-lime-400 text-dark-900 font-semibold text-sm hover:bg-lime-400/90 transition-all hover:shadow-lg hover:shadow-lime-400/20"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Nueva tarea
+          </button>
+        </div>
       </div>
 
       {/* Search + Filters */}
@@ -331,6 +524,9 @@ export default function TasksPage() {
           <option value="salud">❤️ Salud</option>
           <option value="estudio">📖 Estudio</option>
           <option value="hogar">🏠 Hogar</option>
+          {customCategories.map(cat => (
+            <option key={cat} value={cat}>✨ {cat}</option>
+          ))}
         </select>
       </div>
 
@@ -345,77 +541,61 @@ export default function TasksPage() {
           <p className="text-gray-500 dark:text-gray-400 font-medium">No se encontraron tareas</p>
           <p className="text-gray-400 dark:text-gray-600 text-sm mt-1">Prueba a cambiar los filtros o crea una nueva tarea</p>
         </div>
-      ) : (
+      ) : viewMode === "list" ? (
         <div className="space-y-3">
           {filteredTasks.map((task, index) => (
-            <div
+            <TaskCard
               key={task.id}
-              className="group bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-4 sm:p-5 hover:border-gray-200 dark:hover:border-white/10 transition-all duration-200 shadow-sm dark:shadow-none"
-              style={{ animationDelay: `${index * 50}ms` }}
+              task={task}
+              index={index}
+              toggleTask={toggleTask}
+              openEditModal={openEditModal}
+              setTaskToDelete={setTaskToDelete}
+              setIsDeleteModalOpen={setIsDeleteModalOpen}
+              archiveTask={archiveTask}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          {["pendiente", "en_progreso", "completada"].map((colStatus) => (
+            <div
+              key={colStatus}
+              className="bg-gray-100/50 dark:bg-white/5 rounded-2xl p-4 min-h-[500px]"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                const id = e.dataTransfer.getData("taskId");
+                moveTask(id, colStatus as "pendiente" | "en_progreso" | "completada");
+              }}
             >
-              <div className="flex items-start gap-4">
-                {/* Checkbox */}
-                <button
-                  onClick={() => toggleTask(task.id)}
-                  className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
-                    task.completed
-                      ? "bg-lime-400 border-lime-400"
-                      : "border-gray-600 hover:border-lime-400/50"
-                  }`}
-                >
-                  {task.completed && (
-                    <svg className="w-3.5 h-3.5 text-dark-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                </button>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className={`font-semibold text-sm sm:text-base ${task.completed ? "line-through text-gray-400" : "text-dark-900 dark:text-white"}`}>
-                        {task.title}
-                      </h3>
-                      <p className={`text-sm mt-1 ${task.completed ? "text-gray-500 dark:text-gray-600" : "text-gray-600 dark:text-gray-400"}`}>
-                        {task.description}
-                      </p>
+              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 px-2 flex justify-between items-center">
+                {colStatus === "pendiente" ? "Pendiente" : colStatus === "en_progreso" ? "En progreso" : "Completada"}
+                <span className="bg-gray-200 dark:bg-white/10 text-gray-500 px-2 py-0.5 rounded-full text-[10px]">
+                  {filteredTasks.filter(t => t.estado === colStatus).length}
+                </span>
+              </h3>
+              <div className="space-y-3">
+                {filteredTasks
+                  .filter(t => t.estado === colStatus)
+                  .map((task, index) => (
+                    <div
+                      key={task.id}
+                      draggable
+                      onDragStart={(e) => e.dataTransfer.setData("taskId", task.id)}
+                      className="cursor-grab active:cursor-grabbing"
+                    >
+                      <TaskCard
+                        task={task}
+                        index={index}
+                        toggleTask={toggleTask}
+                        openEditModal={openEditModal}
+                        setTaskToDelete={setTaskToDelete}
+                        setIsDeleteModalOpen={setIsDeleteModalOpen}
+                        isKanban
+                        archiveTask={archiveTask}
+                      />
                     </div>
-                    {/* Buttons Edit & Delete */}
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 flex-shrink-0">
-                      <button
-                        onClick={() => openEditModal(task)}
-                        className="p-2 rounded-lg bg-dark-700 hover:bg-lime-500/10 text-gray-400 hover:text-lime-400 transition-colors"
-                        title="Editar tarea"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                      </button>
-                      <button
-                        onClick={() => { setTaskToDelete(task.id); setIsDeleteModalOpen(true); }}
-                        className="p-2 rounded-lg bg-dark-700 hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-colors"
-                        title="Eliminar tarea"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Tags */}
-                  <div className="flex flex-wrap items-center gap-2 mt-3">
-                    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg border ${priorityColors[task.priority]}`}>
-                      {task.priority === "alta" ? "🔴" : task.priority === "media" ? "🟡" : "🔵"} {task.priority}
-                    </span>
-                    <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg ${categoryColors[task.category]}`}>
-                      {categoryIcons[task.category]} {task.category}
-                    </span>
-                    <span className={`text-xs flex items-center gap-1 ${getDueDateColor(task.dueDate)}`}>
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      {task.dueDate || "Sin fecha límite"}
-                    </span>
-                  </div>
-                </div>
+                  ))}
               </div>
             </div>
           ))}
@@ -457,6 +637,9 @@ export default function TasksPage() {
                 setCreateForm({
                   title: "", description: "", priority: "" as Priority | "",
                   category: "" as Category | "", dueDate: "",
+                  estado: "pendiente",
+                  tags: "",
+                  recurrencia: "ninguna"
                 });
                 setCreateErrors({});
               }} className="text-gray-400 hover:text-white transition-colors">
@@ -495,14 +678,32 @@ export default function TasksPage() {
                     <option value="salud">❤️ Salud</option>
                     <option value="estudio">📖 Estudio</option>
                     <option value="hogar">🏠 Hogar</option>
+                    {customCategories.map(cat => (
+                      <option key={cat} value={cat}>✨ {cat}</option>
+                    ))}
                   </select>
                   {createErrors.category && <p className="text-red-400 text-xs mt-1">{createErrors.category}</p>}
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Fecha límite</label>
+                  <input type="date" value={createForm.dueDate} onChange={(e) => setCreateForm({ ...createForm, dueDate: e.target.value })} className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border ${createErrors.dueDate ? "border-red-500/50" : "border-gray-200 dark:border-white/10"} text-dark-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50`} />
+                  {createErrors.dueDate && <p className="text-red-400 text-xs mt-1">{createErrors.dueDate}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Recurrencia</label>
+                  <select value={createForm.recurrencia} onChange={(e) => setCreateForm({ ...createForm, recurrencia: e.target.value as unknown })} className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-white/10 text-dark-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 appearance-none" style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em' }}>
+                    <option value="ninguna">Ninguna</option>
+                    <option value="diaria">Diaria</option>
+                    <option value="semanal">Semanal</option>
+                    <option value="mensual">Mensual</option>
+                  </select>
+                </div>
+              </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Fecha límite</label>
-                <input type="date" value={createForm.dueDate} onChange={(e) => setCreateForm({ ...createForm, dueDate: e.target.value })} className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border ${createErrors.dueDate ? "border-red-500/50" : "border-gray-200 dark:border-white/10"} text-dark-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50`} />
-                {createErrors.dueDate && <p className="text-red-400 text-xs mt-1">{createErrors.dueDate}</p>}
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Etiquetas (separadas por coma)</label>
+                <input type="text" value={createForm.tags} onChange={(e) => setCreateForm({ ...createForm, tags: e.target.value })} placeholder="ej. urgente, revisión, diseño" className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-white/10 text-dark-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all" />
               </div>
 
             <div className="flex gap-3 justify-end mt-6">
@@ -513,6 +714,9 @@ export default function TasksPage() {
                   setCreateForm({
                     title: "", description: "", priority: "" as Priority | "",
                     category: "" as Category | "", dueDate: "",
+                    estado: "pendiente",
+                    tags: "",
+                    recurrencia: "ninguna"
                   });
                   setCreateErrors({});
                 }}
@@ -577,14 +781,32 @@ export default function TasksPage() {
                     <option value="salud">❤️ Salud</option>
                     <option value="estudio">📖 Estudio</option>
                     <option value="hogar">🏠 Hogar</option>
+                    {customCategories.map(cat => (
+                      <option key={cat} value={cat}>✨ {cat}</option>
+                    ))}
                   </select>
                   {editErrors.category && <p className="text-red-400 text-xs mt-1">{editErrors.category}</p>}
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Fecha límite</label>
+                  <input type="date" value={editForm.dueDate} onChange={(e) => setEditForm({ ...editForm, dueDate: e.target.value })} className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border ${editErrors.dueDate ? "border-red-500/50" : "border-gray-200 dark:border-white/10"} text-dark-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50`} />
+                  {editErrors.dueDate && <p className="text-red-400 text-xs mt-1">{editErrors.dueDate}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Recurrencia</label>
+                  <select value={editForm.recurrencia} onChange={(e) => setEditForm({ ...editForm, recurrencia: e.target.value as unknown })} className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-white/10 text-dark-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 appearance-none" style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em' }}>
+                    <option value="ninguna">Ninguna</option>
+                    <option value="diaria">Diaria</option>
+                    <option value="semanal">Semanal</option>
+                    <option value="mensual">Mensual</option>
+                  </select>
+                </div>
+              </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Fecha límite</label>
-                <input type="date" value={editForm.dueDate} onChange={(e) => setEditForm({ ...editForm, dueDate: e.target.value })} className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border ${editErrors.dueDate ? "border-red-500/50" : "border-gray-200 dark:border-white/10"} text-dark-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50`} />
-                {editErrors.dueDate && <p className="text-red-400 text-xs mt-1">{editErrors.dueDate}</p>}
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Etiquetas (separadas por coma)</label>
+                <input type="text" value={editForm.tags} onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })} placeholder="ej. urgente, revisión, diseño" className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-white/10 text-dark-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all" />
               </div>
             </div>
 

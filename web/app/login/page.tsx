@@ -33,7 +33,7 @@ export default function LoginPage() {
       const data = await login(form.email, form.password);
       localStorage.setItem("taskflow_token", data.token);
       window.location.href = "/dashboard";
-    } catch (err: any) {
+    } catch (err: unknown) {
       setErrors({ email: err.message || "Error al iniciar sesión" });
       setLoading(false);
     }

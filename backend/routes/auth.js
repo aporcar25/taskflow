@@ -188,4 +188,35 @@ router.put('/preferences', authMiddleware, async (req, res) => {
   }
 });
 
+// GET /custom-categories -> obtener categorías personalizadas
+router.get('/custom-categories', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('categoriasPersonalizadas');
+    res.json(user.categoriasPersonalizadas || []);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error al obtener categorías' });
+  }
+});
+
+// PUT /custom-categories -> actualizar categorías personalizadas
+router.put('/custom-categories', authMiddleware, async (req, res) => {
+  try {
+    const { categories } = req.body;
+    if (!Array.isArray(categories)) {
+      return res.status(400).json({ mensaje: 'categories debe ser un array' });
+    }
+
+    let user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+
+    user.categoriasPersonalizadas = categories;
+    await user.save();
+    res.json(user.categoriasPersonalizadas);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error al actualizar categorías' });
+  }
+});
+
 module.exports = router;
