@@ -164,6 +164,28 @@ export default function StatsPage() {
     });
   }, [habits]);
 
+  const monthlyHabits = useMemo(() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const days = [];
+    for (let i = 1; i <= daysInMonth; i++) {
+      const date = new Date(year, month, i);
+      const dateStr = date.toDateString();
+      const isToday = dateStr === today.toDateString();
+      const isFuture = date > today && !isToday;
+
+      const allCompleted = !isFuture && habits.length > 0 && habits.every((h: HabitData) =>
+        h.historial.some((hd: string) => new Date(hd).toDateString() === dateStr)
+      );
+
+      days.push({ day: i, completed: allCompleted, isFuture, isToday });
+    }
+    return days;
+  }, [habits]);
+
   const monthlyProgress = useMemo(() => {
     const now = new Date();
     const thisMonth = now.getMonth();
@@ -485,6 +507,49 @@ export default function StatsPage() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Monthly Habits Calendar */}
+      <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8 shadow-sm dark:shadow-none">
+        <h2 className="text-lg font-semibold mb-6 text-dark-900 dark:text-white">Hábitos este Mes</h2>
+        <div className="grid grid-cols-7 gap-2">
+          {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(d => (
+            <div key={d} className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">
+              {d}
+            </div>
+          ))}
+          {(() => {
+            const firstDay = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getDay();
+            const blanks = Array(firstDay).fill(null);
+            return [
+              ...blanks.map((_, i) => <div key={`blank-${i}`} />),
+              ...monthlyHabits.map((day) => (
+                <div
+                  key={day.day}
+                  className={`aspect-square rounded-xl flex flex-col items-center justify-center text-xs font-bold border transition-all ${
+                    day.completed
+                      ? 'bg-lime-400 border-lime-400 text-dark-900 shadow-lg shadow-lime-400/20'
+                      : day.isToday
+                        ? 'bg-lime-400/10 border-lime-400 text-lime-400'
+                        : day.isFuture
+                          ? 'bg-transparent border-white/5 text-gray-700'
+                          : 'bg-white/5 border-white/5 text-gray-500'
+                  }`}
+                >
+                  {day.day}
+                  {day.completed && (
+                    <svg className="w-2.5 h-2.5 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </div>
+              ))
+            ];
+          })()}
+        </div>
+        <p className="text-[10px] text-gray-500 mt-6 text-center">
+          Visualización mensual del cumplimiento total de tus hábitos diarios
+        </p>
       </div>
     </div>
   );

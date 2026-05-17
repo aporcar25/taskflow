@@ -88,3 +88,37 @@ html:not(.dark) .shimmer {
   background-size: 1000px 100%;
   opacity: 1;
 }
+
+@keyframes checkmark-pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { transform: scale(1.4); opacity: 1; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+@keyframes sparkle {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+@keyframes float-fire {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-5px) scale(1.1); }
+}
+
+@keyframes pulse-fire {
+  0%, 100% { filter: drop-shadow(0 0 2px #f97316); }
+  50% { filter: drop-shadow(0 0 8px #f97316); }
+}
+
+.animate-checkmark-pop {
+  animation: checkmark-pop 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-sparkle {
+  animation: sparkle 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-fire {
+  animation: float-fire 3s ease-in-out infinite, pulse-fire 2s ease-in-out infinite;
+}

@@ -190,10 +190,24 @@ export default function DashboardPage() {
               </svg>
             </div>
           </div>
-          <p className="text-3xl font-bold text-dark-900 dark:text-white animate-count-up">
-            {stats.streakDays}
-            <span className="text-lg text-gray-500 font-normal"> días</span>
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-3xl font-bold text-dark-900 dark:text-white animate-count-up">
+              {stats.streakDays}
+              <span className="text-lg text-gray-500 font-normal"> días</span>
+            </p>
+            {stats.streakDays > 0 && (
+              <span
+                className={`inline-block animate-fire ${
+                  stats.streakDays >= 7 ? "text-3xl" : stats.streakDays >= 3 ? "text-2xl" : "text-xl opacity-70"
+                }`}
+                style={{
+                  animationDuration: stats.streakDays >= 7 ? '1s, 1s' : stats.streakDays >= 3 ? '2s, 2s' : '4s, 4s'
+                }}
+              >
+                🔥
+              </span>
+            )}
+          </div>
           <p className="text-xs text-gray-500 mt-1">racha consecutiva</p>
         </div>
       </div>
