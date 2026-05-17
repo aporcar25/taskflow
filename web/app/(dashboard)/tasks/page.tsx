@@ -537,7 +537,7 @@ export default function TasksPage() {
       </div>
 
       {/* Search + Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+      <div className="flex flex-col lg:flex-row gap-3 mb-6">
         {/* Search */}
         <div className="relative flex-1">
           <svg
@@ -618,11 +618,11 @@ export default function TasksPage() {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        <div className="flex lg:grid lg:grid-cols-3 gap-6 items-start overflow-x-auto lg:overflow-x-visible pb-4 lg:pb-0 snap-x snap-mandatory">
           {["pendiente", "en_progreso", "completada"].map((colStatus) => (
             <div
               key={colStatus}
-              className="bg-gray-100/50 dark:bg-white/5 rounded-2xl p-4 min-h-[500px]"
+              className="bg-gray-100/50 dark:bg-white/5 rounded-2xl p-4 min-h-[500px] min-w-[280px] lg:min-w-0 snap-center"
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 const id = e.dataTransfer.getData("taskId");
@@ -666,8 +666,8 @@ export default function TasksPage() {
 
       {/* Delete Modal */}
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-dark-800 border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-fade-in">
+          <div className="bg-white dark:bg-dark-800 border border-white/10 rounded-none sm:rounded-2xl p-6 h-full sm:h-auto max-w-sm w-full shadow-2xl flex flex-col justify-center">
             <h3 className="text-xl font-bold text-white mb-2">Eliminar tarea</h3>
             <p className="text-gray-400 text-sm mb-6">¿Estás seguro de que deseas eliminar esta tarea? Esta acción no se puede deshacer.</p>
             <div className="flex gap-3 justify-end">
@@ -690,8 +690,8 @@ export default function TasksPage() {
 
       {/* Create Modal */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto pt-20 pb-10">
-          <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/10 rounded-2xl p-6 max-w-lg w-full shadow-2xl animate-fade-in my-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/10 rounded-none sm:rounded-2xl p-6 min-h-screen sm:min-h-0 max-w-lg w-full shadow-2xl animate-fade-in my-auto">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-dark-900 dark:text-white">Nueva tarea</h3>
               <button onClick={() => {
@@ -768,7 +768,7 @@ export default function TasksPage() {
                 <input type="text" value={createForm.tags} onChange={(e) => setCreateForm({ ...createForm, tags: e.target.value })} placeholder="ej. urgente, revisión, diseño" className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-white/10 text-dark-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all" />
               </div>
 
-            <div className="flex gap-3 justify-end mt-6">
+            <div className="flex gap-3 justify-end mt-6 pb-10 sm:pb-0">
               <button
                 type="button"
                 onClick={() => {
@@ -803,8 +803,8 @@ export default function TasksPage() {
 
       {/* Edit Modal */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto pt-20 pb-10">
-          <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/10 rounded-2xl p-6 max-w-lg w-full shadow-2xl animate-fade-in my-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/10 rounded-none sm:rounded-2xl p-6 min-h-screen sm:min-h-0 max-w-lg w-full shadow-2xl animate-fade-in my-auto">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-dark-900 dark:text-white">Editar tarea</h3>
               <button onClick={() => setIsEditModalOpen(false)} className="text-gray-400 hover:text-dark-900 dark:hover:text-white transition-colors">
@@ -872,7 +872,7 @@ export default function TasksPage() {
               </div>
             </div>
 
-            <div className="flex gap-3 justify-end mt-6">
+            <div className="flex gap-3 justify-end mt-6 pb-10 sm:pb-0">
               <button
                 onClick={() => setIsEditModalOpen(false)}
                 className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:bg-white/5 transition-colors border border-white/10"

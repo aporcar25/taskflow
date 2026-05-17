@@ -291,8 +291,8 @@ export default function HabitsPage() {
 
       {/* Modal Crear Hábito */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/10 rounded-none sm:rounded-2xl p-6 w-full max-w-md h-full sm:h-auto shadow-2xl flex flex-col justify-center">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-dark-900 dark:text-white">Nuevo hábito</h2>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-dark-900 dark:hover:text-white transition-colors">
@@ -350,8 +350,8 @@ export default function HabitsPage() {
 
       {/* Delete Modal */}
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/10 rounded-none sm:rounded-2xl p-6 w-full max-w-sm h-full sm:h-auto shadow-2xl flex flex-col justify-center text-center sm:text-left">
             <h3 className="text-xl font-bold text-dark-900 dark:text-white mb-2">Eliminar hábito</h3>
             <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">¿Estás seguro de que deseas eliminar este hábito? Se perderá todo el historial de rachas.</p>
             <div className="flex gap-3 justify-end">
@@ -374,8 +374,8 @@ export default function HabitsPage() {
 
       {/* Edit Modal */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/10 rounded-none sm:rounded-2xl p-6 w-full max-w-md h-full sm:h-auto shadow-2xl flex flex-col justify-center">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-dark-900 dark:text-white">Editar hábito</h2>
               <button onClick={() => setIsEditModalOpen(false)} className="text-gray-400 hover:text-dark-900 dark:hover:text-white transition-colors">

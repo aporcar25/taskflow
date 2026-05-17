@@ -28,7 +28,7 @@ export default function QuickSummary() {
   }, [isOpen]);
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-6 right-6 z-40">
       {isOpen && (
         <div className="absolute bottom-16 right-0 w-64 bg-white dark:bg-dark-800 border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl p-4 animate-slide-up transition-colors">
           <h3 className="text-sm font-bold text-dark-900 dark:text-white mb-3 flex items-center justify-between">

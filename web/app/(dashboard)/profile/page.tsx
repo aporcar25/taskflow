@@ -147,7 +147,7 @@ export default function ProfilePage() {
       )}
 
       <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-none">
-        <div className="flex flex-col sm:flex-row items-center gap-6 mb-10">
+        <div className="flex flex-col sm:flex-row items-center gap-6 mb-10 text-center sm:text-left">
           <div className="relative group">
             <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 dark:bg-dark-700 border-2 border-gray-200 dark:border-white/10 flex items-center justify-center">
               {user.foto ? (
@@ -197,7 +197,7 @@ export default function ProfilePage() {
         </div>
 
         <form onSubmit={handleUpdateProfile} className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Nombre</label>
               <input
@@ -293,7 +293,7 @@ export default function ProfilePage() {
                   required
                 />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="newPassword" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Nueva contraseña</label>
                   <input
