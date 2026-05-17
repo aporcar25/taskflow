@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
 // POST / -> crear nueva tarea
 router.post('/', async (req, res) => {
   try {
-    const { titulo, descripcion, prioridad, categoria, fechaLimite } = req.body;
+    const { titulo, descripcion, prioridad, categoria, fechaLimite, estado, tags, recurrencia } = req.body;
 
     if (!titulo) {
       return res.status(400).json({ mensaje: 'El título es obligatorio' });
@@ -31,7 +31,11 @@ router.post('/', async (req, res) => {
       descripcion,
       prioridad,
       categoria,
-      fechaLimite
+      fechaLimite,
+      estado: estado || 'pendiente',
+      completada: estado === 'completada',
+      tags: tags || [],
+      recurrencia: recurrencia || 'ninguna'
     });
 
     const task = await newTask.save();
@@ -45,7 +49,7 @@ router.post('/', async (req, res) => {
 // PUT /:id -> editar tarea
 router.put('/:id', async (req, res) => {
   try {
-    const { titulo, descripcion, prioridad, categoria, fechaLimite, completada } = req.body;
+    const { titulo, descripcion, prioridad, categoria, fechaLimite, completada, estado, archivada, tags, recurrencia } = req.body;
 
     let task = await Task.findById(req.params.id);
 
@@ -62,7 +66,18 @@ router.put('/:id', async (req, res) => {
     task.prioridad = prioridad !== undefined ? prioridad : task.prioridad;
     task.categoria = categoria !== undefined ? categoria : task.categoria;
     task.fechaLimite = fechaLimite !== undefined ? fechaLimite : task.fechaLimite;
-    task.completada = completada !== undefined ? completada : task.completada;
+
+    if (estado !== undefined) {
+      task.estado = estado;
+      task.completada = (estado === 'completada');
+    } else if (completada !== undefined) {
+      task.completada = completada;
+      task.estado = completada ? 'completada' : (task.estado === 'completada' ? 'pendiente' : task.estado);
+    }
+
+    task.archivada = archivada !== undefined ? archivada : task.archivada;
+    task.tags = tags !== undefined ? tags : task.tags;
+    task.recurrencia = recurrencia !== undefined ? recurrencia : task.recurrencia;
 
     await task.save();
     res.json(task);
@@ -113,6 +128,7 @@ router.patch('/:id/complete', async (req, res) => {
     }
 
     task.completada = completada;
+    task.estado = completada ? 'completada' : (task.estado === 'completada' ? 'pendiente' : task.estado);
     await task.save();
 
     res.json(task);

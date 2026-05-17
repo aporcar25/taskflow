@@ -1,32 +1,67 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getPreferences, updatePreferences } from "../../../lib/api";
+import { getPreferences, updatePreferences, getCustomCategories, updateCustomCategories } from "../../../lib/api";
 
 export default function SettingsPage() {
   const [preferences, setPreferences] = useState({
     emailReminders: true,
     dailySummary: true,
   });
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
+  const [newCategory, setNewCategory] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
   useEffect(() => {
-    const fetchPrefs = async () => {
+    const fetchData = async () => {
       try {
-        const prefs = await getPreferences();
+        const [prefs, categories] = await Promise.all([
+          getPreferences(),
+          getCustomCategories()
+        ]);
         setPreferences(prefs);
+        setCustomCategories(categories || []);
         // Sync with localStorage
         localStorage.setItem("taskflow_preferences", JSON.stringify(prefs));
       } catch (error) {
-        console.error("Error fetching preferences:", error);
+        console.error("Error fetching data:", error);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchPrefs();
+    fetchData();
   }, []);
+
+  const handleAddCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = newCategory.trim();
+    if (!trimmed || customCategories.includes(trimmed)) return;
+
+    const updated = [...customCategories, trimmed];
+    setCustomCategories(updated);
+    setNewCategory("");
+    try {
+      await updateCustomCategories(updated);
+      setMessage({ type: "success", text: "Categoría añadida" });
+    } catch (error) {
+      console.error(error);
+      setMessage({ type: "error", text: "Error al añadir categoría" });
+    }
+  };
+
+  const handleDeleteCategory = async (cat: string) => {
+    const updated = customCategories.filter(c => c !== cat);
+    setCustomCategories(updated);
+    try {
+      await updateCustomCategories(updated);
+      setMessage({ type: "success", text: "Categoría eliminada" });
+    } catch (error) {
+      console.error(error);
+      setMessage({ type: "error", text: "Error al eliminar categoría" });
+    }
+  };
 
   const handleToggle = async (key: "emailReminders" | "dailySummary") => {
     const newPrefs = { ...preferences, [key]: !preferences[key] };
@@ -73,6 +108,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-4">
+        <h2 className="text-lg font-bold text-dark-900 dark:text-white px-1">Notificaciones</h2>
         {/* Email Reminders */}
         <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 flex items-center justify-between group transition-all hover:border-lime-400/20 shadow-sm dark:shadow-none">
           <div className="flex items-center gap-4">
@@ -127,6 +163,47 @@ export default function SettingsPage() {
               }`}
             />
           </button>
+        </div>
+      </div>
+
+      <div className="space-y-4 pt-4">
+        <h2 className="text-lg font-bold text-dark-900 dark:text-white px-1">Categorías Personalizadas</h2>
+        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 shadow-sm dark:shadow-none">
+          <form onSubmit={handleAddCategory} className="flex gap-2 mb-6">
+            <input
+              type="text"
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              placeholder="Nueva categoría (ej. Trabajo 2.0)"
+              className="flex-1 px-4 py-2 rounded-xl bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-white/10 text-dark-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50"
+            />
+            <button
+              type="submit"
+              className="px-4 py-2 bg-lime-400 text-dark-900 rounded-xl text-sm font-bold hover:bg-lime-400/90 transition-colors"
+            >
+              Añadir
+            </button>
+          </form>
+
+          <div className="flex flex-wrap gap-2">
+            {customCategories.length === 0 ? (
+              <p className="text-xs text-gray-500 italic">No has añadido categorías personalizadas aún.</p>
+            ) : (
+              customCategories.map((cat) => (
+                <div key={cat} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 group">
+                  <span className="text-sm text-dark-900 dark:text-white">{cat}</span>
+                  <button
+                    onClick={() => handleDeleteCategory(cat)}
+                    className="text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
 

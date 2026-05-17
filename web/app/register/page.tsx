@@ -38,7 +38,7 @@ export default function RegisterPage() {
       const data = await register(form.name, form.email, form.password);
       localStorage.setItem("taskflow_token", data.token);
       window.location.href = "/dashboard";
-    } catch (err: any) {
+    } catch (err: unknown) {
       setErrors({ email: err.message || "Error al registrar" });
       setLoading(false);
     }

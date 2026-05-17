@@ -64,6 +64,50 @@ const initJobs = () => {
       console.error("Error en el job de resumen diario:", error);
     }
   });
+
+  // Job 3: Cada día a medianoche
+  // Crea nuevas instancias de tareas recurrentes que fueron completadas
+  cron.schedule('0 0 * * *', async () => {
+    console.log("Ejecutando job de tareas recurrentes...");
+    try {
+      const completedRecurringTasks = await Task.find({
+        completada: true,
+        recurrencia: { $ne: 'ninguna' }
+      });
+
+      for (const task of completedRecurringTasks) {
+        // Verificar si ya se creó la siguiente instancia para evitar duplicados
+        // (En una app real usaríamos un campo lastInstanceDate o similar,
+        // aquí simplemente crearemos una nueva si la actual está completada y es el momento)
+
+        let nextDueDate = new Date(task.fechaLimite || new Date());
+        if (task.recurrencia === 'diaria') nextDueDate.setDate(nextDueDate.getDate() + 1);
+        else if (task.recurrencia === 'semanal') nextDueDate.setDate(nextDueDate.getDate() + 7);
+        else if (task.recurrencia === 'mensual') nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+
+        const newTask = new Task({
+          userId: task.userId,
+          titulo: task.titulo,
+          descripcion: task.descripcion,
+          prioridad: task.prioridad,
+          categoria: task.categoria,
+          fechaLimite: nextDueDate,
+          estado: 'pendiente',
+          completada: false,
+          tags: task.tags,
+          recurrencia: task.recurrencia
+        });
+
+        await newTask.save();
+
+        // Opcional: Quitar recurrencia de la tarea vieja para que no se procese de nuevo
+        task.recurrencia = 'ninguna';
+        await task.save();
+      }
+    } catch (error) {
+      console.error("Error en el job de tareas recurrentes:", error);
+    }
+  });
 };
 
 module.exports = { initJobs };

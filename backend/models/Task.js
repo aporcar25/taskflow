@@ -24,9 +24,27 @@ const TaskSchema = new mongoose.Schema({
     type: String,
     default: 'general'
   },
+  estado: {
+    type: String,
+    enum: ['pendiente', 'en_progreso', 'completada'],
+    default: 'pendiente'
+  },
   completada: {
     type: Boolean,
     default: false
+  },
+  archivada: {
+    type: Boolean,
+    default: false
+  },
+  tags: {
+    type: [String],
+    default: []
+  },
+  recurrencia: {
+    type: String,
+    enum: ['ninguna', 'diaria', 'semanal', 'mensual'],
+    default: 'ninguna'
   },
   fechaLimite: {
     type: Date

@@ -59,7 +59,7 @@ export const getTasks = async () => {
   return res.json();
 };
 
-export const createTask = async (data: any) => {
+export const createTask = async (data: unknown) => {
   const res = await fetch(`${API_URL}/tasks`, {
     method: "POST",
     headers: getHeaders(),
@@ -69,7 +69,7 @@ export const createTask = async (data: any) => {
   return res.json();
 };
 
-export const updateTask = async (id: string, data: any) => {
+export const updateTask = async (id: string, data: unknown) => {
   const res = await fetch(`${API_URL}/tasks/${id}`, {
     method: "PUT",
     headers: getHeaders(),
@@ -106,7 +106,7 @@ export const getHabits = async () => {
   return res.json();
 };
 
-export const createHabit = async (data: any) => {
+export const createHabit = async (data: unknown) => {
   const res = await fetch(`${API_URL}/habits`, {
     method: "POST",
     headers: getHeaders(),
@@ -125,7 +125,7 @@ export const checkHabit = async (id: string) => {
   return res.json();
 };
 
-export const updateHabit = async (id: string, data: any) => {
+export const updateHabit = async (id: string, data: unknown) => {
   const res = await fetch(`${API_URL}/habits/${id}`, {
     method: "PUT",
     headers: getHeaders(),
@@ -144,7 +144,7 @@ export const deleteHabit = async (id: string) => {
   return res.json();
 };
 
-export const getStats = async (): Promise<any> => {
+export const getStats = async (): Promise<unknown> => {
   const res = await fetch(`${API_URL}/stats`, {
     headers: getHeaders(),
   });
@@ -164,6 +164,24 @@ export const updateProfile = async (data: { nombre?: string; email?: string }) =
     localStorage.setItem('taskflow_user', JSON.stringify(result));
   }
   return result;
+};
+
+export const getCustomCategories = async () => {
+  const res = await fetch(`${API_URL}/auth/custom-categories`, {
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw new Error("Error obteniendo categorías");
+  return res.json();
+};
+
+export const updateCustomCategories = async (categories: string[]) => {
+  const res = await fetch(`${API_URL}/auth/custom-categories`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify({ categories }),
+  });
+  if (!res.ok) throw new Error("Error actualizando categorías");
+  return res.json();
 };
 
 export const updatePreferences = async (data: { emailReminders?: boolean; dailySummary?: boolean }) => {

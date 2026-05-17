@@ -11,9 +11,13 @@ export interface Task {
   title: string;
   description: string;
   priority: Priority;
-  category: Category;
+  category: Category | string;
   dueDate: string;
   completed: boolean;
+  estado: "pendiente" | "en_progreso" | "completada";
+  archivada: boolean;
+  tags: string[];
+  recurrencia: "ninguna" | "diaria" | "semanal" | "mensual";
   createdAt: string;
 }
 

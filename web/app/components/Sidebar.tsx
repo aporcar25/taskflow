@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { getTasks, getHabits } from "@/lib/api";
 
 const navItems = [
   {
@@ -60,6 +61,10 @@ export default function Sidebar() {
   const [streak, setStreak] = useState<number>(0);
   const [isDark, setIsDark] = useState(true);
 
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchData, setSearchData] = useState<{ tasks: { _id: string; titulo: string; descripcion: string; completada: boolean; prioridad: string }[], habits: { _id: string; nombre: string; icono: string; racha: number }[] }>({ tasks: [], habits: [] });
+
   useEffect(() => {
     setIsDark(document.documentElement.classList.contains('dark'));
     const loadUser = () => {
@@ -87,7 +92,7 @@ export default function Sidebar() {
           // Find max current streak among habits
           let maxStreak = 0;
           if (data.habitosDetalles) {
-            maxStreak = Math.max(...data.habitosDetalles.map((h: any) => h.rachaActual), 0);
+            maxStreak = Math.max(...data.habitosDetalles.map((h: { rachaActual: number }) => h.rachaActual), 0);
           }
           setStreak(maxStreak);
         }
@@ -100,6 +105,33 @@ export default function Sidebar() {
     window.addEventListener('storage', loadUser);
     return () => window.removeEventListener('storage', loadUser);
   }, []);
+
+  const fetchSearchData = async () => {
+    try {
+      const [tasks, habits] = await Promise.all([getTasks(), getHabits()]);
+      setSearchData({
+        tasks: (tasks as { _id: string; titulo: string; descripcion: string; completada: boolean; prioridad: string }[]).map(t => ({ _id: (t as { _id: string })._id, titulo: t.titulo, descripcion: t.descripcion, completada: t.completada, prioridad: t.prioridad })),
+        habits: (habits as { _id: string; nombre: string; icono: string; racha: number }[]).map(h => ({ _id: (h as { _id: string })._id, nombre: h.nombre, icono: h.icono, racha: h.racha }))
+      });
+      setIsSearchOpen(true);
+    } catch (error) {
+      console.error("Error fetching search data:", error);
+    }
+  };
+
+  const filteredResults = useMemo(() => {
+    if (!searchQuery.trim()) return { tasks: [], habits: [] };
+    const query = searchQuery.toLowerCase();
+    return {
+      tasks: searchData.tasks.filter(t =>
+        t.titulo?.toLowerCase().includes(query) ||
+        t.descripcion?.toLowerCase().includes(query)
+      ).slice(0, 5),
+      habits: searchData.habits.filter(h =>
+        h.nombre?.toLowerCase().includes(query)
+      ).slice(0, 5)
+    };
+  }, [searchQuery, searchData]);
 
   const toggleTheme = () => {
     const newTheme = !isDark;
@@ -132,6 +164,17 @@ export default function Sidebar() {
             </span>
           </div>
 
+          <div className="flex items-center gap-1">
+          <button
+            onClick={fetchSearchData}
+            className="p-2 rounded-lg bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-lime-400 transition-colors"
+            title="Buscar"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+
           <button
             onClick={toggleTheme}
             className="p-2 rounded-lg bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-lime-400 transition-colors"
@@ -147,6 +190,7 @@ export default function Sidebar() {
               </svg>
             )}
           </button>
+        </div>
         </div>
 
         {/* Navigation */}
@@ -210,6 +254,15 @@ export default function Sidebar() {
       {/* Mobile bottom nav */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-dark-800/95 backdrop-blur-xl border-t border-gray-200 dark:border-white/5 z-50 px-2 py-2">
         <div className="flex justify-around items-center">
+            <button
+              onClick={fetchSearchData}
+              className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all text-gray-500 hover:text-dark-900 dark:hover:text-white"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <span className="text-[10px] font-medium">Buscar</span>
+            </button>
           {navItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
             return (
@@ -226,6 +279,107 @@ export default function Sidebar() {
           })}
         </div>
       </nav>
+
+      <SearchModal
+        isOpen={isSearchOpen}
+        onClose={() => { setIsSearchOpen(false); setSearchQuery(""); }}
+        query={searchQuery}
+        setQuery={setSearchQuery}
+        results={filteredResults}
+      />
     </>
+  );
+}
+
+function SearchModal({ isOpen, onClose, query, setQuery, results }: { isOpen: boolean, onClose: () => void, query: string, setQuery: (q: string) => void, results: { tasks: { _id: string; titulo: string; completada: boolean; prioridad: string }[], habits: { _id: string; nombre: string; icono: string; racha: number }[] } }) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+      <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/10 rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="p-6 border-b border-gray-100 dark:border-white/5">
+          <div className="relative">
+            <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              autoFocus
+              type="text"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Buscar tareas, hábitos..."
+              className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-dark-700 border-none rounded-2xl text-dark-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-lime-400/50 outline-none transition-all"
+            />
+          </div>
+        </div>
+
+        <div className="max-h-[60vh] overflow-y-auto p-4 custom-scrollbar">
+          {query.trim() === "" ? (
+            <div className="py-12 text-center">
+              <p className="text-gray-400 dark:text-gray-500">Escribe algo para empezar a buscar...</p>
+            </div>
+          ) : results.tasks.length === 0 && results.habits.length === 0 ? (
+            <div className="py-12 text-center">
+              <p className="text-gray-400 dark:text-gray-500">No se encontraron resultados para &quot;{query}&quot;</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {results.tasks.length > 0 && (
+                <div>
+                  <h3 className="px-3 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Tareas</h3>
+                  <div className="space-y-1">
+                    {results.tasks.map(task => (
+                      <Link
+                        key={task._id}
+                        href="/tasks"
+                        onClick={onClose}
+                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group"
+                      >
+                        <div className={`w-2 h-2 rounded-full ${task.completada ? 'bg-lime-400' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-medium truncate ${task.completada ? 'line-through text-gray-500' : 'text-dark-900 dark:text-white'}`}>
+                            {task.titulo}
+                          </p>
+                        </div>
+                        <span className="text-[10px] font-bold uppercase text-gray-400">{task.prioridad}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {results.habits.length > 0 && (
+                <div>
+                  <h3 className="px-3 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Hábitos</h3>
+                  <div className="space-y-1">
+                    {results.habits.map(habit => (
+                      <Link
+                        key={habit._id}
+                        href="/habits"
+                        onClick={onClose}
+                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group"
+                      >
+                        <span className="text-xl">{habit.icono}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-dark-900 dark:text-white truncate">
+                            {habit.nombre}
+                          </p>
+                        </div>
+                        <span className="text-[10px] font-bold text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded-full">{habit.racha}🔥</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 border-t border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/5 flex justify-between items-center">
+          <p className="text-[10px] text-gray-400">Presiona <kbd className="bg-white dark:bg-dark-700 px-1.5 py-0.5 rounded border border-gray-200 dark:border-white/10 text-gray-500 font-sans">ESC</kbd> para cerrar</p>
+          <button onClick={onClose} className="text-[10px] font-bold text-lime-500 hover:underline">Cerrar buscador</button>
+        </div>
+      </div>
+    </div>
   );
 }

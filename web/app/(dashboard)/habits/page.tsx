@@ -91,7 +91,7 @@ export default function HabitsPage() {
           });
         };
 
-        const mappedHabits = data.map((h: any) => ({
+        const mappedHabits = data.map((h: unknown) => ({
           id: h._id,
           name: h.nombre,
           icon: h.icono,

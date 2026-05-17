@@ -29,7 +29,7 @@ export default function DashboardPage() {
     productivity: 0,
     streakDays: 0,
   });
-  const [recentTasks, setRecentTasks] = useState<any[]>([]);
+  const [recentTasks, setRecentTasks] = useState<unknown[]>([]);
   const [greeting, setGreeting] = useState("Buenos días");
   const [userName, setUserName] = useState('');
   const [weeklyActivity, setWeeklyActivity] = useState(defaultWeeklyActivity);
@@ -51,7 +51,7 @@ export default function DashboardPage() {
         if (user && user.nombre) {
           setUserName(user.nombre.split(' ')[0]);
         }
-      } catch (e) {}
+      } catch {}
     }
 
     const fetchData = async () => {
@@ -72,7 +72,7 @@ export default function DashboardPage() {
         }
 
         const tasksData = await getTasks();
-        const mappedTasks = tasksData.map((t: any) => ({
+        const mappedTasks = tasksData.map((t: unknown) => ({
           id: t._id,
           title: t.titulo,
           category: t.categoria,
