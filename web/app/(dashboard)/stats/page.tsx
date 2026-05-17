@@ -274,8 +274,8 @@ export default function StatsPage() {
       </div>
 
       {/* Tareas por Prioridad & Progreso Mensual */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="md:col-span-3 bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 flex flex-col justify-center shadow-sm dark:shadow-none">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-3 bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 flex flex-col justify-center shadow-sm dark:shadow-none">
           <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-6">Tareas por Prioridad</h3>
           <div className="grid grid-cols-3 gap-4">
             <div className="flex flex-col items-center p-4 rounded-xl bg-red-500/10 border border-red-500/20">

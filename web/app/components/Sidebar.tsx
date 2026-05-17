@@ -54,7 +54,7 @@ const navItems = [
   },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, setIsOpen }: { isOpen?: boolean; setIsOpen?: (open: boolean) => void }) {
   const pathname = usePathname();
 
   const [user, setUser] = useState<{ nombre: string; email: string; foto?: string } | null>(null);
@@ -149,8 +149,16 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col fixed left-0 top-0 h-screen w-64 bg-white dark:bg-dark-800 border-r border-gray-200 dark:border-white/5 z-40 transition-colors">
+      {/* Overlay for mobile */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[45] md:hidden animate-fade-in"
+          onClick={() => setIsOpen?.(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`fixed left-0 top-0 h-screen w-64 bg-white dark:bg-dark-800 border-r border-gray-200 dark:border-white/5 z-50 transition-all duration-300 transform md:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"} flex flex-col`}>
         {/* Logo */}
         <div className="flex items-center justify-between px-6 py-6 border-b border-gray-100 dark:border-white/5">
           <div className="flex items-center gap-3">
@@ -251,34 +259,6 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {/* Mobile bottom nav */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-dark-800/95 backdrop-blur-xl border-t border-gray-200 dark:border-white/5 z-50 px-2 py-2">
-        <div className="flex justify-around items-center">
-            <button
-              onClick={fetchSearchData}
-              className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all text-gray-500 hover:text-dark-900 dark:hover:text-white"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <span className="text-[10px] font-medium">Buscar</span>
-            </button>
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all ${isActive ? "text-lime-400" : "text-gray-500 hover:text-dark-900 dark:hover:text-white"
-                  }`}
-              >
-                {item.icon}
-                <span className="text-[10px] font-medium">{item.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
 
       <SearchModal
         isOpen={isSearchOpen}
@@ -295,8 +275,8 @@ function SearchModal({ isOpen, onClose, query, setQuery, results }: { isOpen: bo
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-      <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/10 rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-0 sm:pt-[15vh] px-0 sm:px-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+      <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/10 rounded-none sm:rounded-3xl w-full max-w-2xl h-full sm:h-auto shadow-2xl overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
         <div className="p-6 border-b border-gray-100 dark:border-white/5">
           <div className="relative">
             <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
