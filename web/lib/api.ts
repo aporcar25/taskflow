@@ -166,6 +166,20 @@ export const updateProfile = async (data: { nombre?: string; email?: string }) =
   return result;
 };
 
+export const completeTutorial = async (page: string) => {
+  const res = await fetch(`${API_URL}/auth/tutorial-complete`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify({ page }),
+  });
+  if (!res.ok) throw new Error("Error actualizando tutorial");
+  const result = await res.json();
+  if (result.id) {
+    localStorage.setItem('taskflow_user', JSON.stringify(result));
+  }
+  return result;
+};
+
 export const getCustomCategories = async () => {
   const res = await fetch(`${API_URL}/auth/custom-categories`, {
     headers: getHeaders(),
