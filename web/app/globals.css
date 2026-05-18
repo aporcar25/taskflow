@@ -122,3 +122,12 @@ html:not(.dark) .shimmer {
 .animate-fire {
   animation: float-fire 3s ease-in-out infinite, pulse-fire 2s ease-in-out infinite;
 }
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.toast-slide-down {
+  animation: slideDown 0.3s ease-out forwards;
+}
