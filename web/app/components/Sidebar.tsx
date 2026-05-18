@@ -201,16 +201,6 @@ export default function Sidebar({
           </button>
 
           <button
-            onClick={() => setIsPomodoroOpen?.(!isPomodoroOpen)}
-            className={`p-2 rounded-lg bg-gray-100 dark:bg-white/5 transition-colors ${isPomodoroOpen ? "text-lime-400" : "text-gray-500 dark:text-gray-400 hover:text-lime-400"}`}
-            title="Temporizador Pomodoro"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </button>
-
-          <button
             onClick={toggleTheme}
             className="p-2 rounded-lg bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-lime-400 transition-colors"
             title="Cambiar tema"
@@ -251,7 +241,21 @@ export default function Sidebar({
         </nav>
 
         {/* User section */}
-        <div className="px-4 py-4 border-t border-gray-100 dark:border-white/5">
+        <div className="px-4 py-4 border-t border-gray-100 dark:border-white/5 space-y-1">
+          <button
+            onClick={() => setIsPomodoroOpen?.(!isPomodoroOpen)}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+              isPomodoroOpen
+                ? "bg-lime-400/10 text-lime-400 border border-lime-400/20"
+                : "text-gray-500 dark:text-gray-400 hover:text-dark-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
+            }`}
+          >
+            <svg className={`w-5 h-5 transition-colors ${isPomodoroOpen ? "text-lime-400" : "text-gray-500 group-hover:text-dark-900 dark:group-hover:text-white"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Pomodoro
+          </button>
+
           <Link href="/profile" className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 transition-colors cursor-pointer group">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-lime-400 to-emerald-500 flex items-center justify-center overflow-hidden border border-gray-200 dark:border-white/10 group-hover:border-lime-400/50 transition-colors">
               {user?.foto ? (
