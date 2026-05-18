@@ -15,6 +15,12 @@ const getHeaders = () => {
   };
 };
 
+const notifyUserUpdate = () => {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event('taskflow-user-updated'));
+  }
+};
+
 export const register = async (name: string, email: string, password: string) => {
   const res = await fetch(`${API_URL}/auth/register`, {
     method: "POST",
@@ -25,6 +31,7 @@ export const register = async (name: string, email: string, password: string) =>
   const data = await res.json();
   if (data.user) {
     localStorage.setItem('taskflow_user', JSON.stringify(data.user));
+    notifyUserUpdate();
   }
   return data;
 };
@@ -39,6 +46,7 @@ export const login = async (email: string, password: string) => {
   const data = await res.json();
   if (data.user) {
     localStorage.setItem('taskflow_user', JSON.stringify(data.user));
+    notifyUserUpdate();
   }
   return data;
 };
@@ -162,6 +170,7 @@ export const updateProfile = async (data: { nombre?: string; email?: string }) =
   const result = await res.json();
   if (result.id) {
     localStorage.setItem('taskflow_user', JSON.stringify(result));
+    notifyUserUpdate();
   }
   return result;
 };
@@ -176,6 +185,7 @@ export const completeTutorial = async (page: string) => {
   const result = await res.json();
   if (result.id) {
     localStorage.setItem('taskflow_user', JSON.stringify(result));
+    notifyUserUpdate();
   }
   return result;
 };
@@ -239,6 +249,7 @@ export const completeOnboarding = async () => {
   const result = await res.json();
   if (result.id) {
     localStorage.setItem('taskflow_user', JSON.stringify(result));
+    notifyUserUpdate();
   }
   return result;
 };
@@ -253,6 +264,7 @@ export const updateProfilePhoto = async (foto: string) => {
   const result = await res.json();
   if (result.id) {
     localStorage.setItem('taskflow_user', JSON.stringify(result));
+    notifyUserUpdate();
   }
   return result;
 };

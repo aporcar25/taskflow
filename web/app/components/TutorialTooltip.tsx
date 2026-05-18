@@ -20,23 +20,32 @@ export default function TutorialTooltip({ steps, pageKey }: TutorialTooltipProps
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, height: 0 });
 
   useEffect(() => {
-    const userStr = localStorage.getItem("taskflow_user");
-    if (userStr) {
-      const user = JSON.parse(userStr);
-      const fieldMap: Record<string, string> = {
-        dashboard: 'tutorialDashboard',
-        tasks: 'tutorialTasks',
-        habits: 'tutorialHabits',
-        stats: 'tutorialStats'
-      };
+    const checkTutorial = () => {
+      const userStr = localStorage.getItem("taskflow_user");
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        const fieldMap: Record<string, string> = {
+          dashboard: 'tutorialDashboard',
+          tasks: 'tutorialTasks',
+          habits: 'tutorialHabits',
+          stats: 'tutorialStats'
+        };
 
-      const completed = user[fieldMap[pageKey]];
-      if (!completed) {
-        // Delay to ensure elements are rendered
-        const timer = setTimeout(() => setIsVisible(true), 1000);
-        return () => clearTimeout(timer);
+        const completed = user[fieldMap[pageKey]];
+        const onboardingCompleted = user.onboardingCompleted;
+
+        if (!completed && onboardingCompleted) {
+          // Delay to ensure elements are rendered
+          setTimeout(() => setIsVisible(true), 1000);
+        } else {
+          setIsVisible(false);
+        }
       }
-    }
+    };
+
+    checkTutorial();
+    window.addEventListener('taskflow-user-updated', checkTutorial);
+    return () => window.removeEventListener('taskflow-user-updated', checkTutorial);
   }, [pageKey]);
 
   const finish = useCallback(async () => {
