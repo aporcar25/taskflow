@@ -2,8 +2,10 @@
 
 import Sidebar from "../components/Sidebar";
 import QuickSummary from "../components/QuickSummary";
+import OnboardingModal from "../components/OnboardingModal";
+import PomodoroTimer from "../components/PomodoroTimer";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function DashboardLayout({
   children,
@@ -13,10 +15,32 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const isDashboard = pathname === "/dashboard";
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isPomodoroOpen, setIsPomodoroOpen] = useState(false);
+
+  useEffect(() => {
+    const onboardingCompleted = localStorage.getItem("onboardingCompleted");
+    if (!onboardingCompleted) {
+      setShowOnboarding(true);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-dark-900 transition-colors">
-      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
+      {showOnboarding && (
+        <OnboardingModal onComplete={() => setShowOnboarding(false)} />
+      )}
+      <Sidebar
+        isOpen={isSidebarOpen}
+        setIsOpen={setIsSidebarOpen}
+        isPomodoroOpen={isPomodoroOpen}
+        setIsPomodoroOpen={setIsPomodoroOpen}
+      />
+
+      <PomodoroTimer
+        isOpen={isPomodoroOpen}
+        onClose={() => setIsPomodoroOpen(false)}
+      />
 
       {/* Mobile Top Header */}
       <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 dark:bg-dark-900/80 backdrop-blur-xl border-b border-gray-100 dark:border-white/5 z-30 flex items-center justify-between px-4">

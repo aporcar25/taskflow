@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import TutorialTooltip from "../../components/TutorialTooltip";
+import { useToast } from "../../components/ToastProvider";
 import { type Habit } from "@/app/lib/mockData";
 import { getHabits, checkHabit, createHabit, updateHabit, deleteHabit } from "../../../lib/api";
 
 const dayLabels = ["L", "M", "X", "J", "V", "S", "D"];
 
 export default function HabitsPage() {
+  const { showToast } = useToast();
   const [habits, setHabits] = useState<Habit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -39,8 +42,10 @@ export default function HabitsPage() {
       setHabits(habits.map(h => h.id === editingHabit.id ? { ...h, name: updated.nombre, icon: updated.icono } : h));
       setIsEditModalOpen(false);
       setEditingHabit(null);
+      showToast("Hábito actualizado", "success");
     } catch (err) {
       console.error("Error editando hábito", err);
+      showToast("Error al actualizar el hábito", "error");
     } finally {
       setIsSaving(false);
     }
@@ -53,8 +58,10 @@ export default function HabitsPage() {
       setHabits(habits.filter(h => h.id !== habitToDelete));
       setIsDeleteModalOpen(false);
       setHabitToDelete(null);
+      showToast("Hábito eliminado", "success");
     } catch (err) {
       console.error("Error eliminando hábito", err);
+      showToast("Error al eliminar el hábito", "error");
     }
   };
 
@@ -64,9 +71,11 @@ export default function HabitsPage() {
     setIsCreating(true);
     try {
       await createHabit({ nombre: newHabitName, icono: newHabitIcon });
-      window.location.href = "/habits";
+      showToast("Hábito creado", "success");
+      setTimeout(() => window.location.href = "/habits", 500);
     } catch (err) {
       console.error(err);
+      showToast("Error al crear el hábito", "error");
       setIsCreating(false);
     }
   };
@@ -127,8 +136,10 @@ export default function HabitsPage() {
 
     try {
       await checkHabit(id);
+      showToast(nowCompleted ? "Hábito completado! 🔥" : "Hábito desmarcado", "success");
     } catch (err) {
       console.error(err);
+      showToast("Error al marcar el hábito", "error");
       setHabits((prev) =>
         prev.map((h) => {
           if (h.id !== id) return h;
@@ -165,8 +176,15 @@ export default function HabitsPage() {
     </div>
   );
 
+  const tutorialSteps = [
+    { targetId: "btn-new-habit", content: "Comienza un nuevo hábito para mejorar tu rutina diaria." },
+    { targetId: "daily-progress", content: "Mira el porcentaje de hábitos que has completado hoy." },
+    { targetId: "habit-grid", content: "Marca tus hábitos como completados y mantén tu racha viva." },
+  ];
+
   return (
     <div className="animate-fade-in">
+      <TutorialTooltip steps={tutorialSteps} pageKey="habits" />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
@@ -176,6 +194,7 @@ export default function HabitsPage() {
           </p>
         </div>
         <button
+          id="btn-new-habit"
           onClick={() => setShowModal(true)}
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-lime-400 text-dark-900 font-semibold text-sm hover:bg-lime-400/90 transition-all hover:shadow-lg hover:shadow-lime-400/20"
         >
@@ -187,7 +206,7 @@ export default function HabitsPage() {
       </div>
 
       {/* Progress bar */}
-      <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-5 mb-6 shadow-sm dark:shadow-none">
+      <div id="daily-progress" className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-5 mb-6 shadow-sm dark:shadow-none">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Progreso de hoy</span>
           <span className="text-sm font-bold text-lime-400">
@@ -203,7 +222,7 @@ export default function HabitsPage() {
       </div>
 
       {/* Habits grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div id="habit-grid" className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {habits.map((habit) => (
           <div
             key={habit.id}

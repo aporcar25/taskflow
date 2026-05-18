@@ -54,7 +54,17 @@ const navItems = [
   },
 ];
 
-export default function Sidebar({ isOpen, setIsOpen }: { isOpen?: boolean; setIsOpen?: (open: boolean) => void }) {
+export default function Sidebar({
+  isOpen,
+  setIsOpen,
+  isPomodoroOpen,
+  setIsPomodoroOpen
+}: {
+  isOpen?: boolean;
+  setIsOpen?: (open: boolean) => void;
+  isPomodoroOpen?: boolean;
+  setIsPomodoroOpen?: (open: boolean) => void;
+}) {
   const pathname = usePathname();
 
   const [user, setUser] = useState<{ nombre: string; email: string; foto?: string } | null>(null);
@@ -63,6 +73,7 @@ export default function Sidebar({ isOpen, setIsOpen }: { isOpen?: boolean; setIs
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [searchData, setSearchData] = useState<{ tasks: { _id: string; titulo: string; descripcion: string; completada: boolean; prioridad: string }[], habits: { _id: string; nombre: string; icono: string; racha: number }[] }>({ tasks: [], habits: [] });
 
   useEffect(() => {
@@ -133,6 +144,12 @@ export default function Sidebar({ isOpen, setIsOpen }: { isOpen?: boolean; setIs
     };
   }, [searchQuery, searchData]);
 
+  const handleLogout = () => {
+    localStorage.removeItem("taskflow_token");
+    localStorage.removeItem("taskflow_user");
+    window.location.href = "/";
+  };
+
   const toggleTheme = () => {
     const newTheme = !isDark;
     setIsDark(newTheme);
@@ -180,6 +197,16 @@ export default function Sidebar({ isOpen, setIsOpen }: { isOpen?: boolean; setIs
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+
+          <button
+            onClick={() => setIsPomodoroOpen?.(!isPomodoroOpen)}
+            className={`p-2 rounded-lg bg-gray-100 dark:bg-white/5 transition-colors ${isPomodoroOpen ? "text-lime-400" : "text-gray-500 dark:text-gray-400 hover:text-lime-400"}`}
+            title="Temporizador Pomodoro"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </button>
 
@@ -247,15 +274,15 @@ export default function Sidebar({ isOpen, setIsOpen }: { isOpen?: boolean; setIs
               )}
             </div>
           </Link>
-          <Link
-            href="/"
-            className="flex items-center gap-3 px-4 py-2.5 mt-2 rounded-xl text-sm text-gray-500 hover:text-red-500 hover:bg-red-500/5 transition-all"
+          <button
+            onClick={() => setIsLogoutModalOpen(true)}
+            className="w-full flex items-center gap-3 px-4 py-2.5 mt-2 rounded-xl text-sm text-gray-500 hover:text-red-500 hover:bg-red-500/5 transition-all"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1" />
             </svg>
             Cerrar sesión
-          </Link>
+          </button>
         </div>
       </aside>
 
@@ -267,6 +294,34 @@ export default function Sidebar({ isOpen, setIsOpen }: { isOpen?: boolean; setIs
         setQuery={setSearchQuery}
         results={filteredResults}
       />
+
+      {isLogoutModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in" onClick={() => setIsLogoutModalOpen(false)}>
+          <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl flex flex-col items-center text-center" onClick={e => e.stopPropagation()}>
+            <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-4">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-dark-900 dark:text-white mb-2">¿Cerrar sesión?</h3>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">Seguro que quieres cerrar sesión? Tendrás que volver a ingresar tus credenciales.</p>
+            <div className="flex gap-3 w-full">
+              <button
+                onClick={() => setIsLogoutModalOpen(false)}
+                className="flex-1 px-4 py-2 rounded-xl text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors border border-gray-100 dark:border-white/10"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex-1 px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

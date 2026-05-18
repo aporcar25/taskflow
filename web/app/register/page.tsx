@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useToast } from "../components/ToastProvider";
 import { register } from "../../lib/api";
 
 export default function RegisterPage() {
+  const { showToast } = useToast();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({});
   const [loading, setLoading] = useState(false);
@@ -37,8 +39,10 @@ export default function RegisterPage() {
     try {
       const data = await register(form.name, form.email, form.password);
       localStorage.setItem("taskflow_token", data.token);
+      showToast("¡Cuenta creada con éxito! Bienvenido.", "success");
       window.location.href = "/dashboard";
     } catch (err: unknown) {
+      showToast(err.message || "Error al crear la cuenta", "error");
       setErrors({ email: err.message || "Error al registrar" });
       setLoading(false);
     }

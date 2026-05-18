@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { weeklyActivity as defaultWeeklyActivity } from "@/app/lib/mockData";
 import { getStats, getTasks } from "../../../lib/api";
 import Link from "next/link";
+import TutorialTooltip from "../../components/TutorialTooltip";
 
 const getDueDateColor = (dueDate: string) => {
   if (!dueDate) return "text-gray-500";
@@ -110,8 +111,15 @@ export default function DashboardPage() {
     </div>
   );
 
+  const tutorialSteps = [
+    { targetId: "stats-summary", content: "Aquí tienes un resumen rápido de tu actividad de hoy y tu racha actual." },
+    { targetId: "activity-chart", content: "Visualiza cuántas tareas completas cada día de la semana." },
+    { targetId: "recent-tasks", content: "Tus tareas más recientes para que nunca pierdas el hilo." },
+  ];
+
   return (
     <div className="animate-fade-in">
+      <TutorialTooltip steps={tutorialSteps} pageKey="dashboard" />
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-dark-900 dark:text-white">
@@ -123,7 +131,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div id="stats-summary" className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {/* Completed today */}
         <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-5 hover:border-lime-400/20 transition-all duration-300 group shadow-sm dark:shadow-none">
           <div className="flex items-center justify-between mb-3">
@@ -215,7 +223,7 @@ export default function DashboardPage() {
       {/* Activity chart + Recent tasks */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Weekly activity chart */}
-        <div className="lg:col-span-3 bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 shadow-sm dark:shadow-none">
+        <div id="activity-chart" className="lg:col-span-3 bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 shadow-sm dark:shadow-none">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-dark-900 dark:text-white">Actividad semanal</h2>
             <span className="text-xs text-gray-500 bg-gray-50 dark:bg-dark-700 px-3 py-1 rounded-lg border border-gray-100 dark:border-transparent">Esta semana</span>
@@ -242,7 +250,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent tasks */}
-        <div className="lg:col-span-2 bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 shadow-sm dark:shadow-none">
+        <div id="recent-tasks" className="lg:col-span-2 bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 shadow-sm dark:shadow-none">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-dark-900 dark:text-white">Tareas recientes</h2>
             <Link href="/tasks" className="text-xs text-lime-400 hover:text-lime-300 transition-colors font-medium">

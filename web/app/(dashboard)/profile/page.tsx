@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useToast } from "../../components/ToastProvider";
 import { getMe, updateProfile, updateProfilePhoto, changePassword } from "../../../lib/api";
 
 export default function ProfilePage() {
+  const { showToast } = useToast();
   const [user, setUser] = useState({ nombre: "", email: "", foto: "" });
   const [form, setForm] = useState({ nombre: "", email: "" });
   const [loading, setLoading] = useState(true);
@@ -55,11 +57,11 @@ export default function ProfilePage() {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword,
       });
-      setPasswordSuccess("Contraseña actualizada con éxito.");
+      showToast("Contraseña actualizada", "success");
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
       setTimeout(() => setIsPasswordSectionOpen(false), 2000);
     } catch (err: unknown) {
-      setPasswordError(err.message || "Error al actualizar la contraseña.");
+      showToast(err.message || "Error al actualizar la contraseña", "error");
     } finally {
       setPasswordSaving(false);
     }
@@ -73,12 +75,12 @@ export default function ProfilePage() {
     try {
       const updatedUser = await updateProfile({ nombre: form.nombre, email: form.email });
       setUser((prev) => ({ ...prev, nombre: updatedUser.nombre, email: updatedUser.email }));
-      setSuccess("Perfil actualizado con éxito.");
+      showToast("Perfil actualizado", "success");
       
       // Update local storage so Sidebar updates if needed (Sidebar reads from localstorage, though a page reload might be needed to reflect changes)
       window.dispatchEvent(new Event("storage"));
     } catch {
-      setError("Error al actualizar el perfil.");
+      showToast("Error al actualizar el perfil", "error");
     } finally {
       setSaving(false);
     }
@@ -103,12 +105,12 @@ export default function ProfilePage() {
       try {
         const updatedUser = await updateProfilePhoto(base64String);
         setUser((prev) => ({ ...prev, foto: updatedUser.foto }));
-        setSuccess("Foto actualizada con éxito.");
+        showToast("Foto de perfil actualizada", "success");
         
         // Dispatch storage event
         window.dispatchEvent(new Event("storage"));
       } catch {
-        setError("Error al actualizar la foto.");
+        showToast("Error al actualizar la foto", "error");
       } finally {
         setUploading(false);
       }
