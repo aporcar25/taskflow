@@ -236,6 +236,7 @@ export default function StatsPage() {
 
   const tutorialSteps = [
     { targetId: "stats-header", content: "Analiza tu productividad con métricas detalladas de tus tareas y hábitos." },
+    { targetId: "stats-summary", content: "Un vistazo rápido a tus tareas totales, completadas y pendientes." },
     { targetId: "productivity-chart", content: "Este gráfico muestra tu porcentaje de éxito global." },
     { targetId: "calendar-habits", content: "Visualiza tu consistencia a lo largo del mes con este calendario." },
   ];
@@ -254,7 +255,7 @@ export default function StatsPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div id="stats-summary" className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-6 hover:border-lime-400/20 transition-all group shadow-sm dark:shadow-none">
           <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Total Creadas</p>
           <p className="text-4xl font-bold text-dark-900 dark:text-white">{stats.totalTareas}</p>
