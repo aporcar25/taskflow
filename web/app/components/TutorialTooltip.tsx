@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { completeTutorial } from "../../lib/api";
 
 interface Step {
   targetId: string;
@@ -20,17 +21,32 @@ export default function TutorialTooltip({ steps, pageKey }: TutorialTooltipProps
   const [tooltipOnTop, setTooltipOnTop] = useState(false);
 
   useEffect(() => {
-    const completed = localStorage.getItem(`tutorial_${pageKey}`);
-    if (!completed) {
-      // Delay to ensure elements are rendered
-      const timer = setTimeout(() => setIsVisible(true), 1000);
-      return () => clearTimeout(timer);
+    const userStr = localStorage.getItem("taskflow_user");
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      const fieldMap: Record<string, string> = {
+        dashboard: 'tutorialDashboard',
+        tasks: 'tutorialTasks',
+        habits: 'tutorialHabits',
+        stats: 'tutorialStats'
+      };
+
+      const completed = user[fieldMap[pageKey]];
+      if (!completed) {
+        // Delay to ensure elements are rendered
+        const timer = setTimeout(() => setIsVisible(true), 1000);
+        return () => clearTimeout(timer);
+      }
     }
   }, [pageKey]);
 
-  const finish = useCallback(() => {
+  const finish = useCallback(async () => {
     setIsVisible(false);
-    localStorage.setItem(`tutorial_${pageKey}`, "true");
+    try {
+      await completeTutorial(pageKey);
+    } catch (error) {
+      console.error("Error completing tutorial:", error);
+    }
   }, [pageKey]);
 
   const updateCoords = useCallback(() => {

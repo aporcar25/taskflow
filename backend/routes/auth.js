@@ -44,7 +44,20 @@ router.post('/register', async (req, res) => {
       { expiresIn: '7d' },
       (err, token) => {
         if (err) throw err;
-        res.status(201).json({ token, user: { id: user.id, nombre: user.nombre, email: user.email, foto: user.foto, onboardingCompleted: user.onboardingCompleted } });
+        res.status(201).json({
+          token,
+          user: {
+            id: user.id,
+            nombre: user.nombre,
+            email: user.email,
+            foto: user.foto,
+            onboardingCompleted: user.onboardingCompleted,
+            tutorialDashboard: user.tutorialDashboard,
+            tutorialTasks: user.tutorialTasks,
+            tutorialHabits: user.tutorialHabits,
+            tutorialStats: user.tutorialStats
+          }
+        });
       }
     );
   } catch (error) {
@@ -84,7 +97,20 @@ router.post('/login', async (req, res) => {
       { expiresIn: '7d' },
       (err, token) => {
         if (err) throw err;
-        res.json({ token, user: { id: user.id, nombre: user.nombre, email: user.email, foto: user.foto, onboardingCompleted: user.onboardingCompleted } });
+        res.json({
+          token,
+          user: {
+            id: user.id,
+            nombre: user.nombre,
+            email: user.email,
+            foto: user.foto,
+            onboardingCompleted: user.onboardingCompleted,
+            tutorialDashboard: user.tutorialDashboard,
+            tutorialTasks: user.tutorialTasks,
+            tutorialHabits: user.tutorialHabits,
+            tutorialStats: user.tutorialStats
+          }
+        });
       }
     );
   } catch (error) {
@@ -115,7 +141,17 @@ router.put('/profile', authMiddleware, async (req, res) => {
     if (email) user.email = email;
 
     await user.save();
-    res.json({ id: user.id, nombre: user.nombre, email: user.email, foto: user.foto, onboardingCompleted: user.onboardingCompleted });
+    res.json({
+      id: user.id,
+      nombre: user.nombre,
+      email: user.email,
+      foto: user.foto,
+      onboardingCompleted: user.onboardingCompleted,
+      tutorialDashboard: user.tutorialDashboard,
+      tutorialTasks: user.tutorialTasks,
+      tutorialHabits: user.tutorialHabits,
+      tutorialStats: user.tutorialStats
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ mensaje: 'Error al actualizar perfil' });
@@ -131,7 +167,17 @@ router.post('/profile/photo', authMiddleware, async (req, res) => {
 
     user.foto = foto;
     await user.save();
-    res.json({ id: user.id, nombre: user.nombre, email: user.email, foto: user.foto, onboardingCompleted: user.onboardingCompleted });
+    res.json({
+      id: user.id,
+      nombre: user.nombre,
+      email: user.email,
+      foto: user.foto,
+      onboardingCompleted: user.onboardingCompleted,
+      tutorialDashboard: user.tutorialDashboard,
+      tutorialTasks: user.tutorialTasks,
+      tutorialHabits: user.tutorialHabits,
+      tutorialStats: user.tutorialStats
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ mensaje: 'Error al actualizar foto de perfil' });
@@ -196,6 +242,46 @@ router.get('/custom-categories', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ mensaje: 'Error al obtener categorías' });
+  }
+});
+
+// PUT /tutorial-complete -> marcar tutorial de una página como completado
+router.put('/tutorial-complete', authMiddleware, async (req, res) => {
+  try {
+    const { page } = req.body;
+    const allowedPages = ['dashboard', 'tasks', 'habits', 'stats'];
+
+    if (!allowedPages.includes(page)) {
+      return res.status(400).json({ mensaje: 'Página no válida' });
+    }
+
+    let user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+
+    const fieldMap = {
+      dashboard: 'tutorialDashboard',
+      tasks: 'tutorialTasks',
+      habits: 'tutorialHabits',
+      stats: 'tutorialStats'
+    };
+
+    user[fieldMap[page]] = true;
+    await user.save();
+
+    res.json({
+      id: user.id,
+      nombre: user.nombre,
+      email: user.email,
+      foto: user.foto,
+      onboardingCompleted: user.onboardingCompleted,
+      tutorialDashboard: user.tutorialDashboard,
+      tutorialTasks: user.tutorialTasks,
+      tutorialHabits: user.tutorialHabits,
+      tutorialStats: user.tutorialStats
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error al actualizar tutorial' });
   }
 });
 
