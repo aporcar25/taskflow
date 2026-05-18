@@ -13,6 +13,7 @@ export default function PomodoroTimer({ isOpen, onClose }: PomodoroTimerProps) {
   const [timeLeft, setTimeLeft] = useState(workDuration * 60);
   const [isActive, setIsActive] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
 
   useEffect(() => {
     const savedWork = localStorage.getItem("pomodoroWork");
@@ -27,10 +28,10 @@ export default function PomodoroTimer({ isOpen, onClose }: PomodoroTimerProps) {
   }, []);
 
   useEffect(() => {
-    if (!isActive) {
+    if (!hasStarted) {
       setTimeLeft((isBreak ? breakDuration : workDuration) * 60);
     }
-  }, [workDuration, breakDuration, isBreak, isActive]);
+  }, [workDuration, breakDuration, isBreak, hasStarted]);
 
   const notify = useCallback((title: string, body: string) => {
     if ("Notification" in window && Notification.permission === "granted") {
@@ -60,11 +61,15 @@ export default function PomodoroTimer({ isOpen, onClose }: PomodoroTimerProps) {
     return () => clearInterval(interval);
   }, [isActive, timeLeft, isBreak, workDuration, breakDuration, notify]);
 
-  const toggleTimer = () => setIsActive(!isActive);
+  const toggleTimer = () => {
+    if (!isActive) setHasStarted(true);
+    setIsActive(!isActive);
+  };
 
   const resetTimer = () => {
     setIsActive(false);
     setIsBreak(false);
+    setHasStarted(false);
     setTimeLeft(workDuration * 60);
   };
 
@@ -118,7 +123,7 @@ export default function PomodoroTimer({ isOpen, onClose }: PomodoroTimerProps) {
                 : "bg-lime-400 text-dark-900 hover:bg-lime-300 shadow-lg shadow-lime-400/20"
             }`}
           >
-            {isActive ? "Pausar" : "Empezar"}
+            {isActive ? "Pausar" : (hasStarted ? "Reanudar" : "Empezar")}
           </button>
           <button
             onClick={resetTimer}

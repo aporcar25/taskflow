@@ -71,8 +71,10 @@ export default function TutorialTooltip({ steps, pageKey }: TutorialTooltipProps
     // Re-check coords after a short delay for scroll
     const timer = setTimeout(updateCoords, 500);
     window.addEventListener("resize", updateCoords);
+    window.addEventListener("scroll", updateCoords, { passive: true });
     return () => {
       window.removeEventListener("resize", updateCoords);
+      window.removeEventListener("scroll", updateCoords);
       clearTimeout(timer);
     };
   }, [updateCoords]);
@@ -137,12 +139,20 @@ export default function TutorialTooltip({ steps, pageKey }: TutorialTooltipProps
           {step.content}
         </p>
 
-        <button
-          onClick={nextStep}
-          className="w-full py-2 bg-lime-400 text-dark-900 font-bold text-xs rounded-xl hover:bg-lime-300 transition-all"
-        >
-          {currentStep === steps.length - 1 ? "Entendido" : "Siguiente"}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={finish}
+            className="flex-1 py-2 bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 font-bold text-xs rounded-xl hover:text-dark-900 dark:hover:text-white transition-all"
+          >
+            Saltar
+          </button>
+          <button
+            onClick={nextStep}
+            className="flex-[2] py-2 bg-lime-400 text-dark-900 font-bold text-xs rounded-xl hover:bg-lime-300 transition-all"
+          >
+            {currentStep === steps.length - 1 ? "Entendido" : "Siguiente"}
+          </button>
+        </div>
       </div>
     </div>
   );
