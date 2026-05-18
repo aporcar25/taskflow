@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ToastProvider from "./components/ToastProvider";
 
 export const metadata: Metadata = {
   title: "TaskFlow — Gestor de Productividad Personal",
@@ -32,7 +33,9 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-white dark:bg-dark-900 text-dark-900 dark:text-white antialiased transition-colors duration-200">
-        {children}
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );

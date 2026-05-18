@@ -1,0 +1,123 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+
+interface Step {
+  targetId: string;
+  content: string;
+  position?: "top" | "bottom" | "left" | "right";
+}
+
+interface TutorialTooltipProps {
+  steps: Step[];
+  pageKey: string;
+}
+
+export default function TutorialTooltip({ steps, pageKey }: TutorialTooltipProps) {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, height: 0 });
+
+  useEffect(() => {
+    const completed = localStorage.getItem(`tutorial_${pageKey}`);
+    if (!completed) {
+      // Delay to ensure elements are rendered
+      const timer = setTimeout(() => setIsVisible(true), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [pageKey]);
+
+  const finish = useCallback(() => {
+    setIsVisible(false);
+    localStorage.setItem(`tutorial_${pageKey}`, "true");
+  }, [pageKey]);
+
+  const updateCoords = useCallback(() => {
+    if (!isVisible || currentStep >= steps.length) return;
+
+    const target = document.getElementById(steps[currentStep].targetId);
+    if (target) {
+      const rect = target.getBoundingClientRect();
+      setCoords({
+        top: rect.top + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+        height: rect.height,
+      });
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+    } else {
+      // If target not found, skip to next step or finish
+      if (currentStep < steps.length - 1) {
+        setCurrentStep(currentStep + 1);
+      } else {
+        finish();
+      }
+    }
+  }, [currentStep, isVisible, steps, finish]);
+
+  useEffect(() => {
+    updateCoords();
+    window.addEventListener("resize", updateCoords);
+    return () => window.removeEventListener("resize", updateCoords);
+  }, [updateCoords]);
+
+  const nextStep = () => {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    } else {
+      finish();
+    }
+  };
+
+  if (!isVisible || currentStep >= steps.length) return null;
+
+  const step = steps[currentStep];
+
+  return (
+    <div className="fixed inset-0 z-[180] pointer-events-none">
+      {/* Spotlight effect */}
+      <div
+        className="absolute z-[181] ring-[2000px] ring-black/60 rounded-lg transition-all duration-500 shadow-[0_0_0_4px_rgba(163,230,53,0.5)]"
+        style={{
+          top: coords.top - 4,
+          left: coords.left - 4,
+          width: coords.width + 8,
+          height: coords.height + 8,
+        }}
+      />
+
+      {/* Tooltip content */}
+      <div
+        className="absolute z-[182] pointer-events-auto bg-white dark:bg-dark-800 border border-lime-400/30 rounded-2xl shadow-2xl p-5 w-64 transition-all duration-500 animate-fade-in"
+        style={{
+          top: coords.top + coords.height + 16,
+          left: Math.max(16, Math.min(window.innerWidth - 272, coords.left + coords.width / 2 - 128)),
+        }}
+      >
+        <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white dark:bg-dark-800 border-l border-t border-lime-400/30 rotate-45" />
+
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[10px] font-black text-lime-400 uppercase tracking-widest">
+            Tip {currentStep + 1}/{steps.length}
+          </span>
+          <button onClick={finish} className="text-gray-400 hover:text-red-400 transition-colors">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <p className="text-sm text-dark-900 dark:text-white leading-relaxed mb-4">
+          {step.content}
+        </p>
+
+        <button
+          onClick={nextStep}
+          className="w-full py-2 bg-lime-400 text-dark-900 font-bold text-xs rounded-xl hover:bg-lime-300 transition-all"
+        >
+          {currentStep === steps.length - 1 ? "Entendido" : "Siguiente"}
+        </button>
+      </div>
+    </div>
+  );
+}

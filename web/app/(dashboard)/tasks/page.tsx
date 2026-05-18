@@ -17,6 +17,8 @@ interface ApiTask {
 
 
 import { useState, useMemo, useEffect } from "react";
+import TutorialTooltip from "../../components/TutorialTooltip";
+import { useToast } from "../../components/ToastProvider";
 import { type Task, type Priority, type Category } from "@/app/lib/mockData";
 import { getTasks, deleteTask, updateTask, createTask, getCustomCategories } from "../../../lib/api";
 
@@ -153,6 +155,7 @@ function TaskCard({
 
 
 export default function TasksPage() {
+  const { showToast } = useToast();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [animatingTasks, setAnimatingTasks] = useState<Set<string>>(new Set());
@@ -227,6 +230,7 @@ export default function TasksPage() {
 
       setTasks([mappedNewTask, ...tasks]);
       setIsCreateModalOpen(false);
+      showToast("Tarea creada con éxito", "success");
       setCreateForm({
         title: "", description: "", priority: "" as Priority | "",
         category: "" as Category | "", dueDate: "",
@@ -237,6 +241,7 @@ export default function TasksPage() {
       setCreateErrors({});
     } catch (err) {
       console.error("Error al crear tarea:", err);
+      showToast("Error al crear la tarea", "error");
     } finally {
       setIsCreating(false);
     }
@@ -252,8 +257,10 @@ export default function TasksPage() {
       setTasks(tasks.filter(t => t.id !== taskToDelete));
       setIsDeleteModalOpen(false);
       setTaskToDelete(null);
+      showToast("Tarea eliminada", "success");
     } catch (err) {
       console.error("Error eliminando tarea", err);
+      showToast("Error al eliminar la tarea", "error");
     }
   };
 
@@ -313,8 +320,10 @@ export default function TasksPage() {
       } : t));
       setIsEditModalOpen(false);
       setEditingTask(null);
+      showToast("Tarea actualizada", "success");
     } catch (err) {
       console.error("Error editando tarea", err);
+      showToast("Error al actualizar la tarea", "error");
     } finally {
       setIsSaving(false);
     }
@@ -416,8 +425,10 @@ export default function TasksPage() {
 
     try {
       await updateTask(id, { completada: newStatus, estado: newEstado });
+      showToast(newStatus ? "Tarea completada" : "Tarea pendiente", "success");
     } catch (err) {
       console.error(err);
+      showToast("Error al actualizar el estado", "error");
       setTasks((prev) =>
         prev.map((t) =>
           t.id === id ? { ...t, completed: !newStatus, estado: !newStatus ? "completada" : "pendiente" } : t
@@ -433,8 +444,10 @@ export default function TasksPage() {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, archivada: newArchived } : t));
     try {
       await updateTask(id, { archivada: newArchived });
+      showToast(newArchived ? "Tarea archivada" : "Tarea desarchivada", "success");
     } catch (err) {
       console.error(err);
+      showToast("Error al archivar la tarea", "error");
       setTasks(prev => prev.map(t => t.id === id ? { ...t, archivada: !newArchived } : t));
     }
   };
@@ -458,8 +471,10 @@ export default function TasksPage() {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, estado: newEstado, completed: isCompleted } : t));
     try {
       await updateTask(id, { estado: newEstado, completada: isCompleted });
+      showToast("Tarea movida", "success");
     } catch (err) {
       console.error(err);
+      showToast("Error al mover la tarea", "error");
       setTasks(prev => prev.map(t => t.id === id ? { ...t, estado: task.estado, completed: task.completed } : t));
     }
   };
@@ -484,8 +499,15 @@ export default function TasksPage() {
     </div>
   );
 
+  const tutorialSteps = [
+    { targetId: "view-toggle", content: "Cambia entre vista de lista y tablero Kanban según prefieras." },
+    { targetId: "btn-new-task", content: "Crea nuevas tareas con prioridad, categorías y etiquetas." },
+    { targetId: "task-filters", content: "Filtra tus tareas por prioridad o categoría para enfocarte mejor." },
+  ];
+
   return (
     <div className="animate-fade-in pb-10">
+      <TutorialTooltip steps={tutorialSteps} pageKey="tasks" />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
@@ -495,7 +517,7 @@ export default function TasksPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center bg-gray-100 dark:bg-white/5 rounded-xl p-1">
+          <div id="view-toggle" className="flex items-center bg-gray-100 dark:bg-white/5 rounded-xl p-1">
             <button
               onClick={() => setViewMode("list")}
               className={`p-2 rounded-lg transition-all ${viewMode === "list" ? "bg-white dark:bg-dark-700 text-lime-400 shadow-sm" : "text-gray-400 hover:text-white"}`}
@@ -525,6 +547,7 @@ export default function TasksPage() {
             </svg>
           </button>
           <button
+            id="btn-new-task"
             onClick={() => setIsCreateModalOpen(true)}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-lime-400 text-dark-900 font-semibold text-sm hover:bg-lime-400/90 transition-all hover:shadow-lg hover:shadow-lime-400/20"
           >
@@ -537,7 +560,7 @@ export default function TasksPage() {
       </div>
 
       {/* Search + Filters */}
-      <div className="flex flex-col lg:flex-row gap-3 mb-6">
+      <div id="task-filters" className="flex flex-col lg:flex-row gap-3 mb-6">
         {/* Search */}
         <div className="relative flex-1">
           <svg

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import TutorialTooltip from "../../components/TutorialTooltip";
 import { getStats, getTasks, getHabits } from "../../../lib/api";
 
 interface HabitDetail {
@@ -233,10 +234,17 @@ export default function StatsPage() {
 
   const productivity = stats.porcentajeProductividad || 0;
 
+  const tutorialSteps = [
+    { targetId: "stats-header", content: "Analiza tu productividad con métricas detalladas de tus tareas y hábitos." },
+    { targetId: "productivity-chart", content: "Este gráfico muestra tu porcentaje de éxito global." },
+    { targetId: "calendar-habits", content: "Visualiza tu consistencia a lo largo del mes con este calendario." },
+  ];
+
   return (
     <div className="animate-fade-in space-y-8 pb-10">
+      <TutorialTooltip steps={tutorialSteps} pageKey="stats" />
       {/* Header */}
-      <div>
+      <div id="stats-header">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-dark-900 dark:text-white">
           Tus <span className="text-lime-400">Estadísticas</span> 📊
         </h1>
@@ -312,7 +320,7 @@ export default function StatsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Productivity Circular Chart */}
-        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-sm dark:shadow-none">
+        <div id="productivity-chart" className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-sm dark:shadow-none">
           <h2 className="text-lg font-semibold mb-8 self-start text-dark-900 dark:text-white">Productividad Global</h2>
           <div className="relative w-48 h-48">
             <svg className="w-full h-full -rotate-90">
@@ -510,7 +518,7 @@ export default function StatsPage() {
       </div>
 
       {/* Monthly Habits Calendar */}
-      <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8 shadow-sm dark:shadow-none">
+      <div id="calendar-habits" className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-8 shadow-sm dark:shadow-none">
         <h2 className="text-lg font-semibold mb-6 text-dark-900 dark:text-white">Hábitos este Mes</h2>
         <div className="grid grid-cols-7 gap-2">
           {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(d => (

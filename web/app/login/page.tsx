@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useToast } from "../components/ToastProvider";
 import { login } from "../../lib/api";
 
 export default function LoginPage() {
+  const { showToast } = useToast();
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [loading, setLoading] = useState(false);
@@ -32,8 +34,10 @@ export default function LoginPage() {
     try {
       const data = await login(form.email, form.password);
       localStorage.setItem("taskflow_token", data.token);
+      showToast(`¡Bienvenido de nuevo, ${data.user?.nombre || "usuario"}!`, "success");
       window.location.href = "/dashboard";
     } catch (err: unknown) {
+      showToast(err.message || "Credenciales incorrectas", "error");
       setErrors({ email: err.message || "Error al iniciar sesión" });
       setLoading(false);
     }
