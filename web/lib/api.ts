@@ -216,6 +216,19 @@ export const changePassword = async (data: { currentPassword?: string; newPasswo
   return res.json();
 };
 
+export const completeOnboarding = async () => {
+  const res = await fetch(`${API_URL}/auth/onboarding-complete`, {
+    method: "PUT",
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw new Error("Error actualizando onboarding");
+  const result = await res.json();
+  if (result.id) {
+    localStorage.setItem('taskflow_user', JSON.stringify(result));
+  }
+  return result;
+};
+
 export const updateProfilePhoto = async (foto: string) => {
   const res = await fetch(`${API_URL}/auth/profile/photo`, {
     method: "POST",

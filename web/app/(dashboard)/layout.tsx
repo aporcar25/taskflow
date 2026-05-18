@@ -6,6 +6,7 @@ import OnboardingModal from "../components/OnboardingModal";
 import PomodoroTimer from "../components/PomodoroTimer";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { completeOnboarding } from "../../lib/api";
 
 export default function DashboardLayout({
   children,
@@ -19,16 +20,31 @@ export default function DashboardLayout({
   const [isPomodoroOpen, setIsPomodoroOpen] = useState(false);
 
   useEffect(() => {
-    const onboardingCompleted = localStorage.getItem("onboardingCompleted");
-    if (!onboardingCompleted) {
-      setShowOnboarding(true);
+    const userStr = localStorage.getItem("taskflow_user");
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      if (!user.onboardingCompleted) {
+        setShowOnboarding(true);
+      }
     }
   }, []);
+
+  const handleOnboardingComplete = async () => {
+    try {
+      await completeOnboarding();
+      setShowOnboarding(false);
+    } catch (error) {
+      console.error("Error completing onboarding:", error);
+      // Even if API fails, we close the modal to not block the user,
+      // though they might see it again on next login if it didn't save.
+      setShowOnboarding(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-dark-900 transition-colors">
       {showOnboarding && (
-        <OnboardingModal onComplete={() => setShowOnboarding(false)} />
+        <OnboardingModal onComplete={handleOnboardingComplete} />
       )}
       <Sidebar
         isOpen={isSidebarOpen}

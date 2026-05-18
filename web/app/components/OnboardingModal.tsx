@@ -14,7 +14,6 @@ export default function OnboardingModal({ onComplete }: OnboardingModalProps) {
     if (step < totalSteps) {
       setStep(step + 1);
     } else {
-      localStorage.setItem("onboardingCompleted", "true");
       onComplete();
     }
   };
