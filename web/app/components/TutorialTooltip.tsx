@@ -17,6 +17,7 @@ export default function TutorialTooltip({ steps, pageKey }: TutorialTooltipProps
   const [currentStep, setCurrentStep] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, height: 0 });
+  const [tooltipOnTop, setTooltipOnTop] = useState(false);
 
   useEffect(() => {
     const completed = localStorage.getItem(`tutorial_${pageKey}`);
@@ -38,13 +39,23 @@ export default function TutorialTooltip({ steps, pageKey }: TutorialTooltipProps
     const target = document.getElementById(steps[currentStep].targetId);
     if (target) {
       const rect = target.getBoundingClientRect();
+
+      // Auto-positioning logic: if in bottom half, show on top.
+      const viewportHeight = window.innerHeight;
+      const targetCenterY = rect.top + rect.height / 2;
+      setTooltipOnTop(targetCenterY > viewportHeight / 2);
+
       setCoords({
         top: rect.top + window.scrollY,
         left: rect.left + window.scrollX,
         width: rect.width,
         height: rect.height,
       });
-      target.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      // Smooth scroll to target if not fully in view
+      if (rect.top < 100 || rect.bottom > viewportHeight - 100) {
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
     } else {
       // If target not found, skip to next step or finish
       if (currentStep < steps.length - 1) {
@@ -57,8 +68,13 @@ export default function TutorialTooltip({ steps, pageKey }: TutorialTooltipProps
 
   useEffect(() => {
     updateCoords();
+    // Re-check coords after a short delay for scroll
+    const timer = setTimeout(updateCoords, 500);
     window.addEventListener("resize", updateCoords);
-    return () => window.removeEventListener("resize", updateCoords);
+    return () => {
+      window.removeEventListener("resize", updateCoords);
+      clearTimeout(timer);
+    };
   }, [updateCoords]);
 
   const nextStep = () => {
@@ -79,8 +95,8 @@ export default function TutorialTooltip({ steps, pageKey }: TutorialTooltipProps
       <div
         className="absolute z-[181] ring-[2000px] ring-black/60 rounded-lg transition-all duration-500 shadow-[0_0_0_4px_rgba(163,230,53,0.5)]"
         style={{
-          top: coords.top - 4,
-          left: coords.left - 4,
+          top: coords.top - window.scrollY - 4,
+          left: coords.left - window.scrollX - 4,
           width: coords.width + 8,
           height: coords.height + 8,
         }}
@@ -90,11 +106,21 @@ export default function TutorialTooltip({ steps, pageKey }: TutorialTooltipProps
       <div
         className="absolute z-[182] pointer-events-auto bg-white dark:bg-dark-800 border border-lime-400/30 rounded-2xl shadow-2xl p-5 w-64 transition-all duration-500 animate-fade-in"
         style={{
-          top: coords.top + coords.height + 16,
-          left: Math.max(16, Math.min(window.innerWidth - 272, coords.left + coords.width / 2 - 128)),
+          top: tooltipOnTop
+            ? coords.top - window.scrollY - 16 // Position above
+            : coords.top - window.scrollY + coords.height + 16, // Position below
+          left: Math.max(16, Math.min(window.innerWidth - 272, coords.left - window.scrollX + coords.width / 2 - 128)),
+          transform: tooltipOnTop ? 'translateY(-100%)' : 'none'
         }}
       >
-        <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white dark:bg-dark-800 border-l border-t border-lime-400/30 rotate-45" />
+        {/* Arrow */}
+        <div
+          className={`absolute left-1/2 -translate-x-1/2 w-4 h-4 bg-white dark:bg-dark-800 border-lime-400/30 rotate-45 ${
+            tooltipOnTop
+              ? "-bottom-2 border-r border-b"
+              : "-top-2 border-l border-t"
+          }`}
+        />
 
         <div className="flex items-center justify-between mb-3">
           <span className="text-[10px] font-black text-lime-400 uppercase tracking-widest">
