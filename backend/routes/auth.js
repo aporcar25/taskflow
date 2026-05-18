@@ -294,7 +294,17 @@ router.put('/onboarding-complete', authMiddleware, async (req, res) => {
     user.onboardingCompleted = true;
     await user.save();
 
-    res.json({ id: user.id, nombre: user.nombre, email: user.email, foto: user.foto, onboardingCompleted: user.onboardingCompleted });
+    res.json({
+      id: user.id,
+      nombre: user.nombre,
+      email: user.email,
+      foto: user.foto,
+      onboardingCompleted: user.onboardingCompleted,
+      tutorialDashboard: user.tutorialDashboard,
+      tutorialTasks: user.tutorialTasks,
+      tutorialHabits: user.tutorialHabits,
+      tutorialStats: user.tutorialStats
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ mensaje: 'Error al actualizar onboarding' });

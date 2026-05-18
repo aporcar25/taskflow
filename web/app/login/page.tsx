@@ -34,6 +34,9 @@ export default function LoginPage() {
     try {
       const data = await login(form.email, form.password);
       localStorage.setItem("taskflow_token", data.token);
+      if (data.user) {
+        localStorage.setItem("taskflow_user", JSON.stringify(data.user));
+      }
       showToast(`¡Bienvenido de nuevo, ${data.user?.nombre || "usuario"}!`, "success");
       window.location.href = "/dashboard";
     } catch (err: unknown) {
