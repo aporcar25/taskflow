@@ -39,6 +39,9 @@ export default function RegisterPage() {
     try {
       const data = await register(form.name, form.email, form.password);
       localStorage.setItem("taskflow_token", data.token);
+      if (data.user) {
+        localStorage.setItem("taskflow_user", JSON.stringify(data.user));
+      }
       showToast("¡Cuenta creada con éxito! Bienvenido.", "success");
       window.location.href = "/dashboard";
     } catch (err: unknown) {
