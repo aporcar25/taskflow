@@ -13,6 +13,9 @@ interface ApiTask {
   tags?: string[];
   recurrencia?: string;
   imagenes?: string[];
+  esCompartida?: boolean;
+  compartidaCon?: { usuario: string | { _id: string, nombre: string, email: string }; permiso: string }[];
+  userId: string | { _id: string, nombre: string, email: string };
   createdAt: string;
 }
 
@@ -21,7 +24,7 @@ import { useState, useMemo, useEffect } from "react";
 import TutorialTooltip from "../../components/TutorialTooltip";
 import { useToast } from "../../components/ToastProvider";
 import { type Task, type Priority, type Category } from "@/app/lib/mockData";
-import { getTasks, deleteTask, updateTask, createTask, getCustomCategories } from "../../../lib/api";
+import { getTasks, deleteTask, updateTask, createTask, getCustomCategories, shareTask, unshareTask } from "../../../lib/api";
 
 const priorityColors: Record<Priority, string> = {
   alta: "bg-red-500/10 text-red-400 border-red-500/20",
@@ -50,6 +53,22 @@ function TaskCard({
   archiveTask: (id: string) => void,
   isAnimating?: boolean
 }) {
+  const userJson = typeof window !== "undefined" ? localStorage.getItem('taskflow_user') : null;
+  const currentUser = userJson ? JSON.parse(userJson) : null;
+  const currentUserId = currentUser?._id || currentUser?.id;
+
+  const isOwner = typeof task.userId === 'string'
+    ? task.userId === currentUserId
+    : task.userId._id === currentUserId;
+
+  const shareEntry = task.compartidaCon?.find(c => {
+    const uid = typeof c.usuario === 'string' ? c.usuario : c.usuario._id;
+    return uid === currentUserId;
+  });
+
+  const canEdit = isOwner || (shareEntry && shareEntry.permiso === 'editar');
+  const canDelete = isOwner;
+
   return (
     <div
       className={`group bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-4 hover:border-gray-200 dark:hover:border-white/10 transition-all duration-200 shadow-sm dark:shadow-none ${isKanban ? "mb-3" : ""}`}
@@ -95,32 +114,43 @@ function TaskCard({
                   {task.description}
                 </p>
               )}
+              {!isOwner && typeof task.userId !== 'string' && (
+                <p className="text-[10px] text-blue-400 font-medium mt-1">
+                  De: {task.userId.nombre} ({shareEntry?.permiso})
+                </p>
+              )}
             </div>
             {/* Buttons */}
             <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 flex-shrink-0">
-              <button
-                onClick={() => archiveTask(task.id)}
-                className="p-1.5 rounded-lg bg-gray-100 dark:bg-dark-700 hover:bg-lime-500/10 text-gray-400 hover:text-lime-400 transition-colors"
-                title={task.archivada ? "Desarchivar" : "Archivar"}
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                </svg>
-              </button>
-              <button
-                onClick={() => openEditModal(task)}
-                className="p-1.5 rounded-lg bg-gray-100 dark:bg-dark-700 hover:bg-lime-500/10 text-gray-400 hover:text-lime-400 transition-colors"
-                title="Editar"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-              </button>
-              <button
-                onClick={() => { setTaskToDelete(task.id); setIsDeleteModalOpen(true); }}
-                className="p-1.5 rounded-lg bg-gray-100 dark:bg-dark-700 hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-colors"
-                title="Eliminar"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-              </button>
+              {canDelete && (
+                <button
+                  onClick={() => archiveTask(task.id)}
+                  className="p-1.5 rounded-lg bg-gray-100 dark:bg-dark-700 hover:bg-lime-500/10 text-gray-400 hover:text-lime-400 transition-colors"
+                  title={task.archivada ? "Desarchivar" : "Archivar"}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                  </svg>
+                </button>
+              )}
+              {canEdit && (
+                <button
+                  onClick={() => openEditModal(task)}
+                  className="p-1.5 rounded-lg bg-gray-100 dark:bg-dark-700 hover:bg-lime-500/10 text-gray-400 hover:text-lime-400 transition-colors"
+                  title="Editar"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                </button>
+              )}
+              {canDelete && (
+                <button
+                  onClick={() => { setTaskToDelete(task.id); setIsDeleteModalOpen(true); }}
+                  className="p-1.5 rounded-lg bg-gray-100 dark:bg-dark-700 hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-colors"
+                  title="Eliminar"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+              )}
             </div>
           </div>
 
@@ -135,6 +165,14 @@ function TaskCard({
               <span className="text-[10px] font-medium text-lime-400 flex items-center gap-0.5">
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                 {task.recurrencia}
+              </span>
+            )}
+            {task.esCompartida && (
+              <span className="text-[10px] font-medium text-blue-400 flex items-center gap-0.5" title="Tarea compartida">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                Compartida
               </span>
             )}
             {task.imagenes && task.imagenes.length > 0 && (
@@ -191,6 +229,9 @@ export default function TasksPage() {
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isFullscreenImageOpen, setIsFullscreenImageOpen] = useState<string | null>(null);
+  const [shareEmail, setShareEmail] = useState("");
+  const [sharePermiso, setSharePermiso] = useState("ver");
+  const [isSharing, setIsSharing] = useState(false);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean) => {
     const files = Array.from(e.target.files || []);
@@ -230,6 +271,7 @@ export default function TasksPage() {
 
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const [showArchived, setShowArchived] = useState(false);
+  const [activeTab, setActiveTab] = useState<"mismas" | "compartidas">("mismas");
   const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
@@ -341,6 +383,40 @@ export default function TasksPage() {
     return Object.keys(e).length === 0;
   };
 
+  const handleShare = async () => {
+    if (!editingTask || !shareEmail) return;
+    setIsSharing(true);
+    try {
+      const result = await shareTask(editingTask.id, shareEmail, sharePermiso);
+      setTasks(tasks.map(t => t.id === editingTask.id ? {
+        ...t,
+        esCompartida: result.task.esCompartida,
+        compartidaCon: result.task.compartidaCon
+      } : t));
+      setShareEmail("");
+      showToast("Tarea compartida correctamente", "success");
+    } catch (err: any) {
+      showToast(err.message || "Error al compartir", "error");
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const handleUnshare = async (userId: string) => {
+    if (!editingTask) return;
+    try {
+      const result = await unshareTask(editingTask.id, userId);
+      setTasks(tasks.map(t => t.id === editingTask.id ? {
+        ...t,
+        esCompartida: result.task.esCompartida,
+        compartidaCon: result.task.compartidaCon
+      } : t));
+      showToast("Usuario eliminado", "success");
+    } catch (err) {
+      showToast("Error al eliminar usuario", "error");
+    }
+  };
+
   const saveEdit = async () => {
     if (!editingTask || !validateEdit()) return;
     setIsSaving(true);
@@ -440,6 +516,9 @@ export default function TasksPage() {
   const [filterCategory, setFilterCategory] = useState<Category | "todas">("todas");
 
   const filteredTasks = useMemo(() => {
+    const userJson = typeof window !== "undefined" ? localStorage.getItem('taskflow_user') : null;
+    const currentUser = userJson ? JSON.parse(userJson) : null;
+
     return tasks.filter((task) => {
       const title = task.title || "";
       const description = task.description || "";
@@ -449,9 +528,16 @@ export default function TasksPage() {
       const matchesPriority = filterPriority === "todas" || task.priority === filterPriority;
       const matchesCategory = filterCategory === "todas" || task.category === filterCategory;
       const matchesArchived = task.archivada === showArchived;
-      return matchesSearch && matchesPriority && matchesCategory && matchesArchived;
+
+      const isOwner = typeof task.userId === 'string'
+        ? task.userId === currentUser?._id || task.userId === currentUser?.id
+        : task.userId._id === currentUser?._id || task.userId._id === currentUser?.id;
+
+      const matchesTab = activeTab === "mismas" ? isOwner : !isOwner;
+
+      return matchesSearch && matchesPriority && matchesCategory && matchesArchived && matchesTab;
     });
-  }, [tasks, search, filterPriority, filterCategory, showArchived]);
+  }, [tasks, search, filterPriority, filterCategory, showArchived, activeTab]);
 
   const toggleTask = async (id: string) => {
     const task = tasks.find((t) => t.id === id);
@@ -568,6 +654,20 @@ export default function TasksPage() {
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
             {completedCount} de {filteredTasks.length} {showArchived ? "archivadas" : "activas"}
           </p>
+        </div>
+        <div className="flex items-center bg-gray-100 dark:bg-white/5 rounded-xl p-1">
+          <button
+            onClick={() => setActiveTab("mismas")}
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "mismas" ? "bg-white dark:bg-dark-700 text-lime-400 shadow-sm" : "text-gray-400 hover:text-white"}`}
+          >
+            Mis tareas
+          </button>
+          <button
+            onClick={() => setActiveTab("compartidas")}
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "compartidas" ? "bg-white dark:bg-dark-700 text-lime-400 shadow-sm" : "text-gray-400 hover:text-white"}`}
+          >
+            Compartidas
+          </button>
         </div>
         <div className="flex items-center gap-2">
           <div id="view-toggle" className="flex items-center bg-gray-100 dark:bg-white/5 rounded-xl p-1">
@@ -996,6 +1096,71 @@ export default function TasksPage() {
                       <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleImageUpload(e, true)} />
                     </label>
                   )}
+                </div>
+              </div>
+
+              {/* Sharing Section */}
+              <div className="border-t border-gray-100 dark:border-white/10 pt-6 mt-6">
+                <h4 className="text-sm font-bold text-dark-900 dark:text-white mb-4 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  Compartir tarea
+                </h4>
+
+                <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                  <input
+                    type="email"
+                    value={shareEmail}
+                    onChange={(e) => setShareEmail(e.target.value)}
+                    placeholder="Email del usuario..."
+                    className="flex-1 px-4 py-2 rounded-xl bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-white/10 text-dark-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+                  />
+                  <select
+                    value={sharePermiso}
+                    onChange={(e) => setSharePermiso(e.target.value)}
+                    className="px-4 py-2 rounded-xl bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-white/10 text-dark-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400/50 appearance-none min-w-[100px]"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1em' }}
+                  >
+                    <option value="ver">Ver</option>
+                    <option value="editar">Editar</option>
+                  </select>
+                  <button
+                    onClick={handleShare}
+                    disabled={isSharing || !shareEmail}
+                    className="px-4 py-2 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold transition-colors disabled:opacity-50"
+                  >
+                    {isSharing ? "..." : "Invitar"}
+                  </button>
+                </div>
+
+                {/* List of shared users */}
+                <div className="space-y-2">
+                  {tasks.find(t => t.id === editingTask.id)?.compartidaCon?.map((share: any) => (
+                    <div key={typeof share.usuario === 'string' ? share.usuario : share.usuario._id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-dark-700/50 rounded-xl border border-gray-100 dark:border-white/5">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold text-xs flex-shrink-0">
+                          {typeof share.usuario === 'string' ? '?' : (share.usuario.nombre || '').substring(0, 2).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-dark-900 dark:text-white truncate">
+                            {typeof share.usuario === 'string' ? 'ID: ' + share.usuario : share.usuario.email}
+                          </p>
+                          <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${share.permiso === 'editar' ? 'bg-yellow-500/10 text-yellow-400' : 'bg-blue-500/10 text-blue-400'}`}>
+                            {share.permiso}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleUnshare(typeof share.usuario === 'string' ? share.usuario : share.usuario._id)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

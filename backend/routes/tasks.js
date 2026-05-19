@@ -5,10 +5,15 @@ const authMiddleware = require('../middleware/auth');
 
 router.use(authMiddleware);
 
-// GET / -> obtener todas las tareas del usuario autenticado
+// GET / -> obtener todas las tareas del usuario autenticado (incluidas las compartidas)
 router.get('/', async (req, res) => {
   try {
-    const tasks = await Task.find({ userId: req.user.id }).sort({ createdAt: -1 });
+    const tasks = await Task.find({
+      $or: [
+        { userId: req.user.id },
+        { 'compartidaCon.usuario': req.user.id }
+      ]
+    }).populate('userId', 'nombre email foto').sort({ createdAt: -1 });
     res.json(tasks);
   } catch (error) {
     console.error(error);
@@ -57,8 +62,12 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ mensaje: 'Tarea no encontrada' });
     }
 
-    if (task.userId.toString() !== req.user.id) {
-      return res.status(401).json({ mensaje: 'No autorizado' });
+    const isOwner = task.userId.toString() === req.user.id;
+    const shareEntry = task.compartidaCon.find(c => c.usuario.toString() === req.user.id);
+    const hasEditPermission = shareEntry && shareEntry.permiso === 'editar';
+
+    if (!isOwner && !hasEditPermission) {
+      return res.status(401).json({ mensaje: 'No autorizado para editar esta tarea' });
     }
 
     task.titulo = titulo !== undefined ? titulo : task.titulo;
@@ -88,7 +97,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /:id -> eliminar tarea
+// DELETE /:id -> eliminar tarea (solo el dueño puede eliminar)
 router.delete('/:id', async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
@@ -98,7 +107,7 @@ router.delete('/:id', async (req, res) => {
     }
 
     if (task.userId.toString() !== req.user.id) {
-      return res.status(401).json({ mensaje: 'No autorizado' });
+      return res.status(401).json({ mensaje: 'No autorizado para eliminar esta tarea' });
     }
 
     await task.deleteOne();
@@ -124,7 +133,11 @@ router.patch('/:id/complete', async (req, res) => {
       return res.status(404).json({ mensaje: 'Tarea no encontrada' });
     }
 
-    if (task.userId.toString() !== req.user.id) {
+    const isOwner = task.userId.toString() === req.user.id;
+    const shareEntry = task.compartidaCon.find(c => c.usuario.toString() === req.user.id);
+    const hasEditPermission = shareEntry && shareEntry.permiso === 'editar';
+
+    if (!isOwner && !hasEditPermission) {
       return res.status(401).json({ mensaje: 'No autorizado' });
     }
 
