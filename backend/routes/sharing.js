@@ -47,7 +47,11 @@ router.post('/:id/share', async (req, res) => {
     task.esCompartida = true;
     await task.save();
 
-    res.json({ mensaje: 'Tarea compartida correctamente', task });
+    const populatedTask = await Task.findById(task._id)
+      .populate('userId', 'nombre email foto')
+      .populate('compartidaCon.usuario', 'nombre email foto');
+
+    res.json({ mensaje: 'Tarea compartida correctamente', task: populatedTask });
   } catch (error) {
     console.error(error);
     res.status(500).json({ mensaje: 'Error al compartir la tarea' });
@@ -77,7 +81,12 @@ router.delete('/:id/share/:userId', async (req, res) => {
     }
 
     await task.save();
-    res.json({ mensaje: 'Usuario eliminado de la tarea compartida', task });
+
+    const populatedTask = await Task.findById(task._id)
+      .populate('userId', 'nombre email foto')
+      .populate('compartidaCon.usuario', 'nombre email foto');
+
+    res.json({ mensaje: 'Usuario eliminado de la tarea compartida', task: populatedTask });
   } catch (error) {
     console.error(error);
     res.status(500).json({ mensaje: 'Error al eliminar usuario compartido' });
@@ -89,7 +98,10 @@ router.get('/shared', async (req, res) => {
   try {
     const tasks = await Task.find({
       'compartidaCon.usuario': req.user.id
-    }).populate('userId', 'nombre email foto').sort({ createdAt: -1 });
+    })
+    .populate('userId', 'nombre email foto')
+    .populate('compartidaCon.usuario', 'nombre email foto')
+    .sort({ createdAt: -1 });
 
     res.json(tasks);
   } catch (error) {

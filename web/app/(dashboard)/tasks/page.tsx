@@ -20,11 +20,11 @@ interface ApiTask {
 }
 
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import TutorialTooltip from "../../components/TutorialTooltip";
 import { useToast } from "../../components/ToastProvider";
 import { type Task, type Priority, type Category } from "@/app/lib/mockData";
-import { getTasks, deleteTask, updateTask, createTask, getCustomCategories, shareTask, unshareTask } from "../../../lib/api";
+import { getTasks, deleteTask, updateTask, createTask, getCustomCategories, shareTask, unshareTask, getSharedTasks } from "../../../lib/api";
 
 const priorityColors: Record<Priority, string> = {
   alta: "bg-red-500/10 text-red-400 border-red-500/20",
@@ -459,60 +459,82 @@ export default function TasksPage() {
     }
   };
 
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [tasksData, sharedData, catsData] = await Promise.all([
+        getTasks(),
+        getSharedTasks(),
+        getCustomCategories()
+      ]);
+
+      const mapApiTask = (t: ApiTask) => ({
+        id: t._id,
+        title: t.titulo || "",
+        description: t.descripcion || "",
+        priority: t.prioridad,
+        category: t.categoria,
+        dueDate: t.fechaLimite ? t.fechaLimite.substring(0, 10) : "",
+        completed: t.completada,
+        estado: t.estado || (t.completada ? "completada" : "pendiente"),
+        archivada: !!t.archivada,
+        tags: t.tags || [],
+        recurrencia: t.recurrencia || "ninguna",
+        imagenes: t.imagenes || [],
+        esCompartida: t.esCompartida || false,
+        compartidaCon: t.compartidaCon || [],
+        userId: t.userId,
+        createdAt: t.createdAt
+      });
+
+      const mappedTasks = tasksData.map(mapApiTask);
+      const mappedShared = sharedData.map(mapApiTask);
+
+      // Combinar sin duplicados
+      const combined = [...mappedTasks];
+      mappedShared.forEach((st: any) => {
+        if (!combined.find(t => t.id === st.id)) {
+          combined.push(st);
+        }
+      });
+
+      const priorityOrder = { alta: 0, media: 1, baja: 2 };
+      const sorted = combined.sort((a: Task, b: Task) => (priorityOrder[a.priority as Priority] ?? 3) - (priorityOrder[b.priority as Priority] ?? 3));
+
+      setTasks(sorted);
+      setCustomCategories(catsData || []);
+
+      if ("Notification" in window && Notification.permission === "granted") {
+        const now = new Date();
+        const next24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+        sorted.forEach((t: Task) => {
+          if (!t.completed && t.dueDate) {
+            const due = new Date(t.dueDate);
+            if (due > now && due <= next24h) {
+              new Notification("Tarea por vencer", {
+                body: `La tarea "${t.title}" vence pronto.`,
+                icon: "/favicon.ico"
+              });
+            }
+          }
+        });
+      }
+    } catch (err) {
+      console.error("Error cargando datos:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if ("Notification" in window) {
       if (Notification.permission !== "granted" && Notification.permission !== "denied") {
         Notification.requestPermission();
       }
     }
-
-    const fetchData = async () => {
-      try {
-        const [tasksData, catsData] = await Promise.all([getTasks(), getCustomCategories()]);
-        const mappedTasks = tasksData.map((t: ApiTask) => ({
-          id: t._id,
-          title: t.titulo || "",
-          description: t.descripcion || "",
-          priority: t.prioridad,
-          category: t.categoria,
-          dueDate: t.fechaLimite ? t.fechaLimite.substring(0, 10) : "",
-          completed: t.completada,
-          estado: t.estado || (t.completada ? "completada" : "pendiente"),
-          archivada: !!t.archivada,
-          tags: t.tags || [],
-          recurrencia: t.recurrencia || "ninguna",
-          imagenes: t.imagenes || [],
-          createdAt: t.createdAt
-        }));
-        const priorityOrder = { alta: 0, media: 1, baja: 2 };
-        const sorted = mappedTasks.sort((a: Task, b: Task) => (priorityOrder[a.priority] ?? 3) - (priorityOrder[b.priority] ?? 3));
-        setTasks(sorted);
-        setCustomCategories(catsData || []);
-
-        if ("Notification" in window && Notification.permission === "granted") {
-          const now = new Date();
-          const next24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-
-          mappedTasks.forEach((t: Task) => {
-            if (!t.completed && t.dueDate) {
-              const due = new Date(t.dueDate);
-              if (due > now && due <= next24h) {
-                new Notification("Tarea por vencer", {
-                  body: `La tarea "${t.title}" vence pronto.`,
-                  icon: "/favicon.ico"
-                });
-              }
-            }
-          });
-        }
-      } catch (err) {
-        console.error("Error cargando datos:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchData();
-  }, []);
+  }, [fetchData]);
   const [search, setSearch] = useState("");
   const [filterPriority, setFilterPriority] = useState<Priority | "todas">("todas");
   const [filterCategory, setFilterCategory] = useState<Category | "todas">("todas");
@@ -1144,11 +1166,14 @@ export default function TasksPage() {
                     <div key={typeof share.usuario === 'string' ? share.usuario : share.usuario._id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-dark-700/50 rounded-xl border border-gray-100 dark:border-white/5">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold text-xs flex-shrink-0">
-                          {typeof share.usuario === 'string' ? '?' : (share.usuario.nombre || '').substring(0, 2).toUpperCase()}
+                          {typeof share.usuario === 'string' ? '?' : (share.usuario.nombre || 'U').substring(0, 2).toUpperCase()}
                         </div>
                         <div className="min-w-0">
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                            {typeof share.usuario === 'string' ? 'ID: ' + share.usuario : share.usuario.nombre}
+                          </p>
                           <p className="text-xs font-bold text-dark-900 dark:text-white truncate">
-                            {typeof share.usuario === 'string' ? 'ID: ' + share.usuario : share.usuario.email}
+                            {typeof share.usuario === 'string' ? '' : share.usuario.email}
                           </p>
                           <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${share.permiso === 'editar' ? 'bg-yellow-500/10 text-yellow-400' : 'bg-blue-500/10 text-blue-400'}`}>
                             {share.permiso}
