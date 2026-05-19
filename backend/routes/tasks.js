@@ -49,7 +49,7 @@ router.post('/', async (req, res) => {
 // PUT /:id -> editar tarea
 router.put('/:id', async (req, res) => {
   try {
-    const { titulo, descripcion, prioridad, categoria, fechaLimite, completada, estado, archivada, tags, recurrencia } = req.body;
+    const { titulo, descripcion, prioridad, categoria, fechaLimite, completada, estado, archivada, tags, recurrencia, imagenes } = req.body;
 
     let task = await Task.findById(req.params.id);
 
@@ -78,6 +78,7 @@ router.put('/:id', async (req, res) => {
     task.archivada = archivada !== undefined ? archivada : task.archivada;
     task.tags = tags !== undefined ? tags : task.tags;
     task.recurrencia = recurrencia !== undefined ? recurrencia : task.recurrencia;
+    task.imagenes = imagenes !== undefined ? imagenes : task.imagenes;
 
     await task.save();
     res.json(task);
