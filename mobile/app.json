@@ -1,11 +1,10 @@
 {
   "expo": {
-    "name": "TaskFlow",
-    "slug": "taskflow-mobile",
+    "name": "mobile",
+    "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "taskflow",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
@@ -14,16 +13,13 @@
       "backgroundColor": "#0a0a0a"
     },
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.taskflow.app"
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0a0a0a"
-      },
-      "package": "com.taskflow.app",
-      "edgeToEdgeEnabled": true
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -31,6 +27,7 @@
     },
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "scheme": "taskflow-mobile"
   }
 }
