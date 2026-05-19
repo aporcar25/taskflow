@@ -19,6 +19,9 @@ export interface Task {
   tags: string[];
   recurrencia: "ninguna" | "diaria" | "semanal" | "mensual";
   imagenes: string[];
+  esCompartida: boolean;
+  compartidaCon: { usuario: string | { _id: string, nombre: string, email: string }; permiso: string }[];
+  userId: string | { _id: string, nombre: string, email: string };
   createdAt: string;
 }
 

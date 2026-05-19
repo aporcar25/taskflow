@@ -175,6 +175,36 @@ export const updateProfile = async (data: { nombre?: string; email?: string }) =
   return result;
 };
 
+export const shareTask = async (taskId: string, email: string, permiso: string) => {
+  const res = await fetch(`${API_URL}/sharing/${taskId}/share`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify({ email, permiso }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.mensaje || "Error al compartir tarea");
+  }
+  return res.json();
+};
+
+export const unshareTask = async (taskId: string, userId: string) => {
+  const res = await fetch(`${API_URL}/sharing/${taskId}/share/${userId}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw new Error("Error al dejar de compartir tarea");
+  return res.json();
+};
+
+export const getSharedTasks = async () => {
+  const res = await fetch(`${API_URL}/sharing/shared`, {
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw new Error("Error obteniendo tareas compartidas");
+  return res.json();
+};
+
 export const getNotes = async () => {
   const res = await fetch(`${API_URL}/notes`, {
     headers: getHeaders(),

@@ -8,6 +8,7 @@ const taskRoutes = require('./routes/tasks');
 const habitRoutes = require('./routes/habits');
 const noteRoutes = require('./routes/notes');
 const goalRoutes = require('./routes/goals');
+const sharingRoutes = require('./routes/sharing');
 const authMiddleware = require('./middleware/auth');
 const Task = require('./models/Task');
 const Habit = require('./models/Habit');
@@ -26,6 +27,7 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/habits', habitRoutes);
 app.use('/api/notes', noteRoutes);
 app.use('/api/goals', goalRoutes);
+app.use('/api/sharing', sharingRoutes);
 
 // Stats Endpoint
 app.get('/api/stats', authMiddleware, async (req, res) => {
