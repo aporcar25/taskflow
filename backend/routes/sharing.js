@@ -45,6 +45,7 @@ router.post('/:id/share', async (req, res) => {
     }
 
     task.esCompartida = true;
+    task.markModified('compartidaCon');
     await task.save();
 
     const populatedTask = await Task.findById(task._id)
@@ -80,6 +81,7 @@ router.delete('/:id/share/:userId', async (req, res) => {
       task.esCompartida = false;
     }
 
+    task.markModified('compartidaCon');
     await task.save();
 
     const populatedTask = await Task.findById(task._id)

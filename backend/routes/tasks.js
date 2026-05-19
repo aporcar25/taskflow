@@ -90,7 +90,8 @@ router.put('/:id', async (req, res) => {
     task.imagenes = imagenes !== undefined ? imagenes : task.imagenes;
 
     await task.save();
-    res.json(task);
+    const populated = await Task.findById(task._id).populate('userId', 'nombre email foto').populate('compartidaCon.usuario', 'nombre email foto');
+    res.json(populated);
   } catch (error) {
     console.error(error);
     res.status(500).json({ mensaje: 'Error al actualizar la tarea' });
@@ -145,7 +146,8 @@ router.patch('/:id/complete', async (req, res) => {
     task.estado = completada ? 'completada' : (task.estado === 'completada' ? 'pendiente' : task.estado);
     await task.save();
 
-    res.json(task);
+    const populated = await Task.findById(task._id).populate('userId', 'nombre email foto').populate('compartidaCon.usuario', 'nombre email foto');
+    res.json(populated);
   } catch (error) {
     console.error(error);
     res.status(500).json({ mensaje: 'Error al actualizar el estado de la tarea' });
