@@ -57,9 +57,11 @@ function TaskCard({
   const currentUser = userJson ? JSON.parse(userJson) : null;
   const currentUserId = currentUser?._id || currentUser?.id;
 
-  const isOwner = typeof task.userId === 'string'
-    ? task.userId === currentUserId
-    : task.userId._id === currentUserId;
+  const isOwner = !task.userId
+    ? true
+    : typeof task.userId === 'string'
+      ? task.userId === currentUserId
+      : task.userId?._id === currentUserId;
 
   const shareEntry = task.compartidaCon?.find(c => {
     const uid = typeof c.usuario === 'string' ? c.usuario : c.usuario._id;
@@ -529,9 +531,11 @@ export default function TasksPage() {
       const matchesCategory = filterCategory === "todas" || task.category === filterCategory;
       const matchesArchived = task.archivada === showArchived;
 
-      const isOwner = typeof task.userId === 'string'
-        ? task.userId === currentUser?._id || task.userId === currentUser?.id
-        : task.userId._id === currentUser?._id || task.userId._id === currentUser?.id;
+      const isOwner = !task.userId
+        ? true
+        : typeof task.userId === 'string'
+          ? task.userId === currentUser?._id || task.userId === currentUser?.id
+          : task.userId?._id === currentUser?._id || task.userId?._id === currentUser?.id;
 
       const matchesTab = activeTab === "mismas" ? isOwner : !isOwner;
 
