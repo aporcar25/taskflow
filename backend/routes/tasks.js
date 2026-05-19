@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
         { userId: req.user.id },
         { 'compartidaCon.usuario': req.user.id }
       ]
-    }).populate('userId', 'nombre email foto').sort({ createdAt: -1 });
+    }).populate('userId', 'nombre email foto').populate('compartidaCon.usuario', 'nombre email foto').sort({ createdAt: -1 });
     res.json(tasks);
   } catch (error) {
     console.error(error);
