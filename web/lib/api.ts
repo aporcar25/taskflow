@@ -175,6 +175,52 @@ export const updateProfile = async (data: { nombre?: string; email?: string }) =
   return result;
 };
 
+export const getNotes = async () => {
+  const res = await fetch(`${API_URL}/notes`, {
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw new Error("Error obteniendo notas");
+  return res.json();
+};
+
+export const createNote = async (data: unknown) => {
+  const res = await fetch(`${API_URL}/notes`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Error creando nota");
+  return res.json();
+};
+
+export const updateNote = async (id: string, data: unknown) => {
+  const res = await fetch(`${API_URL}/notes/${id}`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Error actualizando nota");
+  return res.json();
+};
+
+export const deleteNote = async (id: string) => {
+  const res = await fetch(`${API_URL}/notes/${id}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw new Error("Error eliminando nota");
+  return res.json();
+};
+
+export const pinNote = async (id: string) => {
+  const res = await fetch(`${API_URL}/notes/${id}/pin`, {
+    method: "PATCH",
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw new Error("Error al fijar nota");
+  return res.json();
+};
+
 export const completeTutorial = async (page: string) => {
   const res = await fetch(`${API_URL}/auth/tutorial-complete`, {
     method: "PUT",
