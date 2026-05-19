@@ -31,21 +31,20 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      console.log('RESPUESTA:', JSON.stringify(response.data));
-      const { token, user: userData } = response.data;;
+      const { token, user: userData } = response.data;
+
+      const userToSave = { ...userData, foto: null };
 
       await AsyncStorage.setItem('taskflow_token', token);
-      await AsyncStorage.setItem('taskflow_user', JSON.stringify(userData));
+      await AsyncStorage.setItem('taskflow_user', JSON.stringify(userToSave));
 
       api.defaults.headers.Authorization = `Bearer ${token}`;
-      setUser(userData);
+      setUser(userToSave);
       return { success: true };
     } catch (error) {
-      console.log('ERROR STATUS:', error.response?.status);
-      console.log('ERROR DATA:', JSON.stringify(error.response?.data));
       return {
         success: false,
-        message: error.response?.data?.message || error.response?.data?.mensaje || 'Error al iniciar sesión',
+        message: error.response?.data?.mensaje || error.response?.data?.message || 'Error al iniciar sesión',
       };
     }
   };
@@ -55,16 +54,18 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post('/auth/register', { nombre, email, password });
       const { token, user: userData } = response.data;
 
+      const userToSave = { ...userData, foto: null };
+
       await AsyncStorage.setItem('taskflow_token', token);
-      await AsyncStorage.setItem('taskflow_user', JSON.stringify(userData));
+      await AsyncStorage.setItem('taskflow_user', JSON.stringify(userToSave));
 
       api.defaults.headers.Authorization = `Bearer ${token}`;
-      setUser(userData);
+      setUser(userToSave);
       return { success: true };
     } catch (error) {
       return {
         success: false,
-        message: error.response?.data?.mensaje || 'Error al registrarse',
+        message: error.response?.data?.mensaje || error.response?.data?.message || 'Error al registrarse',
       };
     }
   };
