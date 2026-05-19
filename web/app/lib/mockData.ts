@@ -18,6 +18,7 @@ export interface Task {
   archivada: boolean;
   tags: string[];
   recurrencia: "ninguna" | "diaria" | "semanal" | "mensual";
+  imagenes: string[];
   createdAt: string;
 }
 

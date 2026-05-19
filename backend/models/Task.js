@@ -52,6 +52,10 @@ const TaskSchema = new mongoose.Schema({
   recordatorioEnviado: {
     type: Boolean,
     default: false
+  },
+  imagenes: {
+    type: [String],
+    default: []
   }
 }, { timestamps: true });
 

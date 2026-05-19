@@ -12,6 +12,7 @@ interface ApiTask {
   archivada?: boolean;
   tags?: string[];
   recurrencia?: string;
+  imagenes?: string[];
   createdAt: string;
 }
 
@@ -136,6 +137,12 @@ function TaskCard({
                 {task.recurrencia}
               </span>
             )}
+            {task.imagenes && task.imagenes.length > 0 && (
+              <span className="text-[10px] font-medium text-lime-400 flex items-center gap-0.5" title={`${task.imagenes.length} imágenes adjuntas`}>
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                {task.imagenes.length}
+              </span>
+            )}
           </div>
 
           {task.tags.length > 0 && (
@@ -166,7 +173,8 @@ export default function TasksPage() {
     category: "" as Category | "", dueDate: "",
     estado: "pendiente" as "pendiente" | "en_progreso" | "completada",
     tags: "" as string,
-    recurrencia: "ninguna" as "ninguna" | "diaria" | "semanal" | "mensual"
+    recurrencia: "ninguna" as "ninguna" | "diaria" | "semanal" | "mensual",
+    imagenes: [] as string[]
   });
   const [createErrors, setCreateErrors] = useState<Record<string, string>>({});
   const [isCreating, setIsCreating] = useState(false);
@@ -181,6 +189,43 @@ export default function TasksPage() {
   });
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [isFullscreenImageOpen, setIsFullscreenImageOpen] = useState<string | null>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean) => {
+    const files = Array.from(e.target.files || []);
+    const currentImages = isEdit ? editForm.imagenes : createForm.imagenes;
+
+    if (currentImages.length + files.length > 3) {
+      showToast("Máximo 3 imágenes por tarea", "error");
+      return;
+    }
+
+    files.forEach(file => {
+      if (file.size > 2 * 1024 * 1024) {
+        showToast(`La imagen ${file.name} excede los 2MB`, "error");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        if (isEdit) {
+          setEditForm(prev => ({ ...prev, imagenes: [...prev.imagenes, base64String] }));
+        } else {
+          setCreateForm(prev => ({ ...prev, imagenes: [...prev.imagenes, base64String] }));
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (index: number, isEdit: boolean) => {
+    if (isEdit) {
+      setEditForm(prev => ({ ...prev, imagenes: prev.imagenes.filter((_, i) => i !== index) }));
+    } else {
+      setCreateForm(prev => ({ ...prev, imagenes: prev.imagenes.filter((_, i) => i !== index) }));
+    }
+  };
 
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const [showArchived, setShowArchived] = useState(false);
@@ -225,6 +270,7 @@ export default function TasksPage() {
         archivada: !!(newTask as ApiTask).archivada,
         tags: (newTask as ApiTask).tags || [],
         recurrencia: (newTask as ApiTask).recurrencia || "ninguna",
+        imagenes: (newTask as ApiTask).imagenes || [],
         createdAt: (newTask as ApiTask).createdAt
       };
 
@@ -274,7 +320,8 @@ export default function TasksPage() {
       dueDate: task.dueDate || "",
       estado: task.estado,
       tags: task.tags.join(", "),
-      recurrencia: task.recurrencia
+      recurrencia: task.recurrencia,
+      imagenes: task.imagenes || []
     });
     setEditErrors({});
     setIsEditModalOpen(true);
@@ -303,7 +350,8 @@ export default function TasksPage() {
         fechaLimite: editForm.dueDate,
         estado: editForm.estado,
         tags: editForm.tags.split(",").map(t => t.trim()).filter(Boolean),
-        recurrencia: editForm.recurrencia
+        recurrencia: editForm.recurrencia,
+        imagenes: editForm.imagenes
       });
       setTasks(tasks.map(t => t.id === editingTask.id ? {
         ...t,
@@ -316,7 +364,8 @@ export default function TasksPage() {
         estado: updated.estado,
         archivada: !!updated.archivada,
         tags: updated.tags || [],
-        recurrencia: updated.recurrencia
+        recurrencia: updated.recurrencia,
+        imagenes: updated.imagenes || []
       } : t));
       setIsEditModalOpen(false);
       setEditingTask(null);
@@ -351,6 +400,7 @@ export default function TasksPage() {
           archivada: !!t.archivada,
           tags: t.tags || [],
           recurrencia: t.recurrencia || "ninguna",
+          imagenes: t.imagenes || [],
           createdAt: t.createdAt
         }));
         const priorityOrder = { alta: 0, media: 1, baja: 2 };
@@ -724,7 +774,8 @@ export default function TasksPage() {
                   category: "" as Category | "", dueDate: "",
                   estado: "pendiente",
                   tags: "",
-                  recurrencia: "ninguna"
+                  recurrencia: "ninguna",
+                  imagenes: []
                 });
                 setCreateErrors({});
               }} className="text-gray-400 hover:text-white transition-colors">
@@ -791,6 +842,31 @@ export default function TasksPage() {
                 <input type="text" value={createForm.tags} onChange={(e) => setCreateForm({ ...createForm, tags: e.target.value })} placeholder="ej. urgente, revisión, diseño" className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-white/10 text-dark-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all" />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Imágenes (máx 3)</label>
+                <div className="flex flex-wrap gap-3 mb-3">
+                  {createForm.imagenes.map((img, idx) => (
+                    <div key={idx} className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 group">
+                      <img src={img} alt="Preview" className="w-full h-full object-cover cursor-pointer" onClick={() => setIsFullscreenImageOpen(img)} />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(idx, false)}
+                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    </div>
+                  ))}
+                  {createForm.imagenes.length < 3 && (
+                    <label className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 dark:border-white/10 flex flex-col items-center justify-center cursor-pointer hover:border-lime-400/50 hover:bg-lime-400/5 transition-all">
+                      <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                      <span className="text-[10px] text-gray-500 mt-1">Añadir</span>
+                      <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleImageUpload(e, false)} />
+                    </label>
+                  )}
+                </div>
+              </div>
+
             <div className="flex gap-3 justify-end mt-6 pb-10 sm:pb-0">
               <button
                 type="button"
@@ -801,7 +877,8 @@ export default function TasksPage() {
                     category: "" as Category | "", dueDate: "",
                     estado: "pendiente",
                     tags: "",
-                    recurrencia: "ninguna"
+                    recurrencia: "ninguna",
+                    imagenes: []
                   });
                   setCreateErrors({});
                 }}
@@ -893,6 +970,31 @@ export default function TasksPage() {
                 <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Etiquetas (separadas por coma)</label>
                 <input type="text" value={editForm.tags} onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })} placeholder="ej. urgente, revisión, diseño" className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-white/10 text-dark-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all" />
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Imágenes (máx 3)</label>
+                <div className="flex flex-wrap gap-3 mb-3">
+                  {editForm.imagenes.map((img, idx) => (
+                    <div key={idx} className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 group">
+                      <img src={img} alt="Preview" className="w-full h-full object-cover cursor-pointer" onClick={() => setIsFullscreenImageOpen(img)} />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(idx, true)}
+                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    </div>
+                  ))}
+                  {editForm.imagenes.length < 3 && (
+                    <label className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 dark:border-white/10 flex flex-col items-center justify-center cursor-pointer hover:border-lime-400/50 hover:bg-lime-400/5 transition-all">
+                      <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                      <span className="text-[10px] text-gray-500 mt-1">Añadir</span>
+                      <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleImageUpload(e, true)} />
+                    </label>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="flex gap-3 justify-end mt-6 pb-10 sm:pb-0">
@@ -911,6 +1013,16 @@ export default function TasksPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Fullscreen Image Viewer */}
+      {isFullscreenImageOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-fade-in" onClick={() => setIsFullscreenImageOpen(null)}>
+          <button className="absolute top-6 right-6 p-2 text-white hover:text-lime-400 transition-colors z-[110]">
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+          <img src={isFullscreenImageOpen} alt="Fullscreen" className="max-w-full max-h-full rounded-2xl shadow-2xl animate-scale-in" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
     </div>
