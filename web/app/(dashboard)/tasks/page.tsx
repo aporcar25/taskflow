@@ -185,7 +185,8 @@ export default function TasksPage() {
     category: "" as Category | string, dueDate: "",
     estado: "pendiente" as "pendiente" | "en_progreso" | "completada",
     tags: "" as string,
-    recurrencia: "ninguna" as "ninguna" | "diaria" | "semanal" | "mensual"
+    recurrencia: "ninguna" as "ninguna" | "diaria" | "semanal" | "mensual",
+    imagenes: [] as string[]
   });
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -193,7 +194,7 @@ export default function TasksPage() {
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean) => {
     const files = Array.from(e.target.files || []);
-    const currentImages = isEdit ? editForm.imagenes : createForm.imagenes;
+    const currentImages = isEdit ? (editForm.imagenes || []) : (createForm.imagenes || []);
 
     if (currentImages.length + files.length > 3) {
       showToast("Máximo 3 imágenes por tarea", "error");
@@ -210,9 +211,9 @@ export default function TasksPage() {
       reader.onloadend = () => {
         const base64String = reader.result as string;
         if (isEdit) {
-          setEditForm(prev => ({ ...prev, imagenes: [...prev.imagenes, base64String] }));
+          setEditForm(prev => ({ ...prev, imagenes: [...(prev.imagenes || []), base64String] }));
         } else {
-          setCreateForm(prev => ({ ...prev, imagenes: [...prev.imagenes, base64String] }));
+          setCreateForm(prev => ({ ...prev, imagenes: [...(prev.imagenes || []), base64String] }));
         }
       };
       reader.readAsDataURL(file);
@@ -221,9 +222,9 @@ export default function TasksPage() {
 
   const removeImage = (index: number, isEdit: boolean) => {
     if (isEdit) {
-      setEditForm(prev => ({ ...prev, imagenes: prev.imagenes.filter((_, i) => i !== index) }));
+      setEditForm(prev => ({ ...prev, imagenes: (prev.imagenes || []).filter((_, i) => i !== index) }));
     } else {
-      setCreateForm(prev => ({ ...prev, imagenes: prev.imagenes.filter((_, i) => i !== index) }));
+      setCreateForm(prev => ({ ...prev, imagenes: (prev.imagenes || []).filter((_, i) => i !== index) }));
     }
   };
 
@@ -255,7 +256,8 @@ export default function TasksPage() {
         fechaLimite: createForm.dueDate,
         estado: createForm.estado,
         tags: createForm.tags.split(",").map(t => t.trim()).filter(Boolean),
-        recurrencia: createForm.recurrencia
+        recurrencia: createForm.recurrencia,
+        imagenes: createForm.imagenes || []
       });
       
       const mappedNewTask: Task = {
@@ -282,7 +284,8 @@ export default function TasksPage() {
         category: "" as Category | "", dueDate: "",
         estado: "pendiente",
         tags: "",
-        recurrencia: "ninguna"
+        recurrencia: "ninguna",
+        imagenes: []
       });
       setCreateErrors({});
     } catch (err) {
@@ -351,7 +354,7 @@ export default function TasksPage() {
         estado: editForm.estado,
         tags: editForm.tags.split(",").map(t => t.trim()).filter(Boolean),
         recurrencia: editForm.recurrencia,
-        imagenes: editForm.imagenes
+        imagenes: editForm.imagenes || []
       });
       setTasks(tasks.map(t => t.id === editingTask.id ? {
         ...t,
@@ -845,7 +848,7 @@ export default function TasksPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Imágenes (máx 3)</label>
                 <div className="flex flex-wrap gap-3 mb-3">
-                  {createForm.imagenes.map((img, idx) => (
+                  {(createForm.imagenes || []).map((img, idx) => (
                     <div key={idx} className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 group">
                       <img src={img} alt="Preview" className="w-full h-full object-cover cursor-pointer" onClick={() => setIsFullscreenImageOpen(img)} />
                       <button
@@ -857,7 +860,7 @@ export default function TasksPage() {
                       </button>
                     </div>
                   ))}
-                  {createForm.imagenes.length < 3 && (
+                  {(createForm.imagenes || []).length < 3 && (
                     <label className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 dark:border-white/10 flex flex-col items-center justify-center cursor-pointer hover:border-lime-400/50 hover:bg-lime-400/5 transition-all">
                       <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                       <span className="text-[10px] text-gray-500 mt-1">Añadir</span>
@@ -974,7 +977,7 @@ export default function TasksPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Imágenes (máx 3)</label>
                 <div className="flex flex-wrap gap-3 mb-3">
-                  {editForm.imagenes.map((img, idx) => (
+                  {(editForm.imagenes || []).map((img, idx) => (
                     <div key={idx} className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 group">
                       <img src={img} alt="Preview" className="w-full h-full object-cover cursor-pointer" onClick={() => setIsFullscreenImageOpen(img)} />
                       <button
@@ -986,7 +989,7 @@ export default function TasksPage() {
                       </button>
                     </div>
                   ))}
-                  {editForm.imagenes.length < 3 && (
+                  {(editForm.imagenes || []).length < 3 && (
                     <label className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 dark:border-white/10 flex flex-col items-center justify-center cursor-pointer hover:border-lime-400/50 hover:bg-lime-400/5 transition-all">
                       <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                       <span className="text-[10px] text-gray-500 mt-1">Añadir</span>
