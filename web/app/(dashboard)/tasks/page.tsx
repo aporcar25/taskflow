@@ -51,12 +51,9 @@ function TaskCard({
   setIsDeleteModalOpen: (open: boolean) => void,
   isKanban?: boolean,
   archiveTask: (id: string) => void,
-  isAnimating?: boolean
+  isAnimating?: boolean,
+  currentUserId: string | null
 }) {
-  const userJson = typeof window !== "undefined" ? localStorage.getItem('taskflow_user') : null;
-  const currentUser = userJson ? JSON.parse(userJson) : null;
-  const currentUserId = currentUser?._id || currentUser?.id;
-
   const isOwner = !task.userId
     ? true
     : typeof task.userId === 'string'
@@ -118,7 +115,7 @@ function TaskCard({
               )}
               {!isOwner && typeof task.userId !== 'string' && (
                 <p className="text-[10px] text-blue-400 font-medium mt-1">
-                  De: {task.userId.nombre} ({shareEntry?.permiso})
+                  Compartida por: {task.userId.nombre} ({shareEntry?.permiso})
                 </p>
               )}
             </div>
@@ -204,6 +201,20 @@ function TaskCard({
 export default function TasksPage() {
   const { showToast } = useToast();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    const userJson = localStorage.getItem('taskflow_user');
+    if (userJson) setCurrentUser(JSON.parse(userJson));
+
+    const handleUserUpdate = () => {
+      const updatedUserJson = localStorage.getItem('taskflow_user');
+      if (updatedUserJson) setCurrentUser(JSON.parse(updatedUserJson));
+    };
+
+    window.addEventListener('taskflow-user-updated', handleUserUpdate);
+    return () => window.removeEventListener('taskflow-user-updated', handleUserUpdate);
+  }, []);
   const [isLoading, setIsLoading] = useState(true);
   const [animatingTasks, setAnimatingTasks] = useState<Set<string>>(new Set());
 
@@ -540,9 +551,6 @@ export default function TasksPage() {
   const [filterCategory, setFilterCategory] = useState<Category | "todas">("todas");
 
   const filteredTasks = useMemo(() => {
-    const userJson = typeof window !== "undefined" ? localStorage.getItem('taskflow_user') : null;
-    const currentUser = userJson ? JSON.parse(userJson) : null;
-
     return tasks.filter((task) => {
       const title = task.title || "";
       const description = task.description || "";
@@ -563,7 +571,7 @@ export default function TasksPage() {
 
       return matchesSearch && matchesPriority && matchesCategory && matchesArchived && matchesTab;
     });
-  }, [tasks, search, filterPriority, filterCategory, showArchived, activeTab]);
+  }, [tasks, search, filterPriority, filterCategory, showArchived, activeTab, currentUser]);
 
   const toggleTask = async (id: string) => {
     const task = tasks.find((t) => t.id === id);
@@ -816,6 +824,7 @@ export default function TasksPage() {
               setIsDeleteModalOpen={setIsDeleteModalOpen}
               archiveTask={archiveTask}
               isAnimating={animatingTasks.has(task.id)}
+              currentUserId={currentUser?._id || currentUser?.id || null}
             />
           ))}
         </div>
@@ -857,6 +866,7 @@ export default function TasksPage() {
                         isKanban
                         archiveTask={archiveTask}
                         isAnimating={animatingTasks.has(task.id)}
+                        currentUserId={currentUser?._id || currentUser?.id || null}
                       />
                     </div>
                   ))}
