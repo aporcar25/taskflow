@@ -1,16 +1,15 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { useAuth } from '../../src/context/AuthContext';
 import api from '../../src/services/api';
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
-import { CheckCircle2, Circle, Flame, TrendingUp, Layout } from 'lucide-react-native';
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [recentTasks, setRecentTasks] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
     try {
@@ -19,12 +18,9 @@ export default function Dashboard() {
         api.get('/tasks')
       ]);
       setStats(statsRes.data);
-      setRecentTasks(tasksRes.data.slice(0, 5));
+      setRecentTasks(tasksRes.data.slice(0, 3));
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
     }
   };
 
@@ -34,86 +30,64 @@ export default function Dashboard() {
     }, [])
   );
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    fetchData();
+    await fetchData();
+    setRefreshing(false);
   };
-
-  const StatCard = ({ title, value, icon: Icon, color = '#a3e635' }) => (
-    <View style={styles.statCard}>
-      <View style={styles.statIconContainer}>
-        <Icon size={20} color={color} />
-      </View>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statTitle}>{title}</Text>
-    </View>
-  );
 
   return (
     <ScrollView
       style={styles.container}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#a3e635" />}
     >
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.welcome}>Hola, {user?.nombre || 'Usuario'}</Text>
-          <Text style={styles.date}>{new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</Text>
-        </View>
-        <TouchableOpacity onPress={logout} style={styles.logoutButton}>
-          <Text style={styles.logoutText}>Salir</Text>
-        </TouchableOpacity>
+      <View style={styles.welcome}>
+        <Text style={styles.welcomeText}>Hola, {user?.nombre || 'Usuario'}</Text>
+        <Text style={styles.dateText}>{new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</Text>
       </View>
 
       <View style={styles.statsGrid}>
-        <StatCard
-          title="Hoy"
-          value={stats?.tareasCompletadasHoy || 0}
-          icon={CheckCircle2}
-        />
-        <StatCard
-          title="Semana"
-          value={stats?.tareasCompletadasEstaSemana || 0}
-          icon={TrendingUp}
-        />
-        <StatCard
-          title="Productividad"
-          value={`${stats?.porcentajeProductividad || 0}%`}
-          icon={Layout}
-        />
-        <StatCard
-          title="Racha"
-          value={stats?.rachaMaximaHabitos || 0}
-          icon={Flame}
-          color="#fb923c"
-        />
+        <View style={styles.statCard}>
+          <Ionicons name="checkmark-circle" size={24} color="#a3e635" />
+          <Text style={styles.statValue}>{stats?.completadas || 0}</Text>
+          <Text style={styles.statLabel}>Completadas</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Ionicons name="time" size={24} color="#f59e0b" />
+          <Text style={styles.statValue}>{stats?.pendientes || 0}</Text>
+          <Text style={styles.statLabel}>Pendientes</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Ionicons name="flame" size={24} color="#ef4444" />
+          <Text style={styles.statValue}>{stats?.maxRacha || 0}</Text>
+          <Text style={styles.statLabel}>Racha</Text>
+        </View>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Tareas recientes</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Tareas Recientes</Text>
+        </View>
+
         {recentTasks.length > 0 ? (
           recentTasks.map(task => (
-            <View key={task._id} style={styles.taskItem}>
-              {task.completada ? (
-                <CheckCircle2 size={20} color="#a3e635" />
-              ) : (
-                <Circle size={20} color="#666" />
-              )}
+            <View key={task._id} style={styles.taskCard}>
+              <View style={[styles.priorityIndicator, { backgroundColor: task.prioridad === 'alta' ? '#ef4444' : task.prioridad === 'media' ? '#f59e0b' : '#3b82f6' }]} />
               <View style={styles.taskInfo}>
-                <Text style={[styles.taskTitle, task.completada && styles.taskTitleDone]}>
-                  {task.titulo}
-                </Text>
-                <Text style={styles.taskMeta}>
-                  {task.categoria} • {task.prioridad}
-                </Text>
+                <Text style={styles.taskTitle}>{task.titulo}</Text>
+                <Text style={styles.taskCategory}>{task.categoria || 'Sin categoría'}</Text>
               </View>
+              {task.estado === 'completada' && (
+                <Ionicons name="checkmark-done" size={20} color="#a3e635" />
+              )}
             </View>
           ))
         ) : (
-          <Text style={styles.emptyText}>No hay tareas recientes</Text>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>No tienes tareas recientes</Text>
+          </View>
         )}
       </View>
-
-      <View style={{ height: 40 }} />
     </ScrollView>
   );
 }
@@ -122,99 +96,99 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0a0a0a',
-  },
-  header: {
     padding: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
   welcome: {
-    fontSize: 24,
+    marginBottom: 25,
+  },
+  welcomeText: {
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#fff',
   },
-  date: {
-    fontSize: 14,
-    color: '#666',
+  dateText: {
+    fontSize: 16,
+    color: '#999',
     textTransform: 'capitalize',
-  },
-  logoutButton: {
-    padding: 8,
-  },
-  logoutText: {
-    color: '#ff4444',
-    fontWeight: '600',
   },
   statsGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    padding: 10,
     justifyContent: 'space-between',
+    marginBottom: 25,
   },
   statCard: {
     backgroundColor: '#1a1a1a',
-    width: '47%',
+    flex: 1,
+    marginHorizontal: 5,
     padding: 15,
     borderRadius: 12,
-    marginBottom: 15,
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: '#333',
-  },
-  statIconContainer: {
-    marginBottom: 10,
   },
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#fff',
+    marginTop: 5,
   },
-  statTitle: {
+  statLabel: {
     fontSize: 12,
-    color: '#666',
-    marginTop: 2,
+    color: '#999',
   },
   section: {
-    padding: 20,
+    marginBottom: 25,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 15,
   },
-  taskItem: {
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  taskCard: {
+    backgroundColor: '#1a1a1a',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a1a1a',
     padding: 15,
     borderRadius: 12,
     marginBottom: 10,
     borderWidth: 1,
     borderColor: '#333',
   },
+  priorityIndicator: {
+    width: 4,
+    height: '100%',
+    borderRadius: 2,
+    marginRight: 15,
+  },
   taskInfo: {
-    marginLeft: 12,
     flex: 1,
   },
   taskTitle: {
     fontSize: 16,
+    fontWeight: '600',
     color: '#fff',
-    fontWeight: '500',
   },
-  taskTitleDone: {
-    textDecorationLine: 'line-through',
-    color: '#666',
-  },
-  taskMeta: {
+  taskCategory: {
     fontSize: 12,
-    color: '#666',
+    color: '#999',
     marginTop: 2,
-    textTransform: 'capitalize',
+  },
+  emptyState: {
+    padding: 30,
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    borderColor: '#333',
   },
   emptyText: {
     color: '#666',
-    textAlign: 'center',
-    marginTop: 10,
-  },
+  }
 });
