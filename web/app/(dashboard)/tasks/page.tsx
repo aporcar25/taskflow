@@ -52,8 +52,9 @@ function TaskCard({
   isKanban?: boolean,
   archiveTask: (id: string) => void,
   isAnimating?: boolean,
-  currentUserId: string | null
+  currentUser: any
 }) {
+  const currentUserId = currentUser?._id || currentUser?.id || null;
   const isOwner = !task.userId
     ? true
     : typeof task.userId === 'string'
@@ -824,7 +825,7 @@ export default function TasksPage() {
               setIsDeleteModalOpen={setIsDeleteModalOpen}
               archiveTask={archiveTask}
               isAnimating={animatingTasks.has(task.id)}
-              currentUserId={currentUser?._id || currentUser?.id || null}
+              currentUser={currentUser}
             />
           ))}
         </div>
@@ -866,7 +867,7 @@ export default function TasksPage() {
                         isKanban
                         archiveTask={archiveTask}
                         isAnimating={animatingTasks.has(task.id)}
-                        currentUserId={currentUser?._id || currentUser?.id || null}
+                        currentUser={currentUser}
                       />
                     </div>
                   ))}
