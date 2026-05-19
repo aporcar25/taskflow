@@ -31,7 +31,8 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { token, user: userData } = response.data;
+      console.log('RESPUESTA:', JSON.stringify(response.data));
+      const { token, user: userData } = response.data;;
 
       await AsyncStorage.setItem('taskflow_token', token);
       await AsyncStorage.setItem('taskflow_user', JSON.stringify(userData));
@@ -40,9 +41,11 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       return { success: true };
     } catch (error) {
+      console.log('ERROR STATUS:', error.response?.status);
+      console.log('ERROR DATA:', JSON.stringify(error.response?.data));
       return {
         success: false,
-        message: error.response?.data?.mensaje || 'Error al iniciar sesión',
+        message: error.response?.data?.message || error.response?.data?.mensaje || 'Error al iniciar sesión',
       };
     }
   };

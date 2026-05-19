@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "mobile",
+    "name": "TaskFlow",
     "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -19,7 +19,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0a0a0a"
-      }
+      },
+      "package": "com.antonio2505.mobile"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -28,6 +29,13 @@
     "plugins": [
       "expo-router"
     ],
-    "scheme": "taskflow-mobile"
+    "scheme": "taskflow-mobile",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ff142978-c95c-46bb-b2b3-89e38763b972"
+      }
+    },
+    "owner": "antonio2505"
   }
 }
