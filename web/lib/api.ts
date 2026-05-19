@@ -221,6 +221,54 @@ export const pinNote = async (id: string) => {
   return res.json();
 };
 
+export const getGoals = async (semana?: string) => {
+  const url = semana ? `${API_URL}/goals?semana=${semana}` : `${API_URL}/goals`;
+  const res = await fetch(url, {
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw new Error("Error obteniendo objetivos");
+  return res.json();
+};
+
+export const createGoal = async (data: unknown) => {
+  const res = await fetch(`${API_URL}/goals`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Error creando objetivo");
+  return res.json();
+};
+
+export const updateGoal = async (id: string, data: unknown) => {
+  const res = await fetch(`${API_URL}/goals/${id}`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Error actualizando objetivo");
+  return res.json();
+};
+
+export const deleteGoal = async (id: string) => {
+  const res = await fetch(`${API_URL}/goals/${id}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw new Error("Error eliminando objetivo");
+  return res.json();
+};
+
+export const updateGoalProgress = async (id: string, valor: string | number) => {
+  const res = await fetch(`${API_URL}/goals/${id}/progress`, {
+    method: "PATCH",
+    headers: getHeaders(),
+    body: JSON.stringify({ valor }),
+  });
+  if (!res.ok) throw new Error("Error actualizando progreso");
+  return res.json();
+};
+
 export const completeTutorial = async (page: string) => {
   const res = await fetch(`${API_URL}/auth/tutorial-complete`, {
     method: "PUT",
