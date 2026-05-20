@@ -54,16 +54,15 @@ function TaskCard({
   isAnimating?: boolean,
   currentUser: any
 }) {
-  const currentUserId = currentUser?._id || currentUser?.id || null;
   const isOwner = !task.userId
     ? true
     : typeof task.userId === 'string'
-      ? task.userId === currentUserId
-      : task.userId?._id === currentUserId;
+      ? task.userId === (currentUser?._id || currentUser?.id)
+      : task.userId?._id === (currentUser?._id || currentUser?.id);
 
   const shareEntry = task.compartidaCon?.find(c => {
     const uid = typeof c.usuario === 'string' ? c.usuario : c.usuario._id;
-    return uid === currentUserId;
+    return uid === (currentUser?._id || currentUser?.id);
   });
 
   const canEdit = isOwner || (shareEntry && shareEntry.permiso === 'editar');
