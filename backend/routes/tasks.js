@@ -21,19 +21,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /shared -> tareas compartidas con el usuario autenticado
-router.get('/shared', async (req, res) => {
-  try {
-    const tasks = await Task.find({ 'compartidaCon.usuario': req.user.id })
-      .populate('userId', 'nombre email')
-      .populate('compartidaCon.usuario', 'nombre email');
-    res.json(tasks);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ mensaje: 'Error al obtener tareas compartidas' });
-  }
-});
-
 // POST / -> crear nueva tarea
 router.post('/', async (req, res) => {
   try {

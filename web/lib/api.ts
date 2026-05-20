@@ -198,7 +198,7 @@ export const unshareTask = async (taskId: string, userId: string) => {
 };
 
 export const getSharedTasks = async () => {
-  const res = await fetch(`${API_URL}/tasks/shared`, {
+  const res = await fetch(`${API_URL}/sharing/shared`, {
     headers: getHeaders(),
   });
   if (!res.ok) throw new Error("Error obteniendo tareas compartidas");

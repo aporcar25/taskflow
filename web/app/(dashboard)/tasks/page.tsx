@@ -46,8 +46,6 @@ export default function TasksPage() {
   const { showToast } = useToast();
 
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [sharedTasks, setSharedTasks] = useState<Task[]>([]);
-  const [isLoadingShared, setIsLoadingShared] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [animatingTasks, setAnimatingTasks] = useState<Set<string>>(new Set());
 
@@ -106,8 +104,9 @@ export default function TasksPage() {
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [tasksData, catsData] = await Promise.all([
+      const [tasksData, sharedData, catsData] = await Promise.all([
         getTasks(),
+        getSharedTasks(),
         getCustomCategories()
       ]);
 
@@ -130,10 +129,19 @@ export default function TasksPage() {
         createdAt: t.createdAt
       });
 
+      const mappedTasks = (tasksData as ApiTask[]).map(mapApiTask);
+      const mappedShared = (sharedData as ApiTask[]).map(mapApiTask);
+
+      // Combine and remove duplicates
+      const combined = [...mappedTasks];
+      mappedShared.forEach((st: Task) => {
+        if (!combined.find(t => t.id === st.id)) {
+          combined.push(st);
+        }
+      });
+
       const priorityOrder = { alta: 0, media: 1, baja: 2 };
-      const sorted = (tasksData as ApiTask[])
-        .map(mapApiTask)
-        .sort((a, b) => (priorityOrder[a.priority] ?? 3) - (priorityOrder[b.priority] ?? 3));
+      const sorted = combined.sort((a, b) => (priorityOrder[a.priority] ?? 3) - (priorityOrder[b.priority] ?? 3));
 
       setTasks(sorted);
       setCustomCategories(catsData || []);
@@ -148,29 +156,6 @@ export default function TasksPage() {
     fetchData();
   }, [fetchData, currentUser]);
 
-  const fetchSharedTasks = useCallback(async () => {
-    setIsLoadingShared(true);
-    try {
-      const data = await getSharedTasks();
-      const mapApiTask = (t: ApiTask): Task => ({
-        id: t._id, title: t.titulo || "", description: t.descripcion || "", priority: t.prioridad as Priority, category: t.categoria, dueDate: t.fechaLimite ? t.fechaLimite.substring(0, 10) : "", completed: t.completada, estado: (t.estado as any) || (t.completada ? "completada" : "pendiente"), archivada: !!t.archivada, tags: t.tags || [], recurrencia: (t.recurrencia as any) || "ninguna", imagenes: t.imagenes || [], esCompartida: t.esCompartida || false, compartidaCon: t.compartidaCon || [], userId: t.userId, createdAt: t.createdAt
-      });
-      const priorityOrder = { alta: 0, media: 1, baja: 2 };
-      const sorted = (data as ApiTask[]).map(mapApiTask).sort((a, b) => (priorityOrder[a.priority] ?? 3) - (priorityOrder[b.priority] ?? 3));
-      setSharedTasks(sorted);
-    } catch (err) {
-      console.error("Error loading shared tasks:", err);
-    } finally {
-      setIsLoadingShared(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (activeTab === "compartidas") {
-      fetchSharedTasks();
-    }
-  }, [activeTab, fetchSharedTasks]);
-
   /**
    * Computed State
    */
@@ -184,32 +169,23 @@ export default function TasksPage() {
       const matchesPriority = filterPriority === "todas" || task.priority === filterPriority;
       const matchesCategory = filterCategory === "todas" || task.category === filterCategory;
       const matchesArchived = task.archivada === showArchived;
+
       const currentUserId = currentUser?._id || currentUser?.id;
+
+      // Exact requested isOwner check
       const isOwner = !task.userId
         ? true
         : typeof task.userId === 'string'
           ? task.userId === currentUserId
           : task.userId?._id === currentUserId || task.userId?.id === currentUserId;
-      return matchesSearch && matchesPriority && matchesCategory && matchesArchived && isOwner;
-    });
-  }, [tasks, search, filterPriority, filterCategory, showArchived, currentUser]);
 
-  const filteredSharedTasks = useMemo(() => {
-    return sharedTasks.filter((task) => {
-      const title = task.title || "";
-      const description = task.description || "";
-      const matchesSearch =
-        title.toLowerCase().includes(search.toLowerCase()) ||
-        description.toLowerCase().includes(search.toLowerCase());
-      const matchesPriority = filterPriority === "todas" || task.priority === filterPriority;
-      const matchesCategory = filterCategory === "todas" || task.category === filterCategory;
-      const matchesArchived = task.archivada === showArchived;
-      return matchesSearch && matchesPriority && matchesCategory && matchesArchived;
-    });
-  }, [sharedTasks, search, filterPriority, filterCategory, showArchived]);
+      const matchesTab = activeTab === "mismas" ? isOwner : !isOwner;
 
-  const activeTasks = activeTab === "compartidas" ? filteredSharedTasks : filteredTasks;
-  const completedCount = activeTasks.filter((t) => t.completed).length;
+      return matchesSearch && matchesPriority && matchesCategory && matchesArchived && matchesTab;
+    });
+  }, [tasks, search, filterPriority, filterCategory, showArchived, activeTab, currentUser]);
+
+  const completedCount = filteredTasks.filter((t) => t.completed).length;
 
   /**
    * Actions
@@ -492,7 +468,7 @@ export default function TasksPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-dark-900 dark:text-white">Tareas</h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{completedCount} de {activeTasks.length} {showArchived ? "archivadas" : "activas"}</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{completedCount} de {filteredTasks.length} {showArchived ? "archivadas" : "activas"}</p>
         </div>
         <div className="flex items-center bg-gray-100 dark:bg-white/5 rounded-xl p-1">
           <button onClick={() => setActiveTab("mismas")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "mismas" ? "bg-white dark:bg-dark-700 text-lime-400 shadow-sm" : "text-gray-400 hover:text-white"}`}>Mis tareas</button>
@@ -522,26 +498,26 @@ export default function TasksPage() {
       </div>
 
       <div className="flex-1 overflow-hidden min-h-0">
-        {(isLoading || (activeTab === "compartidas" && isLoadingShared)) ? (
+        {isLoading ? (
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => <div key={i} className="h-20 shimmer rounded-2xl bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5" />)}
           </div>
-        ) : activeTasks.length === 0 ? (
+        ) : filteredTasks.length === 0 ? (
           <div className="text-center py-20 opacity-50"><p>No se encontraron tareas</p></div>
         ) : viewMode === "list" ? (
           <div className="space-y-3 overflow-y-auto h-full pr-2 custom-scrollbar">
-            {activeTasks.map((task, index) => <TaskCardInternal key={task.id} task={task} index={index} />)}
+            {filteredTasks.map((task, index) => <TaskCardInternal key={task.id} task={task} index={index} />)}
           </div>
         ) : (
-          <div className="flex gap-6 pb-4 pr-2" style={{ height: 'calc(100vh - 200px)' }}>
+          <div className="flex gap-6 overflow-x-auto pb-4 snap-x pr-2" style={{ height: 'calc(100vh - 200px)' }}>
             {["pendiente", "en_progreso", "completada"].map((status) => (
-              <div key={status} className="bg-gray-100/50 dark:bg-white/5 rounded-2xl p-4 flex-1 min-w-0 flex flex-col h-full" onDragOver={e => e.preventDefault()} onDrop={e => moveTask(e.dataTransfer.getData("taskId"), status as any)}>
+              <div key={status} className="bg-gray-100/50 dark:bg-white/5 rounded-2xl p-4 min-w-[320px] max-w-[350px] snap-center flex flex-col h-full" onDragOver={e => e.preventDefault()} onDrop={e => moveTask(e.dataTransfer.getData("taskId"), status as any)}>
                 <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 mb-4 px-2 flex items-center justify-between">
                   {status === "pendiente" ? "Pendiente" : status === "en_progreso" ? "En progreso" : "Completada"}
-                  <span className="bg-gray-200 dark:bg-white/10 px-2 py-0.5 rounded-lg text-xs">{activeTasks.filter(t => t.estado === status).length}</span>
+                  <span className="bg-gray-200 dark:bg-white/10 px-2 py-0.5 rounded-lg text-xs">{filteredTasks.filter(t => t.estado === status).length}</span>
                 </h3>
                 <div className="space-y-3 overflow-y-auto flex-1 pr-2 custom-scrollbar">
-                  {activeTasks.filter(t => t.estado === status).map((task, index) => (
+                  {filteredTasks.filter(t => t.estado === status).map((task, index) => (
                     <div key={task.id} draggable onDragStart={e => e.dataTransfer.setData("taskId", task.id)} className="cursor-grab active:cursor-grabbing">
                       <TaskCardInternal task={task} index={index} isKanban />
                     </div>
