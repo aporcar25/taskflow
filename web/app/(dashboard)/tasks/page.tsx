@@ -509,9 +509,9 @@ export default function TasksPage() {
             {filteredTasks.map((task, index) => <TaskCardInternal key={task.id} task={task} index={index} />)}
           </div>
         ) : (
-          <div className="flex gap-6 overflow-x-auto pb-4 snap-x pr-2" style={{ height: 'calc(100vh - 200px)' }}>
+          <div className="flex gap-6 pb-4 w-full" style={{ height: 'calc(100vh - 200px)' }}>
             {["pendiente", "en_progreso", "completada"].map((status) => (
-              <div key={status} className="bg-gray-100/50 dark:bg-white/5 rounded-2xl p-4 min-w-[320px] max-w-[350px] snap-center flex flex-col h-full" onDragOver={e => e.preventDefault()} onDrop={e => moveTask(e.dataTransfer.getData("taskId"), status as any)}>
+              <div key={status} className="bg-gray-100/50 dark:bg-white/5 rounded-2xl p-4 flex-1 flex flex-col h-full" onDragOver={e => e.preventDefault()} onDrop={e => moveTask(e.dataTransfer.getData("taskId"), status as any)}>
                 <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 mb-4 px-2 flex items-center justify-between">
                   {status === "pendiente" ? "Pendiente" : status === "en_progreso" ? "En progreso" : "Completada"}
                   <span className="bg-gray-200 dark:bg-white/10 px-2 py-0.5 rounded-lg text-xs">{filteredTasks.filter(t => t.estado === status).length}</span>
