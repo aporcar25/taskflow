@@ -375,7 +375,8 @@ export default function TasksPage() {
     setIsSharing(true);
     try {
       const result = await shareTask(editingTask.id, shareEmail, sharePermiso);
-      setTasks(tasks.map(t => t.id === editingTask.id ? { ...t, esCompartida: result.task.esCompartida, compartidaCon: result.task.compartidaCon } : t));
+      setTasks(tasks.map(t => t.id === editingTask.id ? { ...t, esCompartida: result.esCompartida, compartidaCon: result.esCompartida ? result.compartidaCon : [] } : t));
+      setEditingTask({ ...editingTask, compartidaCon: result.compartidaCon });
       setShareEmail("");
       showToast("Compartida correctamente", "success");
     } catch (err: any) {
@@ -389,7 +390,8 @@ export default function TasksPage() {
     if (!editingTask) return;
     try {
       const result = await unshareTask(editingTask.id, userId);
-      setTasks(tasks.map(t => t.id === editingTask.id ? { ...t, esCompartida: result.task.esCompartida, compartidaCon: result.task.compartidaCon } : t));
+      setTasks(tasks.map(t => t.id === editingTask.id ? { ...t, esCompartida: result.esCompartida, compartidaCon: result.compartidaCon } : t));
+      setEditingTask({ ...editingTask, compartidaCon: result.compartidaCon });
       showToast("Usuario eliminado", "success");
     } catch (err) {
       showToast("Error al eliminar", "error");
