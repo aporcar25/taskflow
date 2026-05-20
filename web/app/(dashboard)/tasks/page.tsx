@@ -41,6 +41,42 @@ const priorityColors: Record<Priority, string> = {
   baja: "bg-blue-500/10 text-blue-400 border-blue-500/20",
 };
 
+const categoryConfig: Record<string, { emoji: string; className: string }> = {
+  personal: { emoji: "👤", className: "bg-[#a855f7]/10 text-[#a855f7] border-[#a855f7]/20" },
+  trabajo: { emoji: "💼", className: "bg-[#3b82f6]/10 text-[#3b82f6] border-[#3b82f6]/20" },
+  estudio: { emoji: "📚", className: "bg-[#eab308]/10 text-[#eab308] border-[#eab308]/20" },
+  estudios: { emoji: "📚", className: "bg-[#eab308]/10 text-[#eab308] border-[#eab308]/20" },
+  salud: { emoji: "❤️", className: "bg-[#ef4444]/10 text-[#ef4444] border-[#ef4444]/20" },
+  hogar: { emoji: "🏠", className: "bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/20" },
+  finanzas: { emoji: "💰", className: "bg-[#10b981]/10 text-[#10b981] border-[#10b981]/20" },
+  ocio: { emoji: "🎮", className: "bg-[#ec4899]/10 text-[#ec4899] border-[#ec4899]/20" },
+  general: { emoji: "📌", className: "bg-[#6b7280]/10 text-[#6b7280] border-[#6b7280]/20" }
+};
+
+const getDueDateConfig = (dueDateStr: string) => {
+  if (!dueDateStr) return { className: "bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 border-transparent" };
+  const [year, month, day] = dueDateStr.split("-").map(Number);
+  const due = new Date(year, month - 1, day);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffTime = due.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays < 0) {
+    // Overdue
+    return { className: "bg-[#ef4444]/20 text-[#ef4444] border-[#ef4444]/20" };
+  } else if (diffDays <= 2) {
+    // Due within 2 days
+    return { className: "bg-[#f97316]/20 text-[#f97316] border-[#f97316]/20" };
+  } else if (diffDays <= 7) {
+    // Due within 7 days
+    return { className: "bg-[#eab308]/20 text-[#eab308] border-[#eab308]/20" };
+  } else {
+    // More than 7 days
+    return { className: "bg-[#22c55e]/20 text-[#22c55e] border-[#22c55e]/20" };
+  }
+};
+
 export default function TasksPage() {
   const { user: currentUser } = useAuth();
   const { showToast } = useToast();
@@ -97,6 +133,10 @@ export default function TasksPage() {
 
   // Fullscreen Viewer
   const [isFullscreenImageOpen, setIsFullscreenImageOpen] = useState<string | null>(null);
+
+  // Gallery Modal
+  const [galleryTaskImages, setGalleryTaskImages] = useState<string[] | null>(null);
+  const [galleryTaskIndex, setGalleryTaskIndex] = useState<number>(0);
 
   /**
    * Data Fetching
@@ -155,6 +195,26 @@ export default function TasksPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData, currentUser]);
+
+  // Keyboard navigation for image gallery
+  useEffect(() => {
+    if (!galleryTaskImages || galleryTaskImages.length === 0) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setGalleryTaskImages(null);
+      } else if (e.key === "ArrowLeft" && galleryTaskImages.length > 1) {
+        setGalleryTaskIndex((prev) => (prev === 0 ? galleryTaskImages.length - 1 : prev - 1));
+      } else if (e.key === "ArrowRight" && galleryTaskImages.length > 1) {
+        setGalleryTaskIndex((prev) => (prev === galleryTaskImages.length - 1 ? 0 : prev + 1));
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [galleryTaskImages]);
 
   /**
    * Computed State
@@ -435,9 +495,9 @@ export default function TasksPage() {
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <h3 className={`text-base font-semibold truncate transition-all ${task.completed ? "text-gray-400 line-through" : "text-dark-900 dark:text-white"}`}>{task.title}</h3>
-                {!isKanban && <p className={`text-sm mt-1 truncate ${task.completed ? "text-gray-500 dark:text-gray-600" : "text-gray-600 dark:text-gray-400"}`}>{task.description}</p>}
+                {!isKanban && <p className={`text-sm mt-1.5 truncate ${task.completed ? "text-gray-500 dark:text-gray-600" : "text-gray-600 dark:text-gray-400"}`}>{task.description}</p>}
                 {!isOwner && task.userId && (
-                  <p className="text-[10px] text-blue-400 font-medium mt-1 truncate">
+                  <p className="text-xs text-blue-400 font-medium mt-1.5 truncate">
                     Compartida por {typeof task.userId === 'string' ? '...' : (task.userId.nombre || task.userId.email)}
                   </p>
                 )}
@@ -448,12 +508,43 @@ export default function TasksPage() {
                 {canDelete && <button onClick={() => { setTaskToDelete(task.id); setIsDeleteModalOpen(true); }} className="p-1.5 rounded-lg hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-colors"><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>}
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2 mt-3">
+            <div className="flex flex-wrap items-center gap-2 mt-4">
               <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded border ${priorityColors[task.priority as Priority]}`}>{task.priority}</span>
-              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400">{task.category}</span>
+              {(() => {
+                const config = categoryConfig[(task.category || "").toLowerCase()] || { emoji: "📌", className: "bg-[#6b7280]/10 text-[#6b7280] border-[#6b7280]/20" };
+                return (
+                  <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded border flex items-center gap-1 ${config.className}`}>
+                    <span>{config.emoji}</span>
+                    <span>{task.category}</span>
+                  </span>
+                );
+              })()}
+              {task.dueDate && (() => {
+                const dateConfig = getDueDateConfig(task.dueDate);
+                return (
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border flex items-center gap-1 ${dateConfig.className}`}>
+                    <span>📅</span>
+                    <span>{task.dueDate}</span>
+                  </span>
+                );
+              })()}
               {task.recurrencia !== "ninguna" && <span className="text-[10px] font-medium text-lime-400 flex items-center gap-0.5"><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>{task.recurrencia}</span>}
               {task.esCompartida && <span className="text-[10px] font-medium text-blue-400 flex items-center gap-0.5"><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>Compartida</span>}
-              {task.imagenes && task.imagenes.length > 0 && <span className="text-[10px] font-medium text-lime-400 flex items-center gap-0.5"><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>{task.imagenes.length}</span>}
+              {task.imagenes && task.imagenes.length > 0 && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    setGalleryTaskImages(task.imagenes);
+                    setGalleryTaskIndex(0);
+                  }}
+                  className="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-lime-400/10 text-lime-400 border-lime-400/20 flex items-center gap-1 hover:bg-lime-400/20 hover:scale-105 transition-all cursor-pointer"
+                  title="Ver imágenes"
+                >
+                  <span>📷</span>
+                  <span>{task.imagenes.length}</span>
+                </button>
+              )}
             </div>
             {task.tags && task.tags.length > 0 && <div className="flex flex-wrap gap-1 mt-2">{task.tags.map(tag => <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-lime-400/10 text-lime-400 border border-lime-400/20">#{tag}</span>)}</div>}
           </div>
@@ -472,7 +563,7 @@ export default function TasksPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-dark-900 dark:text-white">Tareas</h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{completedCount} de {filteredTasks.length} {showArchived ? "archivadas" : "activas"}</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{completedCount} de {filteredTasks.length} {showArchived ? "archivadas" : "completadas"}</p>
         </div>
         <div className="flex items-center bg-gray-100 dark:bg-white/5 rounded-xl p-1">
           <button onClick={() => setActiveTab("mismas")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "mismas" ? "bg-white dark:bg-dark-700 text-lime-400 shadow-sm" : "text-gray-400 hover:text-white"}`}>Mis tareas</button>
@@ -488,17 +579,23 @@ export default function TasksPage() {
         </div>
       </div>
 
-      <div id="task-filters" className="flex flex-col lg:flex-row gap-3 mb-6">
+      <div id="task-filters" className="flex flex-col lg:flex-row gap-3 mb-6 items-center">
         <div className="relative flex-1">
           <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar..." className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 text-dark-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/30" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar tareas..." className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 text-dark-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/30" />
         </div>
-        <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value as any)} className="px-4 py-2.5 rounded-xl bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 text-dark-900 dark:text-white text-sm">
-          <option value="todas">Prioridad</option><option value="alta">🔴 Alta</option><option value="media">🟡 Media</option><option value="baja">🔵 Baja</option>
-        </select>
-        <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value as any)} className="px-4 py-2.5 rounded-xl bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 text-dark-900 dark:text-white text-sm">
-          <option value="todas">Categoría</option><option value="trabajo">💼 Trabajo</option><option value="personal">👤 Personal</option><option value="salud">❤️ Salud</option><option value="estudio">📖 Estudio</option><option value="hogar">🏠 Hogar</option>{customCategories.map(cat => <option key={cat} value={cat}>✨ {cat}</option>)}
-        </select>
+        <div className="relative flex items-center w-full lg:w-auto">
+          <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value as any)} className="appearance-none w-full pl-4 pr-10 py-2.5 rounded-xl bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 text-dark-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/30 flex items-center cursor-pointer">
+            <option value="todas">Prioridad</option><option value="alta">🔴 Alta</option><option value="media">🟡 Media</option><option value="baja">🔵 Baja</option>
+          </select>
+          <svg className="absolute right-3.5 pointer-events-none w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+        </div>
+        <div className="relative flex items-center w-full lg:w-auto">
+          <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value as any)} className="appearance-none w-full pl-4 pr-10 py-2.5 rounded-xl bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 text-dark-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-lime-400/30 flex items-center cursor-pointer">
+            <option value="todas">Categoría</option><option value="trabajo">💼 Trabajo</option><option value="personal">👤 Personal</option><option value="salud">❤️ Salud</option><option value="estudio">📖 Estudio</option><option value="hogar">🏠 Hogar</option>{customCategories.map(cat => <option key={cat} value={cat}>✨ {cat}</option>)}
+          </select>
+          <svg className="absolute right-3.5 pointer-events-none w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+        </div>
       </div>
 
       <div className="flex-1 overflow-hidden min-h-0">
@@ -686,6 +783,92 @@ export default function TasksPage() {
       {isFullscreenImageOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4" onClick={() => setIsFullscreenImageOpen(null)}>
           <img src={isFullscreenImageOpen} alt="Full" className="max-w-full max-h-full rounded-2xl shadow-2xl animate-scale-in" />
+        </div>
+      )}
+
+      {/* Fullscreen Image Gallery Modal */}
+      {galleryTaskImages && galleryTaskImages.length > 0 && (
+        <div 
+          className="fixed inset-0 z-[110] flex items-center justify-center bg-black/95 p-4 md:p-8" 
+          onClick={() => setGalleryTaskImages(null)}
+        >
+          {/* Close Button */}
+          <button 
+            className="absolute top-4 right-4 md:top-6 md:right-6 text-white/70 hover:text-white transition-colors bg-white/10 hover:bg-white/20 p-2.5 rounded-full z-[120]"
+            onClick={(e) => {
+              e.stopPropagation();
+              setGalleryTaskImages(null);
+            }}
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          {/* Modal Container */}
+          <div 
+            className="relative max-w-4xl w-full h-full flex flex-col items-center justify-center gap-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Image Wrapper */}
+            <div className="relative flex-1 flex items-center justify-center w-full min-h-0">
+              <img 
+                src={galleryTaskImages[galleryTaskIndex]} 
+                alt={`Imagen ${galleryTaskIndex + 1}`} 
+                className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl animate-scale-in"
+              />
+
+              {/* Prev Button */}
+              {galleryTaskImages.length > 1 && (
+                <button
+                  className="absolute left-2 md:-left-12 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors bg-white/10 hover:bg-white/20 p-3 rounded-full z-10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setGalleryTaskIndex((prev) => (prev === 0 ? galleryTaskImages.length - 1 : prev - 1));
+                  }}
+                >
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+              )}
+
+              {/* Next Button */}
+              {galleryTaskImages.length > 1 && (
+                <button
+                  className="absolute right-2 md:-right-12 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors bg-white/10 hover:bg-white/20 p-3 rounded-full z-10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setGalleryTaskIndex((prev) => (prev === galleryTaskImages.length - 1 ? 0 : prev + 1));
+                  }}
+                >
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            {/* Pagination indicator & Thumbnails */}
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-white/60 text-sm font-semibold">
+                {galleryTaskIndex + 1} de {galleryTaskImages.length}
+              </p>
+              {galleryTaskImages.length > 1 && (
+                <div className="flex gap-2 max-w-full overflow-x-auto py-1">
+                  {galleryTaskImages.map((img, idx) => (
+                    <button
+                      key={idx}
+                      className={`w-12 h-12 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${galleryTaskIndex === idx ? "border-lime-400 scale-105" : "border-transparent opacity-60 hover:opacity-100"}`}
+                      onClick={() => setGalleryTaskIndex(idx)}
+                    >
+                      <img src={img} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
