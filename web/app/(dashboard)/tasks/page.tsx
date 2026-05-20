@@ -462,7 +462,7 @@ export default function TasksPage() {
    * Final Render
    */
   return (
-    <div className="animate-fade-in pb-10">
+    <div className="animate-fade-in h-[calc(100vh-8rem)] flex flex-col">
       <TutorialTooltip steps={[{ targetId: "view-toggle", content: "Cambia de vista." }, { targetId: "btn-new-task", content: "Crea nuevas tareas." }]} pageKey="tasks" />
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -497,32 +497,37 @@ export default function TasksPage() {
         </select>
       </div>
 
-      {isLoading ? (
-        <div className="space-y-4">
-          {[...Array(3)].map((_, i) => <div key={i} className="h-20 shimmer rounded-2xl bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5" />)}
-        </div>
-      ) : filteredTasks.length === 0 ? (
-        <div className="text-center py-20 opacity-50"><p>No se encontraron tareas</p></div>
-      ) : viewMode === "list" ? (
-        <div className="space-y-3">
-          {filteredTasks.map((task, index) => <TaskCardInternal key={task.id} task={task} index={index} />)}
-        </div>
-      ) : (
-        <div className="flex gap-6 overflow-x-auto pb-4 snap-x">
-          {["pendiente", "en_progreso", "completada"].map((status) => (
-            <div key={status} className="bg-gray-100/50 dark:bg-white/5 rounded-2xl p-4 min-h-[500px] min-w-[300px] snap-center" onDragOver={e => e.preventDefault()} onDrop={e => moveTask(e.dataTransfer.getData("taskId"), status as any)}>
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 px-2">{status}</h3>
-              <div className="space-y-3">
-                {filteredTasks.filter(t => t.estado === status).map((task, index) => (
-                  <div key={task.id} draggable onDragStart={e => e.dataTransfer.setData("taskId", task.id)} className="cursor-grab active:cursor-grabbing">
-                    <TaskCardInternal task={task} index={index} isKanban />
-                  </div>
-                ))}
+      <div className="flex-1 overflow-hidden min-h-0">
+        {isLoading ? (
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => <div key={i} className="h-20 shimmer rounded-2xl bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5" />)}
+          </div>
+        ) : filteredTasks.length === 0 ? (
+          <div className="text-center py-20 opacity-50"><p>No se encontraron tareas</p></div>
+        ) : viewMode === "list" ? (
+          <div className="space-y-3 overflow-y-auto h-full pr-2 custom-scrollbar">
+            {filteredTasks.map((task, index) => <TaskCardInternal key={task.id} task={task} index={index} />)}
+          </div>
+        ) : (
+          <div className="flex gap-6 h-full overflow-x-auto pb-4 snap-x pr-2">
+            {["pendiente", "en_progreso", "completada"].map((status) => (
+              <div key={status} className="bg-gray-100/50 dark:bg-white/5 rounded-2xl p-4 min-w-[320px] max-w-[350px] snap-center flex flex-col h-full" onDragOver={e => e.preventDefault()} onDrop={e => moveTask(e.dataTransfer.getData("taskId"), status as any)}>
+                <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 mb-4 px-2 flex items-center justify-between">
+                  {status === "pendiente" ? "Pendiente" : status === "en_progreso" ? "En progreso" : "Completada"}
+                  <span className="bg-gray-200 dark:bg-white/10 px-2 py-0.5 rounded-lg text-xs">{filteredTasks.filter(t => t.estado === status).length}</span>
+                </h3>
+                <div className="space-y-3 overflow-y-auto flex-1 pr-2 custom-scrollbar">
+                  {filteredTasks.filter(t => t.estado === status).map((task, index) => (
+                    <div key={task.id} draggable onDragStart={e => e.dataTransfer.setData("taskId", task.id)} className="cursor-grab active:cursor-grabbing">
+                      <TaskCardInternal task={task} index={index} isKanban />
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
