@@ -434,7 +434,7 @@ export default function TasksPage() {
                 {!isKanban && <p className={`text-xs mt-1 truncate ${task.completed ? "text-gray-500 dark:text-gray-600" : "text-gray-600 dark:text-gray-400"}`}>{task.description}</p>}
                 {!isOwner && task.userId && (
                   <p className="text-[10px] text-blue-400 font-medium mt-1 truncate">
-                    Compartida por: {typeof task.userId === 'string' ? '...' : (task.userId.nombre || task.userId.email)}
+                    Compartida por {typeof task.userId === 'string' ? '...' : (task.userId.nombre || task.userId.email)}
                   </p>
                 )}
               </div>
@@ -509,7 +509,7 @@ export default function TasksPage() {
             {filteredTasks.map((task, index) => <TaskCardInternal key={task.id} task={task} index={index} />)}
           </div>
         ) : (
-          <div className="flex gap-6 h-full overflow-x-auto pb-4 snap-x pr-2">
+          <div className="flex gap-6 overflow-x-auto pb-4 snap-x pr-2" style={{ height: 'calc(100vh - 200px)' }}>
             {["pendiente", "en_progreso", "completada"].map((status) => (
               <div key={status} className="bg-gray-100/50 dark:bg-white/5 rounded-2xl p-4 min-w-[320px] max-w-[350px] snap-center flex flex-col h-full" onDragOver={e => e.preventDefault()} onDrop={e => moveTask(e.dataTransfer.getData("taskId"), status as any)}>
                 <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 mb-4 px-2 flex items-center justify-between">
