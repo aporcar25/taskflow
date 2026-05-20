@@ -418,7 +418,7 @@ export default function TasksPage() {
     const canDelete = isOwner;
 
     return (
-      <div className={`group bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-4 hover:border-gray-200 dark:hover:border-white/10 transition-all duration-200 shadow-sm dark:shadow-none ${isKanban ? "mb-3" : ""}`} style={{ animationDelay: `${index * 50}ms` }}>
+      <div className={`group bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl p-5 hover:border-gray-200 dark:hover:border-white/10 transition-all duration-200 shadow-sm dark:shadow-none ${isKanban ? "mb-3" : ""}`} style={{ animationDelay: `${index * 50}ms` }}>
         <div className="flex items-start gap-3">
           <div className="relative">
             <button onClick={() => toggleTask(task.id)} className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${task.completed ? "bg-lime-400 border-lime-400 text-dark-900" : "border-gray-200 dark:border-white/10 hover:border-lime-400/50"}`}>
@@ -434,8 +434,8 @@ export default function TasksPage() {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <h3 className={`text-sm font-bold truncate transition-all ${task.completed ? "text-gray-400 line-through" : "text-dark-900 dark:text-white"}`}>{task.title}</h3>
-                {!isKanban && <p className={`text-xs mt-1 truncate ${task.completed ? "text-gray-500 dark:text-gray-600" : "text-gray-600 dark:text-gray-400"}`}>{task.description}</p>}
+                <h3 className={`text-base font-semibold truncate transition-all ${task.completed ? "text-gray-400 line-through" : "text-dark-900 dark:text-white"}`}>{task.title}</h3>
+                {!isKanban && <p className={`text-sm mt-1 truncate ${task.completed ? "text-gray-500 dark:text-gray-600" : "text-gray-600 dark:text-gray-400"}`}>{task.description}</p>}
                 {!isOwner && task.userId && (
                   <p className="text-[10px] text-blue-400 font-medium mt-1 truncate">
                     Compartida por {typeof task.userId === 'string' ? '...' : (task.userId.nombre || task.userId.email)}
@@ -448,7 +448,7 @@ export default function TasksPage() {
                 {canDelete && <button onClick={() => { setTaskToDelete(task.id); setIsDeleteModalOpen(true); }} className="p-1.5 rounded-lg hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-colors"><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>}
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2 mt-2">
+            <div className="flex flex-wrap items-center gap-2 mt-3">
               <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded border ${priorityColors[task.priority as Priority]}`}>{task.priority}</span>
               <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400">{task.category}</span>
               {task.recurrencia !== "ninguna" && <span className="text-[10px] font-medium text-lime-400 flex items-center gap-0.5"><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>{task.recurrencia}</span>}
@@ -515,7 +515,7 @@ export default function TasksPage() {
         ) : (
           <div className="flex gap-6 pb-4 w-full" style={{ height: 'calc(100vh - 200px)' }}>
             {["pendiente", "en_progreso", "completada"].map((status) => (
-              <div key={status} className="bg-gray-100/50 dark:bg-white/5 rounded-2xl p-4 flex-1 flex flex-col h-full" onDragOver={e => e.preventDefault()} onDrop={e => moveTask(e.dataTransfer.getData("taskId"), status as any)}>
+              <div key={status} className="bg-gray-100/50 dark:bg-white/5 rounded-xl p-4 flex-1 flex flex-col h-full" onDragOver={e => e.preventDefault()} onDrop={e => moveTask(e.dataTransfer.getData("taskId"), status as any)}>
                 <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 mb-4 px-2 flex items-center justify-between">
                   {status === "pendiente" ? "Pendiente" : status === "en_progreso" ? "En progreso" : "Completada"}
                   <span className="bg-gray-200 dark:bg-white/10 px-2 py-0.5 rounded-lg text-xs">{filteredTasks.filter(t => t.estado === status).length}</span>
