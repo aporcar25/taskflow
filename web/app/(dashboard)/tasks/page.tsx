@@ -558,7 +558,7 @@ export default function TasksPage() {
    */
   return (
     <div className="animate-fade-in h-[calc(100vh-8rem)] flex flex-col">
-      <TutorialTooltip steps={[{ targetId: "view-toggle", content: "Cambia de vista." }, { targetId: "btn-new-task", content: "Crea nuevas tareas." }]} pageKey="tasks" />
+      <TutorialTooltip steps={[{ targetId: "view-toggle", content: "Cambia de vista." }, { targetId: "btn-new-task", content: "Crea nuevas tareas." }, { targetId: "tab-compartidas", content: "Aquí verás las tareas que otros usuarios han compartido contigo. Puedes verlas y archivarlas, pero no eliminarlas a menos que tengas permiso." }]} pageKey="tasks" />
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
@@ -567,7 +567,7 @@ export default function TasksPage() {
         </div>
         <div className="flex items-center bg-gray-100 dark:bg-white/5 rounded-xl p-1">
           <button onClick={() => setActiveTab("mismas")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "mismas" ? "bg-white dark:bg-dark-700 text-lime-400 shadow-sm" : "text-gray-400 hover:text-white"}`}>Mis tareas</button>
-          <button onClick={() => setActiveTab("compartidas")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "compartidas" ? "bg-white dark:bg-dark-700 text-lime-400 shadow-sm" : "text-gray-400 hover:text-white"}`}>Compartidas</button>
+          <button id="tab-compartidas" onClick={() => setActiveTab("compartidas")} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "compartidas" ? "bg-white dark:bg-dark-700 text-lime-400 shadow-sm" : "text-gray-400 hover:text-white"}`}>Compartidas</button>
         </div>
         <div className="flex items-center gap-2">
           <div id="view-toggle" className="flex items-center bg-gray-100 dark:bg-white/5 rounded-xl p-1">
@@ -612,7 +612,7 @@ export default function TasksPage() {
         ) : (
           <div className="flex gap-6 pb-4 w-full" style={{ height: 'calc(100vh - 200px)' }}>
             {["pendiente", "en_progreso", "completada"].map((status) => (
-              <div key={status} className="bg-gray-100/50 dark:bg-white/5 rounded-xl p-4 flex-1 flex flex-col h-full" onDragOver={e => e.preventDefault()} onDrop={e => moveTask(e.dataTransfer.getData("taskId"), status as any)}>
+              <div key={status} className="bg-gray-100/50 dark:bg-white/5 rounded-xl overflow-hidden p-4 flex-1 flex flex-col h-full" onDragOver={e => e.preventDefault()} onDrop={e => moveTask(e.dataTransfer.getData("taskId"), status as any)}>
                 <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 mb-4 px-2 flex items-center justify-between">
                   {status === "pendiente" ? "Pendiente" : status === "en_progreso" ? "En progreso" : "Completada"}
                   <span className="bg-gray-200 dark:bg-white/10 px-2 py-0.5 rounded-lg text-xs">{filteredTasks.filter(t => t.estado === status).length}</span>

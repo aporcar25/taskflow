@@ -55,7 +55,8 @@ router.post('/register', async (req, res) => {
             tutorialDashboard: user.tutorialDashboard,
             tutorialTasks: user.tutorialTasks,
             tutorialHabits: user.tutorialHabits,
-            tutorialStats: user.tutorialStats
+            tutorialStats: user.tutorialStats,
+            tutorialGoals: user.tutorialGoals
           }
         });
       }
@@ -108,7 +109,8 @@ router.post('/login', async (req, res) => {
             tutorialDashboard: user.tutorialDashboard,
             tutorialTasks: user.tutorialTasks,
             tutorialHabits: user.tutorialHabits,
-            tutorialStats: user.tutorialStats
+            tutorialStats: user.tutorialStats,
+            tutorialGoals: user.tutorialGoals
           }
         });
       }
@@ -150,7 +152,8 @@ router.put('/profile', authMiddleware, async (req, res) => {
       tutorialDashboard: user.tutorialDashboard,
       tutorialTasks: user.tutorialTasks,
       tutorialHabits: user.tutorialHabits,
-      tutorialStats: user.tutorialStats
+      tutorialStats: user.tutorialStats,
+            tutorialGoals: user.tutorialGoals
     });
   } catch (error) {
     console.error(error);
@@ -176,7 +179,8 @@ router.post('/profile/photo', authMiddleware, async (req, res) => {
       tutorialDashboard: user.tutorialDashboard,
       tutorialTasks: user.tutorialTasks,
       tutorialHabits: user.tutorialHabits,
-      tutorialStats: user.tutorialStats
+      tutorialStats: user.tutorialStats,
+            tutorialGoals: user.tutorialGoals
     });
   } catch (error) {
     console.error(error);
@@ -249,7 +253,7 @@ router.get('/custom-categories', authMiddleware, async (req, res) => {
 router.put('/tutorial-complete', authMiddleware, async (req, res) => {
   try {
     const { page } = req.body;
-    const allowedPages = ['dashboard', 'tasks', 'habits', 'stats'];
+    const allowedPages = ['dashboard', 'tasks', 'habits', 'stats', 'goals'];
 
     if (!allowedPages.includes(page)) {
       return res.status(400).json({ mensaje: 'Página no válida' });
@@ -262,7 +266,8 @@ router.put('/tutorial-complete', authMiddleware, async (req, res) => {
       dashboard: 'tutorialDashboard',
       tasks: 'tutorialTasks',
       habits: 'tutorialHabits',
-      stats: 'tutorialStats'
+      stats: 'tutorialStats',
+      goals: 'tutorialGoals'
     };
 
     user[fieldMap[page]] = true;
@@ -277,7 +282,8 @@ router.put('/tutorial-complete', authMiddleware, async (req, res) => {
       tutorialDashboard: user.tutorialDashboard,
       tutorialTasks: user.tutorialTasks,
       tutorialHabits: user.tutorialHabits,
-      tutorialStats: user.tutorialStats
+      tutorialStats: user.tutorialStats,
+            tutorialGoals: user.tutorialGoals
     });
   } catch (error) {
     console.error(error);
@@ -303,7 +309,8 @@ router.put('/onboarding-complete', authMiddleware, async (req, res) => {
       tutorialDashboard: user.tutorialDashboard,
       tutorialTasks: user.tutorialTasks,
       tutorialHabits: user.tutorialHabits,
-      tutorialStats: user.tutorialStats
+      tutorialStats: user.tutorialStats,
+            tutorialGoals: user.tutorialGoals
     });
   } catch (error) {
     console.error(error);
