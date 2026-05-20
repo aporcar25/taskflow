@@ -179,7 +179,11 @@ export default function TasksPage() {
           ? task.userId === currentUserId
           : task.userId?._id === currentUserId || task.userId?.id === currentUserId;
 
-      const matchesTab = activeTab === "mismas" ? isOwner : !isOwner;
+      const isSharedWithMe = task.compartidaCon?.some(c => {
+        const uid = typeof c.usuario === 'string' ? c.usuario : (c.usuario?._id || c.usuario?.id);
+        return uid === currentUserId;
+      });
+      const matchesTab = activeTab === "mismas" ? isOwner : isSharedWithMe;
 
       return matchesSearch && matchesPriority && matchesCategory && matchesArchived && matchesTab;
     });
