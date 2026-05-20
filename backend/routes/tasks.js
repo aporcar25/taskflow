@@ -167,24 +167,4 @@ router.patch('/:id/complete', async (req, res) => {
   }
 });
 
-router.delete('/:id/share/:userId', async (req, res) => {
-  try {
-    const task = await Task.findById(req.params.id);
-    if (!task) return res.status(404).json({ mensaje: 'Tarea no encontrada' });
-    if (task.userId.toString() !== req.usuario.id) {
-      return res.status(401).json({ mensaje: 'Solo el propietario puede modificar el acceso' });
-    }
-    task.compartidaCon = task.compartidaCon.filter(c => c.usuario.toString() !== req.params.userId);
-    if (task.compartidaCon.length === 0) task.esCompartida = false;
-    await task.save();
-    const populated = await Task.findById(task._id)
-      .populate('userId', 'nombre email foto')
-      .populate('compartidaCon.usuario', 'nombre email foto');
-    res.json(populated);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ mensaje: 'Error al dejar de compartir' });
-  }
-});
-
 module.exports = router;

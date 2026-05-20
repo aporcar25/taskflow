@@ -176,7 +176,7 @@ export const updateProfile = async (data: { nombre?: string; email?: string }) =
 };
 
 export const shareTask = async (taskId: string, email: string, permiso: string) => {
-  const res = await fetch(`${API_URL}/tasks/${taskId}/share`, {
+  const res = await fetch(`${API_URL}/sharing/${taskId}/share`, {
     method: "POST",
     headers: getHeaders(),
     body: JSON.stringify({ email, permiso }),
@@ -189,7 +189,7 @@ export const shareTask = async (taskId: string, email: string, permiso: string) 
 };
 
 export const unshareTask = async (taskId: string, userId: string) => {
-  const res = await fetch(`${API_URL}/tasks/${taskId}/share/${userId}`, {
+  const res = await fetch(`${API_URL}/sharing/${taskId}/share/${userId}`, {
     method: "DELETE",
     headers: getHeaders(),
   });
