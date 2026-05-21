@@ -33,6 +33,20 @@ function RootLayoutNav() {
       <Stack.Screen name="login" />
       <Stack.Screen name="register" />
       <Stack.Screen name="(main)" />
+      <Stack.Screen name="stats" options={{
+        headerShown: true,
+        title: 'Estadísticas',
+        headerStyle: { backgroundColor: '#0a0a0a' },
+        headerTitleStyle: { color: '#fff' },
+        headerTintColor: '#a3e635'
+      }} />
+      <Stack.Screen name="goals" options={{
+        headerShown: true,
+        title: 'Objetivos',
+        headerStyle: { backgroundColor: '#0a0a0a' },
+        headerTitleStyle: { color: '#fff' },
+        headerTintColor: '#a3e635'
+      }} />
     </Stack>
   );
 }
