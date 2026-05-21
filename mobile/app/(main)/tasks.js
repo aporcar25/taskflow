@@ -4,6 +4,7 @@ import api from '../../src/services/api';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { Swipeable } from 'react-native-gesture-handler';
 
 const { width } = Dimensions.get('window');
 
@@ -21,14 +22,112 @@ const PRIORITIES = [
   { label: 'Alta', value: 'alta', color: '#ef4444' },
 ];
 
+const TaskItem = ({ item, onToggle, onDelete }) => {
+  const cat = CATEGORIES.find(c => c.value === item.categoria) || CATEGORIES[0];
+  const prioColor = PRIORITIES.find(p => p.value === item.prioridad)?.color || '#3b82f6';
+  const isCompleted = item.estado === 'completada';
+
+  const popAnim = useRef(new Animated.Value(1)).current;
+
+  const handleToggle = () => {
+    if (!isCompleted) {
+      Animated.sequence([
+        Animated.timing(popAnim, { toValue: 1.4, duration: 150, useNativeDriver: true }),
+        Animated.timing(popAnim, { toValue: 1, duration: 150, useNativeDriver: true })
+      ]).start(() => onToggle(item._id, item.estado));
+    } else {
+      onToggle(item._id, item.estado);
+    }
+  };
+
+  const renderRightActions = (progress, dragX) => {
+    const trans = dragX.interpolate({
+      inputRange: [-100, 0],
+      outputRange: [0, 100],
+    });
+    return (
+      <TouchableOpacity onPress={() => onDelete(item._id)} style={styles.deleteAction}>
+        <Animated.View style={{ transform: [{ translateX: trans }] }}>
+          <Ionicons name="trash" size={24} color="#fff" />
+        </Animated.View>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderLeftActions = (progress, dragX) => {
+    const trans = dragX.interpolate({
+      inputRange: [0, 100],
+      outputRange: [-100, 0],
+    });
+    return (
+      <TouchableOpacity onPress={handleToggle} style={styles.completeAction}>
+        <Animated.View style={{ transform: [{ translateX: trans }] }}>
+          <Ionicons name={isCompleted ? "arrow-undo" : "checkmark-done"} size={24} color="#0a0a0a" />
+        </Animated.View>
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <Swipeable renderRightActions={renderRightActions} renderLeftActions={renderLeftActions}>
+      <View style={[styles.taskCard, { borderLeftColor: prioColor, borderLeftWidth: 5 }]}>
+        <TouchableOpacity
+          style={styles.checkbox}
+          onPress={handleToggle}
+        >
+          <Animated.View style={{ transform: [{ scale: popAnim }] }}>
+            <Ionicons
+              name={isCompleted ? "checkmark-circle" : "ellipse-outline"}
+              size={30}
+              color={isCompleted ? "#a3e635" : "#666"}
+            />
+          </Animated.View>
+        </TouchableOpacity>
+
+        <View style={styles.taskContent}>
+          <Text style={[styles.taskTitle, isCompleted && styles.completedText]}>
+            {item.titulo}
+          </Text>
+          <View style={styles.taskFooter}>
+            <Text style={styles.categoryBadge}>{cat.emoji} {cat.label}</Text>
+            {getDueDateBadge(item.fechaVencimiento)}
+          </View>
+        </View>
+      </View>
+    </Swipeable>
+  );
+};
+
+const getDueDateBadge = (dateStr) => {
+  if (!dateStr) return null;
+  const date = new Date(dateStr);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffTime = date - today;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  let color = '#a3e635';
+  if (diffDays < 0) color = '#ef4444';
+  else if (diffDays <= 2) color = '#f97316';
+  else if (diffDays <= 7) color = '#f59e0b';
+
+  return (
+    <View style={[styles.dateBadge, { backgroundColor: color + '22' }]}>
+      <Ionicons name="calendar-outline" size={12} color={color} />
+      <Text style={[styles.dateBadgeText, { color }]}>
+        {date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+      </Text>
+    </View>
+  );
+};
+
 export default function Tasks() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [filter, setFilter] = useState('Todas'); // Todas, Pendientes, Completadas
+  const [filter, setFilter] = useState('Todas');
 
-  // Form state
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('media');
@@ -52,12 +151,6 @@ export default function Tasks() {
       fetchTasks();
     }, [])
   );
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchTasks();
-    setRefreshing(false);
-  };
 
   const handleCreateTask = async () => {
     if (!title.trim()) {
@@ -98,21 +191,17 @@ export default function Tasks() {
   const deleteTask = async (id) => {
     Alert.alert(
       "Eliminar tarea",
-      "¿Estás seguro de que quieres eliminar esta tarea?",
+      "¿Estás seguro?",
       [
         { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await api.delete(`/tasks/${id}`);
-              fetchTasks();
-            } catch (error) {
-              Alert.alert('Error', 'No se pudo eliminar la tarea');
-            }
+        { text: "Eliminar", style: "destructive", onPress: async () => {
+          try {
+            await api.delete(`/tasks/${id}`);
+            fetchTasks();
+          } catch (error) {
+            Alert.alert('Error', 'No se pudo eliminar');
           }
-        }
+        }}
       ]
     );
   };
@@ -123,68 +212,10 @@ export default function Tasks() {
     return true;
   });
 
-  const getDueDateBadge = (dateStr) => {
-    if (!dateStr) return null;
-    const date = new Date(dateStr);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const diffTime = date - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    let color = '#a3e635';
-    if (diffDays < 0) color = '#ef4444';
-    else if (diffDays <= 2) color = '#f97316';
-    else if (diffDays <= 7) color = '#f59e0b';
-
-    return (
-      <View style={[styles.dateBadge, { backgroundColor: color + '22' }]}>
-        <Ionicons name="calendar-outline" size={12} color={color} />
-        <Text style={[styles.dateBadgeText, { color }]}>
-          {date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
-        </Text>
-      </View>
-    );
-  };
-
   const onDateChange = (event, selectedDate) => {
     const currentDate = selectedDate || dueDate;
     setShowDatePicker(false);
     setDueDate(currentDate);
-  };
-
-  const renderTask = ({ item }) => {
-    const cat = CATEGORIES.find(c => c.value === item.categoria) || CATEGORIES[0];
-    const prioColor = PRIORITIES.find(p => p.value === item.prioridad)?.color || '#3b82f6';
-    const isCompleted = item.estado === 'completada';
-
-    return (
-      <View style={[styles.taskCard, { borderLeftColor: prioColor, borderLeftWidth: 5 }]}>
-        <TouchableOpacity
-          style={styles.checkbox}
-          onPress={() => toggleTask(item._id, item.estado)}
-        >
-          <Ionicons
-            name={isCompleted ? "checkmark-circle" : "ellipse-outline"}
-            size={30}
-            color={isCompleted ? "#a3e635" : "#666"}
-          />
-        </TouchableOpacity>
-
-        <View style={styles.taskContent}>
-          <Text style={[styles.taskTitle, isCompleted && styles.completedText]}>
-            {item.titulo}
-          </Text>
-          <View style={styles.taskFooter}>
-            <Text style={styles.categoryBadge}>{cat.emoji} {cat.label}</Text>
-            {getDueDateBadge(item.fechaVencimiento)}
-          </View>
-        </View>
-
-        <TouchableOpacity onPress={() => deleteTask(item._id)} style={styles.deleteBtn}>
-          <Ionicons name="trash-outline" size={20} color="#ef4444" />
-        </TouchableOpacity>
-      </View>
-    );
   };
 
   return (
@@ -204,17 +235,14 @@ export default function Tasks() {
       <FlatList
         data={filteredTasks}
         keyExtractor={(item) => item._id}
-        renderItem={renderTask}
+        renderItem={({ item }) => <TaskItem item={item} onToggle={toggleTask} onDelete={deleteTask} />}
         contentContainerStyle={styles.listContent}
         refreshing={refreshing}
-        onRefresh={onRefresh}
+        onRefresh={fetchTasks}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <View style={styles.emptyIllustration}>
-              <Ionicons name="clipboard-outline" size={80} color="#333" />
-            </View>
+            <Ionicons name="clipboard-outline" size={80} color="#333" />
             <Text style={styles.emptyText}>No hay tareas aquí</Text>
-            <Text style={styles.emptySubtext}>¡Añade una nueva para empezar el día!</Text>
           </View>
         }
       />
@@ -226,12 +254,7 @@ export default function Tasks() {
         <Ionicons name="add" size={32} color="#0a0a0a" />
       </TouchableOpacity>
 
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
+      <Modal animationType="slide" transparent={true} visible={modalVisible}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -250,7 +273,6 @@ export default function Tasks() {
                 value={title}
                 onChangeText={setTitle}
               />
-
               <Text style={styles.label}>Descripción</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
@@ -259,9 +281,7 @@ export default function Tasks() {
                 value={description}
                 onChangeText={setDescription}
                 multiline
-                numberOfLines={3}
               />
-
               <Text style={styles.label}>Prioridad</Text>
               <View style={styles.selector}>
                 {PRIORITIES.map((p) => (
@@ -270,13 +290,10 @@ export default function Tasks() {
                     style={[styles.option, priority === p.value && { borderColor: p.color, backgroundColor: p.color + '22' }]}
                     onPress={() => setPriority(p.value)}
                   >
-                    <Text style={[styles.optionText, priority === p.value && { color: p.color, fontWeight: 'bold' }]}>
-                      {p.label}
-                    </Text>
+                    <Text style={[styles.optionText, priority === p.value && { color: p.color, fontWeight: 'bold' }]}>{p.label}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
-
               <Text style={styles.label}>Categoría</Text>
               <View style={styles.categorySelector}>
                 {CATEGORIES.map((c) => (
@@ -290,32 +307,15 @@ export default function Tasks() {
                   </TouchableOpacity>
                 ))}
               </View>
-
               <Text style={styles.label}>Fecha de Vencimiento</Text>
-              <TouchableOpacity
-                style={styles.datePickerBtn}
-                onPress={() => setShowDatePicker(true)}
-              >
+              <TouchableOpacity style={styles.datePickerBtn} onPress={() => setShowDatePicker(true)}>
                 <Ionicons name="calendar-outline" size={20} color="#a3e635" />
                 <Text style={styles.datePickerText}>{dueDate.toLocaleDateString()}</Text>
               </TouchableOpacity>
-
-              {showDatePicker && (
-                <DateTimePicker
-                  value={dueDate}
-                  mode="date"
-                  display="default"
-                  onChange={onDateChange}
-                />
-              )}
-
-              <TouchableOpacity
-                style={styles.saveButton}
-                onPress={handleCreateTask}
-              >
+              {showDatePicker && <DateTimePicker value={dueDate} mode="date" onChange={onDateChange} />}
+              <TouchableOpacity style={styles.saveButton} onPress={handleCreateTask}>
                 <Text style={styles.saveButtonText}>Crear Tarea</Text>
               </TouchableOpacity>
-              <View style={{ height: 20 }} />
             </ScrollView>
           </View>
         </View>
@@ -332,9 +332,6 @@ const styles = StyleSheet.create({
   filterContainer: {
     flexDirection: 'row',
     padding: 15,
-    backgroundColor: '#0a0a0a',
-    borderBottomWidth: 1,
-    borderBottomColor: '#1a1a1a',
   },
   filterBtn: {
     paddingHorizontal: 15,
@@ -409,10 +406,6 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
     color: '#666',
   },
-  deleteBtn: {
-    padding: 5,
-    marginLeft: 10,
-  },
   fab: {
     position: 'absolute',
     bottom: 30,
@@ -430,19 +423,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 50,
   },
-  emptyIllustration: {
-    marginBottom: 20,
-    opacity: 0.5,
-  },
   emptyText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
-  },
-  emptySubtext: {
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 10,
+    marginTop: 15,
   },
   modalOverlay: {
     flex: 1,
@@ -455,8 +440,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 30,
     padding: 25,
     maxHeight: '90%',
-    borderWidth: 1,
-    borderColor: '#333',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -566,4 +549,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  deleteAction: {
+    backgroundColor: '#ef4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    height: '100%',
+    borderRadius: 15,
+    marginBottom: 12,
+    marginLeft: -10,
+  },
+  completeAction: {
+    backgroundColor: '#a3e635',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    height: '100%',
+    borderRadius: 15,
+    marginBottom: 12,
+    marginRight: -10,
+  }
 });

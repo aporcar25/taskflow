@@ -1,10 +1,10 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert, ActivityIndicator, ScrollView, Dimensions } from 'react-native';
+import React, { useState, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert, ActivityIndicator, ScrollView, Animated } from 'react-native';
 import api from '../../src/services/api';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
+import { Swipeable } from 'react-native-gesture-handler';
 
-const { width } = Dimensions.get('window');
 const NOTE_COLORS = [
   '#1a1a1a',
   '#1a2a1a',
@@ -13,6 +13,48 @@ const NOTE_COLORS = [
   '#1a2a2a',
   '#2a2a1a',
 ];
+
+const NoteItem = ({ item, onPress, onLongPress, onTogglePin, onDelete }) => {
+  const renderRightActions = (progress, dragX) => {
+    const trans = dragX.interpolate({
+      inputRange: [-100, 0],
+      outputRange: [0, 100],
+    });
+    return (
+      <TouchableOpacity onPress={() => onDelete(item._id)} style={styles.deleteAction}>
+        <Animated.View style={{ transform: [{ translateX: trans }] }}>
+          <Ionicons name="trash" size={24} color="#fff" />
+        </Animated.View>
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <Swipeable renderRightActions={renderRightActions}>
+      <TouchableOpacity
+        style={[styles.noteCard, { backgroundColor: item.color || '#1a1a1a' }]}
+        onLongPress={onLongPress}
+        onPress={onPress}
+      >
+        <View style={styles.noteHeader}>
+          {item.fijada && <Ionicons name="pin" size={16} color="#a3e635" style={styles.pinIcon} />}
+          <Text style={styles.noteTitle} numberOfLines={1}>{item.titulo || 'Sin título'}</Text>
+        </View>
+        <Text style={styles.noteContent} numberOfLines={6}>
+          {item.contenido}
+        </Text>
+        <View style={styles.noteFooter}>
+          <Text style={styles.noteDate}>
+            {new Date(item.updatedAt).toLocaleDateString()}
+          </Text>
+          <TouchableOpacity onPress={() => onTogglePin(item._id)}>
+            <Ionicons name={item.fijada ? "pin" : "pin-outline"} size={18} color={item.fijada ? "#a3e635" : "#666"} />
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Swipeable>
+  );
+};
 
 export default function Notes() {
   const [notes, setNotes] = useState([]);
@@ -47,12 +89,6 @@ export default function Notes() {
     }, [])
   );
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchNotes();
-    setRefreshing(false);
-  };
-
   const openCreateModal = () => {
     setEditingNote(null);
     setTitle('');
@@ -76,7 +112,6 @@ export default function Notes() {
       Alert.alert('Error', 'La nota no puede estar vacía');
       return;
     }
-
     try {
       const noteData = { titulo: title, contenido: content, color, fijada };
       if (editingNote) {
@@ -92,25 +127,17 @@ export default function Notes() {
   };
 
   const deleteNote = async (id) => {
-    Alert.alert(
-      "Eliminar nota",
-      "¿Estás seguro?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await api.delete(`/notes/${id}`);
-              fetchNotes();
-            } catch (error) {
-              Alert.alert('Error', 'No se pudo eliminar');
-            }
-          }
+    Alert.alert("Eliminar nota", "¿Estás seguro?", [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Eliminar", style: "destructive", onPress: async () => {
+        try {
+          await api.delete(`/notes/${id}`);
+          fetchNotes();
+        } catch (error) {
+          Alert.alert('Error', 'No se pudo eliminar');
         }
-      ]
-    );
+      }}
+    ]);
   };
 
   const togglePin = async (id) => {
@@ -122,40 +149,24 @@ export default function Notes() {
     }
   };
 
-  const renderNote = ({ item }) => (
-    <TouchableOpacity
-      style={[styles.noteCard, { backgroundColor: item.color || '#1a1a1a' }]}
-      onLongPress={() => deleteNote(item._id)}
-      onPress={() => openEditModal(item)}
-    >
-      <View style={styles.noteHeader}>
-        {item.fijada && <Ionicons name="pin" size={16} color="#a3e635" style={styles.pinIcon} />}
-        <Text style={styles.noteTitle} numberOfLines={1}>{item.titulo || 'Sin título'}</Text>
-      </View>
-      <Text style={styles.noteContent} numberOfLines={6}>
-        {item.contenido}
-      </Text>
-      <View style={styles.noteFooter}>
-        <Text style={styles.noteDate}>
-          {new Date(item.updatedAt).toLocaleDateString()}
-        </Text>
-        <TouchableOpacity onPress={() => togglePin(item._id)}>
-          <Ionicons name={item.fijada ? "pin" : "pin-outline"} size={18} color={item.fijada ? "#a3e635" : "#666"} />
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
-
   return (
     <View style={styles.container}>
       <FlatList
         data={notes}
         keyExtractor={(item) => item._id}
-        renderItem={renderNote}
+        renderItem={({ item }) => (
+          <NoteItem
+            item={item}
+            onPress={() => openEditModal(item)}
+            onLongPress={() => deleteNote(item._id)}
+            onTogglePin={togglePin}
+            onDelete={deleteNote}
+          />
+        )}
         numColumns={2}
         contentContainerStyle={styles.listContent}
         refreshing={refreshing}
-        onRefresh={onRefresh}
+        onRefresh={fetchNotes}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="document-text-outline" size={60} color="#333" />
@@ -171,12 +182,7 @@ export default function Notes() {
         <Ionicons name="add" size={32} color="#0a0a0a" />
       </TouchableOpacity>
 
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
+      <Modal animationType="slide" transparent={true} visible={modalVisible}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: color }]}>
             <View style={styles.modalHeader}>
@@ -192,33 +198,13 @@ export default function Notes() {
                 </TouchableOpacity>
               </View>
             </View>
-
             <ScrollView showsVerticalScrollIndicator={false}>
-              <TextInput
-                style={styles.titleInput}
-                placeholder="Título"
-                placeholderTextColor="#999"
-                value={title}
-                onChangeText={setTitle}
-              />
-              <TextInput
-                style={styles.contentInput}
-                placeholder="Escribe algo..."
-                placeholderTextColor="#666"
-                value={content}
-                onChangeText={setContent}
-                multiline
-                textAlignVertical="top"
-              />
-
+              <TextInput style={styles.titleInput} placeholder="Título" placeholderTextColor="#999" value={title} onChangeText={setTitle} />
+              <TextInput style={styles.contentInput} placeholder="Escribe algo..." placeholderTextColor="#666" value={content} onChangeText={setContent} multiline textAlignVertical="top" />
               <Text style={styles.colorLabel}>Color</Text>
               <View style={styles.colorPicker}>
                 {NOTE_COLORS.map((c) => (
-                  <TouchableOpacity
-                    key={c}
-                    style={[styles.colorOption, { backgroundColor: c }, color === c && styles.colorOptionSelected]}
-                    onPress={() => setColor(c)}
-                  />
+                  <TouchableOpacity key={c} style={[styles.colorOption, { backgroundColor: c }, color === c && styles.colorOptionSelected]} onPress={() => setColor(c)} />
                 ))}
               </View>
               <View style={{ height: 40 }} />
@@ -309,8 +295,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 30,
     padding: 25,
     height: '90%',
-    borderWidth: 1,
-    borderColor: '#333',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -367,4 +351,14 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
     borderWidth: 2,
   },
+  deleteAction: {
+    backgroundColor: '#ef4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    height: '100%',
+    borderRadius: 15,
+    marginVertical: 8,
+    marginLeft: -10,
+  }
 });
