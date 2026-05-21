@@ -25,6 +25,10 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  tutorialGoals: {
+    type: Boolean,
+    default: false
+  },
   tutorialDashboard: {
     type: Boolean,
     default: false

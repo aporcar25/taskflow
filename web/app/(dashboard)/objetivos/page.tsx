@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import TutorialTooltip from "../../components/TutorialTooltip";
 import { useToast } from "../../components/ToastProvider";
 import { getGoals, createGoal, updateGoal, deleteGoal, updateGoalProgress } from "../../../lib/api";
 
@@ -130,11 +131,19 @@ export default function GoalsPage() {
 
   return (
     <div className="animate-fade-in pb-10">
+      <TutorialTooltip
+        steps={[
+          { targetId: "btn-new-goal", content: "Crea tus objetivos semanales aquí. Ponle un título, una meta numérica y la unidad que quieras medir." },
+          { targetId: "week-nav", content: "Navega entre semanas para ver el progreso de tus objetivos anteriores." },
+          { targetId: "goals-summary", content: "Aquí ves cuántos objetivos has completado esta semana de un vistazo." }
+        ]}
+        pageKey="goals"
+      />
       {/* Header & Week Nav */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-dark-900 dark:text-white">Objetivos Semanales</h1>
-          <div className="flex items-center gap-2 mt-2 text-gray-500 dark:text-gray-400">
+          <div id="week-nav" className="flex items-center gap-2 mt-2 text-gray-500 dark:text-gray-400">
             <button onClick={handlePrevWeek} className="p-1 hover:text-lime-400 transition-colors">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             </button>
@@ -145,6 +154,7 @@ export default function GoalsPage() {
           </div>
         </div>
         <button
+          id="btn-new-goal"
           onClick={() => setIsModalOpen(true)}
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-lime-400 text-dark-900 font-semibold text-sm hover:bg-lime-400/90 transition-all hover:shadow-lg hover:shadow-lime-400/20"
         >
@@ -155,7 +165,7 @@ export default function GoalsPage() {
 
       {/* Summary Card */}
       {goals.length > 0 && (
-        <div className="mb-8 p-6 bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl flex items-center gap-6 shadow-sm">
+        <div id="goals-summary" className="mb-8 p-6 bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5 rounded-2xl flex items-center gap-6 shadow-sm">
           <div className="relative w-20 h-20 flex-shrink-0">
             <svg className="w-full h-full -rotate-90">
               <circle cx="40" cy="40" r="36" fill="none" stroke="currentColor" strokeWidth="8" className="text-gray-100 dark:text-white/5" />
