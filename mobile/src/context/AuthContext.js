@@ -33,13 +33,11 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post('/auth/login', { email, password });
       const { token, user: userData } = response.data;
 
-      const userToSave = { ...userData, foto: null };
-
       await AsyncStorage.setItem('taskflow_token', token);
-      await AsyncStorage.setItem('taskflow_user', JSON.stringify(userToSave));
+      await AsyncStorage.setItem('taskflow_user', JSON.stringify(userData));
 
       api.defaults.headers.Authorization = `Bearer ${token}`;
-      setUser(userToSave);
+      setUser(userData);
       return { success: true };
     } catch (error) {
       return {
@@ -54,13 +52,11 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post('/auth/register', { nombre, email, password });
       const { token, user: userData } = response.data;
 
-      const userToSave = { ...userData, foto: null };
-
       await AsyncStorage.setItem('taskflow_token', token);
-      await AsyncStorage.setItem('taskflow_user', JSON.stringify(userToSave));
+      await AsyncStorage.setItem('taskflow_user', JSON.stringify(userData));
 
       api.defaults.headers.Authorization = `Bearer ${token}`;
-      setUser(userToSave);
+      setUser(userData);
       return { success: true };
     } catch (error) {
       return {
@@ -76,9 +72,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateUser = async (userData) => {
-    const userToSave = { ...userData, foto: null };
-    await AsyncStorage.setItem('taskflow_user', JSON.stringify(userToSave));
-    setUser(userToSave);
+    await AsyncStorage.setItem('taskflow_user', JSON.stringify(userData));
+    setUser(userData);
   };
 
   return (

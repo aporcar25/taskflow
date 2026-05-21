@@ -1,8 +1,11 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import React, { useState, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert, ActivityIndicator, ScrollView, Animated, Dimensions } from 'react-native';
 import api from '../../src/services/api';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
+import DateTimePicker from '@react-native-community/datetimepicker';
+
+const { width } = Dimensions.get('window');
 
 const CATEGORIES = [
   { label: 'Personal', value: 'personal', emoji: '👤' },
@@ -23,13 +26,15 @@ export default function Tasks() {
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [filter, setFilter] = useState('Todas'); // Todas, Pendientes, Completadas
 
   // Form state
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('media');
   const [category, setCategory] = useState('personal');
-  const [dueDate, setDueDate] = useState('');
+  const [dueDate, setDueDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const fetchTasks = async () => {
     try {
@@ -37,7 +42,6 @@ export default function Tasks() {
       setTasks(response.data);
     } catch (error) {
       console.error('Error fetching tasks:', error);
-      Alert.alert('Error', 'No se pudieron cargar las tareas');
     } finally {
       setLoading(false);
     }
@@ -66,14 +70,14 @@ export default function Tasks() {
         descripcion: description,
         prioridad: priority,
         categoria: category,
-        fechaVencimiento: dueDate || null,
+        fechaVencimiento: dueDate.toISOString(),
         estado: 'pendiente'
       });
       setTitle('');
       setDescription('');
       setPriority('media');
       setCategory('personal');
-      setDueDate('');
+      setDueDate(new Date());
       setModalVisible(false);
       fetchTasks();
     } catch (error) {
@@ -113,6 +117,12 @@ export default function Tasks() {
     );
   };
 
+  const filteredTasks = tasks.filter(t => {
+    if (filter === 'Pendientes') return t.estado !== 'completada';
+    if (filter === 'Completadas') return t.estado === 'completada';
+    return true;
+  });
+
   const getDueDateBadge = (dateStr) => {
     if (!dateStr) return null;
     const date = new Date(dateStr);
@@ -121,10 +131,10 @@ export default function Tasks() {
     const diffTime = date - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    let color = '#a3e635'; // green (ok)
-    if (diffDays < 0) color = '#ef4444'; // red (overdue)
-    else if (diffDays <= 2) color = '#f97316'; // orange (near)
-    else if (diffDays <= 7) color = '#f59e0b'; // yellow (soon)
+    let color = '#a3e635';
+    if (diffDays < 0) color = '#ef4444';
+    else if (diffDays <= 2) color = '#f97316';
+    else if (diffDays <= 7) color = '#f59e0b';
 
     return (
       <View style={[styles.dateBadge, { backgroundColor: color + '22' }]}>
@@ -136,31 +146,34 @@ export default function Tasks() {
     );
   };
 
+  const onDateChange = (event, selectedDate) => {
+    const currentDate = selectedDate || dueDate;
+    setShowDatePicker(false);
+    setDueDate(currentDate);
+  };
+
   const renderTask = ({ item }) => {
     const cat = CATEGORIES.find(c => c.value === item.categoria) || CATEGORIES[0];
     const prioColor = PRIORITIES.find(p => p.value === item.prioridad)?.color || '#3b82f6';
+    const isCompleted = item.estado === 'completada';
 
     return (
-      <View style={styles.taskCard}>
+      <View style={[styles.taskCard, { borderLeftColor: prioColor, borderLeftWidth: 5 }]}>
         <TouchableOpacity
           style={styles.checkbox}
           onPress={() => toggleTask(item._id, item.estado)}
         >
           <Ionicons
-            name={item.estado === 'completada' ? "checkmark-circle" : "ellipse-outline"}
-            size={28}
-            color={item.estado === 'completada' ? "#a3e635" : "#666"}
+            name={isCompleted ? "checkmark-circle" : "ellipse-outline"}
+            size={30}
+            color={isCompleted ? "#a3e635" : "#666"}
           />
         </TouchableOpacity>
 
         <View style={styles.taskContent}>
-          <View style={styles.taskHeader}>
-            <Text style={[styles.taskTitle, item.estado === 'completada' && styles.completedText]}>
-              {item.titulo}
-            </Text>
-            <View style={[styles.priorityLine, { backgroundColor: prioColor }]} />
-          </View>
-
+          <Text style={[styles.taskTitle, isCompleted && styles.completedText]}>
+            {item.titulo}
+          </Text>
           <View style={styles.taskFooter}>
             <Text style={styles.categoryBadge}>{cat.emoji} {cat.label}</Text>
             {getDueDateBadge(item.fechaVencimiento)}
@@ -174,18 +187,22 @@ export default function Tasks() {
     );
   };
 
-  if (loading && !refreshing) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#a3e635" />
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
+      <View style={styles.filterContainer}>
+        {['Todas', 'Pendientes', 'Completadas'].map((f) => (
+          <TouchableOpacity
+            key={f}
+            style={[styles.filterBtn, filter === f && styles.filterBtnActive]}
+            onPress={() => setFilter(f)}
+          >
+            <Text style={[styles.filterBtnText, filter === f && styles.filterBtnTextActive]}>{f}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       <FlatList
-        data={tasks}
+        data={filteredTasks}
         keyExtractor={(item) => item._id}
         renderItem={renderTask}
         contentContainerStyle={styles.listContent}
@@ -193,9 +210,11 @@ export default function Tasks() {
         onRefresh={onRefresh}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="clipboard-outline" size={60} color="#333" />
-            <Text style={styles.emptyText}>No hay tareas pendientes</Text>
-            <Text style={styles.emptySubtext}>¡Añade una nueva tarea para empezar!</Text>
+            <View style={styles.emptyIllustration}>
+              <Ionicons name="clipboard-outline" size={80} color="#333" />
+            </View>
+            <Text style={styles.emptyText}>No hay tareas aquí</Text>
+            <Text style={styles.emptySubtext}>¡Añade una nueva para empezar el día!</Text>
           </View>
         }
       />
@@ -272,14 +291,23 @@ export default function Tasks() {
                 ))}
               </View>
 
-              <Text style={styles.label}>Fecha de Vencimiento (YYYY-MM-DD)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Ej: 2025-12-31"
-                placeholderTextColor="#666"
-                value={dueDate}
-                onChangeText={setDueDate}
-              />
+              <Text style={styles.label}>Fecha de Vencimiento</Text>
+              <TouchableOpacity
+                style={styles.datePickerBtn}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Ionicons name="calendar-outline" size={20} color="#a3e635" />
+                <Text style={styles.datePickerText}>{dueDate.toLocaleDateString()}</Text>
+              </TouchableOpacity>
+
+              {showDatePicker && (
+                <DateTimePicker
+                  value={dueDate}
+                  mode="date"
+                  display="default"
+                  onChange={onDateChange}
+                />
+              )}
 
               <TouchableOpacity
                 style={styles.saveButton}
@@ -301,11 +329,30 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0a0a0a',
   },
-  loadingContainer: {
-    flex: 1,
+  filterContainer: {
+    flexDirection: 'row',
+    padding: 15,
     backgroundColor: '#0a0a0a',
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a1a1a',
+  },
+  filterBtn: {
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 10,
+    backgroundColor: '#1a1a1a',
+  },
+  filterBtnActive: {
+    backgroundColor: '#a3e635',
+  },
+  filterBtnText: {
+    color: '#999',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  filterBtnTextActive: {
+    color: '#0a0a0a',
   },
   listContent: {
     padding: 20,
@@ -327,23 +374,11 @@ const styles = StyleSheet.create({
   taskContent: {
     flex: 1,
   },
-  taskHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
   taskTitle: {
     fontSize: 16,
     color: '#fff',
     fontWeight: '600',
-    flex: 1,
-  },
-  priorityLine: {
-    width: 30,
-    height: 4,
-    borderRadius: 2,
-    marginLeft: 10,
+    marginBottom: 8,
   },
   taskFooter: {
     flexDirection: 'row',
@@ -389,21 +424,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 8,
-    shadowColor: '#a3e635',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
   },
   emptyContainer: {
     padding: 50,
     alignItems: 'center',
     marginTop: 50,
   },
+  emptyIllustration: {
+    marginBottom: 20,
+    opacity: 0.5,
+  },
   emptyText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
-    marginTop: 20,
   },
   emptySubtext: {
     color: '#666',
@@ -439,7 +473,6 @@ const styles = StyleSheet.create({
     color: '#999',
     fontSize: 14,
     marginBottom: 8,
-    fontWeight: '500',
   },
   input: {
     backgroundColor: '#0a0a0a',
@@ -505,6 +538,21 @@ const styles = StyleSheet.create({
   catLabelSelected: {
     color: '#a3e635',
     fontWeight: 'bold',
+  },
+  datePickerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0a0a0a',
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  datePickerText: {
+    color: '#fff',
+    marginLeft: 10,
+    fontSize: 16,
   },
   saveButton: {
     backgroundColor: '#a3e635',
