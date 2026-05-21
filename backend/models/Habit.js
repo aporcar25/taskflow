@@ -23,6 +23,10 @@ const HabitSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  ultimaFecha: {
+    type: Date,
+    default: null
+  },
   historial: [{
     type: Date
   }]
