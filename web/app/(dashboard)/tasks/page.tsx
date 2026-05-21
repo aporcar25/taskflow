@@ -598,7 +598,7 @@ export default function TasksPage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden min-h-0">
+      <div className="flex-1 min-h-0">
         {isLoading ? (
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => <div key={i} className="h-20 shimmer rounded-2xl bg-white dark:bg-dark-800 border border-gray-100 dark:border-white/5" />)}
