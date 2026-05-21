@@ -75,8 +75,14 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateUser = async (userData) => {
+    const userToSave = { ...userData, foto: null };
+    await AsyncStorage.setItem('taskflow_user', JSON.stringify(userToSave));
+    setUser(userToSave);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
