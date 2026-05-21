@@ -171,4 +171,18 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// GET /fix-streaks -> migración para actualizar rachaMaxima en hábitos existentes
+router.get('/fix-streaks', async (req, res) => {
+  try {
+    const result = await Habit.updateMany(
+      { $or: [{ rachaMaxima: { $exists: false } }, { rachaMaxima: 0 }] },
+      [{ $set: { rachaMaxima: "$racha" } }]
+    );
+    res.json({ mensaje: 'Migración completada', result });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error en la migración' });
+  }
+});
+
 module.exports = router;
