@@ -1,12 +1,13 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Dimensions, TouchableOpacity } from 'react-native';
 import api from '../src/services/api';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
 export default function Stats() {
+  const router = useRouter();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -42,96 +43,100 @@ export default function Stats() {
     );
   }
 
-  const taskCompletionData = stats?.tareasPorDia || [
-    { dia: 'Lun', completadas: 0 },
-    { dia: 'Mar', completadas: 0 },
-    { dia: 'Mié', completadas: 0 },
-    { dia: 'Jue', completadas: 0 },
-    { dia: 'Vie', completadas: 0 },
-    { dia: 'Sáb', completadas: 0 },
-    { dia: 'Dom', completadas: 0 },
+  const activityData = stats?.actividadSemanal || [
+    { day: 'Lun', tasks: 0 },
+    { day: 'Mar', tasks: 0 },
+    { day: 'Mié', tasks: 0 },
+    { day: 'Jue', tasks: 0 },
+    { day: 'Vie', tasks: 0 },
+    { day: 'Sáb', tasks: 0 },
+    { day: 'Dom', tasks: 0 },
   ];
 
-  const maxCompletadas = Math.max(...taskCompletionData.map(d => d.completadas), 1);
+  const maxTasks = Math.max(...activityData.map(d => d.tasks), 1);
+  const productivity = stats?.porcentajeProductividad || 0;
 
   return (
-    <ScrollView
-      style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#a3e635" />}
-    >
-      <View style={styles.summaryCard}>
-        <View style={styles.statBox}>
-          <Text style={styles.statValue}>{stats?.totalCompletadas || 0}</Text>
-          <Text style={styles.statLabel}>Total Completadas</Text>
-        </View>
-        <View style={[styles.statBox, styles.statBoxBorder]}>
-          <Text style={styles.statValue}>{stats?.productividad || 0}%</Text>
-          <Text style={styles.statLabel}>Productividad</Text>
-        </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statValue}>{stats?.mejorDia || '-'}</Text>
-          <Text style={styles.statLabel}>Mejor Día</Text>
-        </View>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={24} color="#a3e635" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Estadísticas</Text>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Actividad Semanal</Text>
-        <View style={styles.chartContainer}>
-          <View style={styles.barChart}>
-            {taskCompletionData.map((data, index) => (
-              <View key={index} style={styles.barCol}>
-                <View style={styles.barTrack}>
-                  <View
-                    style={[
-                      styles.barFill,
-                      { height: `${(data.completadas / maxCompletadas) * 100}%` }
-                    ]}
-                  />
-                </View>
-                <Text style={styles.barLabel}>{data.dia}</Text>
-                <Text style={styles.barValue}>{data.completadas}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Ranking de Hábitos</Text>
-        {stats?.habitosRanking && stats.habitosRanking.length > 0 ? (
-          stats.habitosRanking.map((habit, index) => (
-            <View key={habit._id || index} style={styles.rankingCard}>
-              <View style={styles.rankingPosition}>
-                <Text style={styles.positionText}>{index + 1}</Text>
-              </View>
-              <View style={styles.rankingInfo}>
-                <Text style={styles.habitName}>{habit.nombre}</Text>
-                <View style={styles.progressBar}>
-                  <View style={[styles.progressFill, { width: `${Math.min(habit.porcentaje, 100)}%` }]} />
-                </View>
-              </View>
-              <View style={styles.rankingValue}>
-                <Text style={styles.streakText}>🔥 {habit.rachaActual}</Text>
-                <Text style={styles.percentText}>{habit.porcentaje}%</Text>
-              </View>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#a3e635" />}
+      >
+        <View style={styles.productivityCard}>
+          <View style={styles.circularContainer}>
+            <View style={styles.circularBg}>
+              <Text style={styles.circularValue}>{productivity}%</Text>
+              <Text style={styles.circularLabel}>Productividad</Text>
             </View>
-          ))
-        ) : (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No hay datos de hábitos suficientes</Text>
           </View>
-        )}
-      </View>
+          <View style={styles.productivityInfo}>
+            <Text style={styles.infoTitle}>Rendimiento Semanal</Text>
+            <Text style={styles.infoSub}>{stats?.totalTareas} tareas totales</Text>
+            <Text style={styles.infoSub}>{stats?.tareasCompletadas} completadas</Text>
+          </View>
+        </View>
 
-      <View style={styles.infoCard}>
-        <Ionicons name="bulb-outline" size={24} color="#a3e635" />
-        <Text style={styles.infoText}>
-          Mantén tus rachas para aumentar tu productividad. ¡Tu mejor día suele ser el {stats?.mejorDia || '...'}!
-        </Text>
-      </View>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Actividad Semanal</Text>
+          <View style={styles.chartContainer}>
+            <View style={styles.barChart}>
+              {activityData.map((data, index) => (
+                <View key={index} style={styles.barCol}>
+                  <View style={styles.barTrack}>
+                    <View
+                      style={[
+                        styles.barFill,
+                        { height: `${(data.tasks / maxTasks) * 100}%` }
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.barLabel}>{data.day}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+          <View style={styles.highlightBox}>
+            <Ionicons name="star" size={20} color="#f59e0b" />
+            <Text style={styles.highlightText}>
+              Tu día más productivo es el <Text style={styles.boldText}>{stats?.mejorDia || '...'}</Text>
+            </Text>
+          </View>
+        </View>
 
-      <View style={{ height: 40 }} />
-    </ScrollView>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Ranking de Hábitos</Text>
+          {stats?.habitosDetalles && stats.habitosDetalles.length > 0 ? (
+            stats.habitosDetalles.map((habit, index) => (
+              <View key={index} style={styles.rankingCard}>
+                <View style={styles.rankingIcon}>
+                  <Text style={styles.rankingEmoji}>{habit.icono || '✨'}</Text>
+                </View>
+                <View style={styles.rankingInfo}>
+                  <Text style={styles.habitName}>{habit.nombre}</Text>
+                  <Text style={styles.habitRacha}>Racha actual: {habit.rachaActual} días</Text>
+                </View>
+                <View style={styles.rankingBadge}>
+                  <Text style={styles.badgeText}>#{index + 1}</Text>
+                </View>
+              </View>
+            ))
+          ) : (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>No hay datos suficientes</Text>
+            </View>
+          )}
+        </View>
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
+    </View>
   );
 }
 
@@ -139,6 +144,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0a0a0a',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    paddingTop: 50,
+    backgroundColor: '#1a1a1a',
+  },
+  backBtn: {
+    padding: 5,
+    marginRight: 15,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  scrollContent: {
     padding: 20,
   },
   loadingContainer: {
@@ -147,34 +170,52 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  summaryCard: {
+  productivityCard: {
     flexDirection: 'row',
     backgroundColor: '#1a1a1a',
     borderRadius: 20,
     padding: 20,
     marginBottom: 25,
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: '#333',
   },
-  statBox: {
-    flex: 1,
+  circularContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 8,
+    borderColor: '#a3e63533',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  statBoxBorder: {
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderColor: '#333',
+  circularBg: {
+    alignItems: 'center',
   },
-  statValue: {
-    fontSize: 20,
+  circularValue: {
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#a3e635',
   },
-  statLabel: {
-    fontSize: 10,
+  circularLabel: {
+    fontSize: 8,
     color: '#999',
-    marginTop: 4,
-    textAlign: 'center',
+    textTransform: 'uppercase',
+  },
+  productivityInfo: {
+    flex: 1,
+    marginLeft: 20,
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  infoSub: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
   },
   section: {
     marginBottom: 30,
@@ -188,7 +229,7 @@ const styles = StyleSheet.create({
   chartContainer: {
     backgroundColor: '#1a1a1a',
     borderRadius: 20,
-    padding: 20,
+    padding: 25,
     borderWidth: 1,
     borderColor: '#333',
   },
@@ -196,34 +237,47 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
-    height: 150,
+    height: 120,
   },
   barCol: {
     alignItems: 'center',
-    width: (width - 120) / 7,
+    width: (width - 130) / 7,
   },
   barTrack: {
-    width: 8,
+    width: 10,
     height: 100,
     backgroundColor: '#2a2a2a',
-    borderRadius: 4,
+    borderRadius: 5,
     justifyContent: 'flex-end',
   },
   barFill: {
     width: '100%',
     backgroundColor: '#a3e635',
-    borderRadius: 4,
+    borderRadius: 5,
   },
   barLabel: {
     color: '#666',
     fontSize: 10,
-    marginTop: 8,
+    marginTop: 10,
   },
-  barValue: {
-    color: '#fff',
-    fontSize: 10,
+  highlightBox: {
+    flexDirection: 'row',
+    backgroundColor: '#f59e0b15',
+    padding: 15,
+    borderRadius: 15,
+    marginTop: 15,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#f59e0b33',
+  },
+  highlightText: {
+    color: '#ccc',
+    fontSize: 14,
+    marginLeft: 10,
+  },
+  boldText: {
+    color: '#f59e0b',
     fontWeight: 'bold',
-    marginTop: 2,
   },
   rankingCard: {
     flexDirection: 'row',
@@ -235,52 +289,42 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#333',
   },
-  rankingPosition: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+  rankingIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
     backgroundColor: '#2a2a2a',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
   },
-  positionText: {
-    color: '#a3e635',
-    fontWeight: 'bold',
+  rankingEmoji: {
+    fontSize: 20,
   },
   rankingInfo: {
     flex: 1,
   },
   habitName: {
     color: '#fff',
-    fontWeight: '600',
-    marginBottom: 6,
+    fontWeight: 'bold',
   },
-  progressBar: {
-    height: 4,
-    backgroundColor: '#2a2a2a',
-    borderRadius: 2,
-    width: '90%',
+  habitRacha: {
+    color: '#999',
+    fontSize: 12,
+    marginTop: 2,
   },
-  progressFill: {
-    height: '100%',
+  rankingBadge: {
     backgroundColor: '#a3e635',
-    borderRadius: 2,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
   },
-  rankingValue: {
-    alignItems: 'flex-end',
-  },
-  streakText: {
-    color: '#f97316',
+  badgeText: {
+    color: '#0a0a0a',
     fontWeight: 'bold',
     fontSize: 12,
   },
-  percentText: {
-    color: '#999',
-    fontSize: 10,
-    marginTop: 2,
-  },
-  emptyState: {
+  emptyCard: {
     backgroundColor: '#1a1a1a',
     padding: 20,
     borderRadius: 15,
@@ -288,21 +332,5 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     color: '#666',
-  },
-  infoCard: {
-    flexDirection: 'row',
-    backgroundColor: '#a3e63510',
-    padding: 15,
-    borderRadius: 15,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#a3e63533',
-  },
-  infoText: {
-    flex: 1,
-    color: '#ccc',
-    fontSize: 13,
-    marginLeft: 12,
-    lineHeight: 18,
   }
 });

@@ -1,16 +1,17 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert, ActivityIndicator, ScrollView, Dimensions } from 'react-native';
 import api from '../../src/services/api';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 
+const { width } = Dimensions.get('window');
 const NOTE_COLORS = [
-  '#1a1a1a', // Default dark
-  '#1a2a1a', // Greenish
-  '#1a1a2a', // Bluish
-  '#2a1a1a', // Reddish
-  '#1a2a2a', // Cyanish
-  '#2a2a1a', // Yellowish
+  '#1a1a1a',
+  '#1a2a1a',
+  '#1a1a2a',
+  '#2a1a1a',
+  '#1a2a2a',
+  '#2a2a1a',
 ];
 
 export default function Notes() {
@@ -20,7 +21,6 @@ export default function Notes() {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
 
-  // Form state
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [color, setColor] = useState(NOTE_COLORS[0]);
@@ -29,7 +29,6 @@ export default function Notes() {
   const fetchNotes = async () => {
     try {
       const response = await api.get('/notes');
-      // Sort pinned notes first
       const sortedNotes = response.data.sort((a, b) => {
         if (a.fijada === b.fijada) return new Date(b.updatedAt) - new Date(a.updatedAt);
         return a.fijada ? -1 : 1;
@@ -37,7 +36,6 @@ export default function Notes() {
       setNotes(sortedNotes);
     } catch (error) {
       console.error('Error fetching notes:', error);
-      Alert.alert('Error', 'No se pudieron cargar las notas');
     } finally {
       setLoading(false);
     }
@@ -80,13 +78,7 @@ export default function Notes() {
     }
 
     try {
-      const noteData = {
-        titulo: title,
-        contenido: content,
-        color,
-        fijada
-      };
-
+      const noteData = { titulo: title, contenido: content, color, fijada };
       if (editingNote) {
         await api.put(`/notes/${editingNote._id}`, noteData);
       } else {
@@ -102,7 +94,7 @@ export default function Notes() {
   const deleteNote = async (id) => {
     Alert.alert(
       "Eliminar nota",
-      "¿Estás seguro de que quieres eliminar esta nota?",
+      "¿Estás seguro?",
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -113,7 +105,7 @@ export default function Notes() {
               await api.delete(`/notes/${id}`);
               fetchNotes();
             } catch (error) {
-              Alert.alert('Error', 'No se pudo eliminar la nota');
+              Alert.alert('Error', 'No se pudo eliminar');
             }
           }
         }
@@ -126,7 +118,7 @@ export default function Notes() {
       await api.patch(`/notes/${id}/pin`);
       fetchNotes();
     } catch (error) {
-      Alert.alert('Error', 'No se pudo destacar la nota');
+      console.error(error);
     }
   };
 
@@ -140,12 +132,12 @@ export default function Notes() {
         {item.fijada && <Ionicons name="pin" size={16} color="#a3e635" style={styles.pinIcon} />}
         <Text style={styles.noteTitle} numberOfLines={1}>{item.titulo || 'Sin título'}</Text>
       </View>
-      <Text style={styles.noteContent} numberOfLines={4}>
+      <Text style={styles.noteContent} numberOfLines={6}>
         {item.contenido}
       </Text>
       <View style={styles.noteFooter}>
         <Text style={styles.noteDate}>
-          {new Date(item.updatedAt || item.createdAt).toLocaleDateString()}
+          {new Date(item.updatedAt).toLocaleDateString()}
         </Text>
         <TouchableOpacity onPress={() => togglePin(item._id)}>
           <Ionicons name={item.fijada ? "pin" : "pin-outline"} size={18} color={item.fijada ? "#a3e635" : "#666"} />
@@ -153,14 +145,6 @@ export default function Notes() {
       </View>
     </TouchableOpacity>
   );
-
-  if (loading && !refreshing) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#a3e635" />
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
@@ -175,8 +159,7 @@ export default function Notes() {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="document-text-outline" size={60} color="#333" />
-            <Text style={styles.emptyText}>No tienes notas</Text>
-            <Text style={styles.emptySubtext}>Anota tus ideas, planes o recordatorios aquí.</Text>
+            <Text style={styles.emptyText}>Sin notas</Text>
           </View>
         }
       />
@@ -200,8 +183,8 @@ export default function Notes() {
               <TouchableOpacity onPress={() => setModalVisible(false)}>
                 <Ionicons name="chevron-down" size={28} color="#fff" />
               </TouchableOpacity>
-              <View style={styles.modalHeaderRight}>
-                <TouchableOpacity onPress={() => setFijada(!fijada)} style={styles.headerIcon}>
+              <View style={styles.modalActions}>
+                <TouchableOpacity onPress={() => setFijada(!fijada)} style={styles.actionBtn}>
                   <Ionicons name={fijada ? "pin" : "pin-outline"} size={24} color={fijada ? "#a3e635" : "#fff"} />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={handleSaveNote} style={styles.saveBtn}>
@@ -218,10 +201,9 @@ export default function Notes() {
                 value={title}
                 onChangeText={setTitle}
               />
-
               <TextInput
                 style={styles.contentInput}
-                placeholder="Empieza a escribir..."
+                placeholder="Escribe algo..."
                 placeholderTextColor="#666"
                 value={content}
                 onChangeText={setContent}
@@ -229,16 +211,12 @@ export default function Notes() {
                 textAlignVertical="top"
               />
 
-              <Text style={styles.colorLabel}>Color de fondo</Text>
+              <Text style={styles.colorLabel}>Color</Text>
               <View style={styles.colorPicker}>
                 {NOTE_COLORS.map((c) => (
                   <TouchableOpacity
                     key={c}
-                    style={[
-                      styles.colorOption,
-                      { backgroundColor: c },
-                      color === c && styles.colorOptionSelected
-                    ]}
+                    style={[styles.colorOption, { backgroundColor: c }, color === c && styles.colorOptionSelected]}
                     onPress={() => setColor(c)}
                   />
                 ))}
@@ -257,12 +235,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0a0a0a',
   },
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: '#0a0a0a',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   listContent: {
     padding: 10,
     paddingBottom: 100,
@@ -272,7 +244,7 @@ const styles = StyleSheet.create({
     margin: 8,
     padding: 15,
     borderRadius: 15,
-    minHeight: 120,
+    minHeight: 150,
     borderWidth: 1,
     borderColor: '#333',
   },
@@ -323,15 +295,9 @@ const styles = StyleSheet.create({
     marginTop: 100,
   },
   emptyText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 20,
-  },
-  emptySubtext: {
     color: '#666',
-    textAlign: 'center',
-    marginTop: 10,
+    fontSize: 16,
+    marginTop: 15,
   },
   modalOverlay: {
     flex: 1,
@@ -352,11 +318,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  modalHeaderRight: {
+  modalActions: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  headerIcon: {
+  actionBtn: {
     marginRight: 20,
   },
   saveBtn: {
@@ -379,7 +345,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#ccc',
     minHeight: 300,
-    lineHeight: 24,
   },
   colorLabel: {
     color: '#999',

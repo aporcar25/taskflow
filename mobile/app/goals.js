@@ -1,10 +1,40 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert, ActivityIndicator, Animated } from 'react-native';
 import api from '../src/services/api';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
+
+const ProgressBar = ({ progress, color }) => {
+  const animatedWidth = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(animatedWidth, {
+      toValue: Math.min(progress, 100),
+      duration: 1000,
+      useNativeDriver: false,
+    }).start();
+  }, [progress]);
+
+  return (
+    <View style={styles.progressBarBg}>
+      <Animated.View
+        style={[
+          styles.progressBarFill,
+          {
+            width: animatedWidth.interpolate({
+              inputRange: [0, 100],
+              outputRange: ['0%', '100%']
+            }),
+            backgroundColor: color
+          }
+        ]}
+      />
+    </View>
+  );
+};
 
 export default function Goals() {
+  const router = useRouter();
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -12,13 +42,9 @@ export default function Goals() {
   const [progressModalVisible, setProgressModalVisible] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState(null);
 
-  // New Goal form state
   const [title, setTitle] = useState('');
   const [meta, setMeta] = useState('');
   const [unidad, setUnidad] = useState('');
-  const [color, setColor] = useState('#a3e635');
-
-  // Progress update state
   const [increment, setIncrement] = useState('1');
 
   const fetchGoals = async () => {
@@ -27,7 +53,6 @@ export default function Goals() {
       setGoals(response.data);
     } catch (error) {
       console.error('Error fetching goals:', error);
-      Alert.alert('Error', 'No se pudieron cargar los objetivos');
     } finally {
       setLoading(false);
     }
@@ -39,24 +64,17 @@ export default function Goals() {
     }, [])
   );
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchGoals();
-    setRefreshing(false);
-  };
-
   const handleCreateGoal = async () => {
     if (!title.trim() || !meta.trim() || !unidad.trim()) {
-      Alert.alert('Error', 'Todos los campos son obligatorios');
+      Alert.alert('Error', 'Completa todos los campos');
       return;
     }
-
     try {
       await api.post('/goals', {
         titulo: title,
         meta: parseInt(meta),
         unidad,
-        color
+        color: '#a3e635'
       });
       setTitle('');
       setMeta('');
@@ -70,7 +88,6 @@ export default function Goals() {
 
   const handleUpdateProgress = async () => {
     if (!selectedGoal || !increment.trim()) return;
-
     try {
       await api.patch(`/goals/${selectedGoal._id}/progress`, {
         incremento: parseInt(increment)
@@ -78,36 +95,22 @@ export default function Goals() {
       setProgressModalVisible(false);
       fetchGoals();
     } catch (error) {
-      Alert.alert('Error', 'No se pudo actualizar el progreso');
+      Alert.alert('Error', 'Error al actualizar progreso');
     }
   };
 
   const deleteGoal = (id) => {
-    Alert.alert(
-      "Eliminar objetivo",
-      "¿Estás seguro de que quieres eliminar este objetivo?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await api.delete(`/goals/${id}`);
-              fetchGoals();
-            } catch (error) {
-              Alert.alert('Error', 'No se pudo eliminar el objetivo');
-            }
-          }
-        }
-      ]
-    );
+    Alert.alert("Eliminar", "¿Seguro?", [
+      { text: "No" },
+      { text: "Sí", style: "destructive", onPress: async () => {
+        await api.delete(`/goals/${id}`);
+        fetchGoals();
+      }}
+    ]);
   };
 
   const renderGoal = ({ item }) => {
-    const progress = (item.progreso / item.meta) * 100;
-    const completed = item.progreso >= item.meta;
-
+    const progressPercent = (item.progreso / item.meta) * 100;
     return (
       <TouchableOpacity
         style={styles.goalCard}
@@ -120,176 +123,99 @@ export default function Goals() {
       >
         <View style={styles.goalHeader}>
           <Text style={styles.goalTitle}>{item.titulo}</Text>
-          <Text style={[styles.goalProgressText, { color: item.color || '#a3e635' }]}>
-            {item.progreso} / {item.meta} {item.unidad}
-          </Text>
+          <Text style={styles.goalCount}>{item.progreso} / {item.meta} {item.unidad}</Text>
         </View>
-
-        <View style={styles.progressBarBg}>
-          <View
-            style={[
-              styles.progressBarFill,
-              {
-                width: `${Math.min(progress, 100)}%`,
-                backgroundColor: item.color || '#a3e635'
-              }
-            ]}
-          />
-        </View>
-
-        <View style={styles.goalFooter}>
-          <Text style={styles.percentText}>{Math.round(progress)}% completado</Text>
-          {completed && (
-            <View style={styles.completedBadge}>
-              <Ionicons name="checkmark-circle" size={14} color="#a3e635" />
-              <Text style={styles.completedText}>Completado</Text>
-            </View>
-          )}
-        </View>
+        <ProgressBar progress={progressPercent} color={item.color || '#a3e635'} />
+        <Text style={styles.percentText}>{Math.round(progressPercent)}% completado</Text>
       </TouchableOpacity>
     );
   };
 
-  if (loading && !refreshing) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#a3e635" />
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={24} color="#a3e635" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Objetivos Semanales</Text>
+      </View>
+
       <FlatList
         data={goals}
         keyExtractor={(item) => item._id}
         renderItem={renderGoal}
         contentContainerStyle={styles.listContent}
         refreshing={refreshing}
-        onRefresh={onRefresh}
+        onRefresh={fetchGoals}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="target-outline" size={60} color="#333" />
-            <Text style={styles.emptyText}>No tienes objetivos semanales</Text>
-            <Text style={styles.emptySubtext}>Establece metas para mantenerte motivado.</Text>
+            <Ionicons name="target" size={60} color="#333" />
+            <Text style={styles.emptyText}>Sin objetivos esta semana</Text>
           </View>
         }
       />
 
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => setModalVisible(true)}
-      >
+      <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
         <Ionicons name="add" size={32} color="#0a0a0a" />
       </TouchableOpacity>
 
-      {/* New Goal Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
+      <Modal animationType="slide" transparent={true} visible={modalVisible}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Nuevo Objetivo Semanal</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Ionicons name="close" size={24} color="#999" />
-              </TouchableOpacity>
-            </View>
-
-            <Text style={styles.label}>¿Qué quieres lograr?</Text>
+            <Text style={styles.modalTitle}>Nuevo Objetivo</Text>
             <TextInput
               style={styles.input}
-              placeholder="Ej: Leer libros, Correr, Meditar..."
+              placeholder="¿Qué quieres lograr?"
               placeholderTextColor="#666"
               value={title}
               onChangeText={setTitle}
             />
-
             <View style={styles.row}>
-              <View style={{ flex: 1, marginRight: 10 }}>
-                <Text style={styles.label}>Meta</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ej: 5"
-                  placeholderTextColor="#666"
-                  value={meta}
-                  onChangeText={setMeta}
-                  keyboardType="numeric"
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.label}>Unidad</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ej: km, pág, min"
-                  placeholderTextColor="#666"
-                  value={unidad}
-                  onChangeText={setUnidad}
-                />
-              </View>
+              <TextInput
+                style={[styles.input, { flex: 1, marginRight: 10 }]}
+                placeholder="Meta (ej: 10)"
+                placeholderTextColor="#666"
+                value={meta}
+                onChangeText={setMeta}
+                keyboardType="numeric"
+              />
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                placeholder="Unidad (ej: km)"
+                placeholderTextColor="#666"
+                value={unidad}
+                onChangeText={setUnidad}
+              />
             </View>
-
-            <TouchableOpacity
-              style={styles.saveButton}
-              onPress={handleCreateGoal}
-            >
-              <Text style={styles.saveButtonText}>Crear Objetivo</Text>
+            <TouchableOpacity style={styles.saveBtn} onPress={handleCreateGoal}>
+              <Text style={styles.saveBtnText}>Crear Objetivo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalVisible(false)}>
+              <Text style={styles.cancelBtnText}>Cancelar</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
-      {/* Progress Update Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={progressModalVisible}
-        onRequestClose={() => setProgressModalVisible(false)}
-      >
+      <Modal animationType="fade" transparent={true} visible={progressModalVisible}>
         <View style={styles.modalOverlayCenter}>
-          <View style={styles.smallModalContent}>
-            <Text style={styles.modalTitleSmall}>Actualizar Progreso</Text>
-            <Text style={styles.goalTitleSmall}>{selectedGoal?.titulo}</Text>
-
-            <View style={styles.incrementContainer}>
-              <TouchableOpacity
-                onPress={() => setIncrement(prev => Math.max(1, parseInt(prev || 0) - 1).toString())}
-                style={styles.incBtn}
-              >
-                <Ionicons name="remove" size={24} color="#fff" />
+          <View style={styles.smallModal}>
+            <Text style={styles.modalTitle}>Sumar Progreso</Text>
+            <Text style={styles.selectedGoalTitle}>{selectedGoal?.titulo}</Text>
+            <TextInput
+              style={styles.incInput}
+              value={increment}
+              onChangeText={setIncrement}
+              keyboardType="numeric"
+              textAlign="center"
+              autoFocus
+            />
+            <View style={styles.row}>
+              <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={handleUpdateProgress}>
+                <Text style={styles.saveBtnText}>Sumar</Text>
               </TouchableOpacity>
-
-              <TextInput
-                style={styles.incInput}
-                value={increment}
-                onChangeText={setIncrement}
-                keyboardType="numeric"
-                textAlign="center"
-              />
-
-              <TouchableOpacity
-                onPress={() => setIncrement(prev => (parseInt(prev || 0) + 1).toString())}
-                style={styles.incBtn}
-              >
-                <Ionicons name="add" size={24} color="#fff" />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.cancelBtn]}
-                onPress={() => setProgressModalVisible(false)}
-              >
-                <Text style={styles.cancelBtnText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.confirmBtn]}
-                onPress={handleUpdateProgress}
-              >
-                <Text style={styles.confirmBtnText}>Sumar</Text>
+              <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setProgressModalVisible(false)}>
+                <Text style={styles.cancelBtnText}>Cerrar</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -304,11 +230,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0a0a0a',
   },
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: '#0a0a0a',
-    justifyContent: 'center',
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
+    padding: 20,
+    paddingTop: 50,
+    backgroundColor: '#1a1a1a',
+  },
+  backBtn: {
+    padding: 5,
+    marginRight: 15,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
   },
   listContent: {
     padding: 20,
@@ -325,7 +261,6 @@ const styles = StyleSheet.create({
   goalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 15,
   },
   goalTitle: {
@@ -334,43 +269,25 @@ const styles = StyleSheet.create({
     color: '#fff',
     flex: 1,
   },
-  goalProgressText: {
-    fontSize: 14,
+  goalCount: {
+    color: '#a3e635',
     fontWeight: 'bold',
   },
   progressBarBg: {
-    height: 12,
+    height: 10,
     backgroundColor: '#2a2a2a',
-    borderRadius: 6,
-    marginBottom: 15,
+    borderRadius: 5,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    borderRadius: 6,
-  },
-  goalFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    borderRadius: 5,
   },
   percentText: {
-    color: '#999',
+    color: '#666',
     fontSize: 12,
-  },
-  completedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#a3e63515',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  completedText: {
-    color: '#a3e635',
-    fontSize: 10,
-    fontWeight: 'bold',
-    marginLeft: 4,
+    marginTop: 10,
+    textAlign: 'right',
   },
   fab: {
     position: 'absolute',
@@ -387,18 +304,11 @@ const styles = StyleSheet.create({
   emptyContainer: {
     padding: 50,
     alignItems: 'center',
-    marginTop: 80,
+    marginTop: 100,
   },
   emptyText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 20,
-  },
-  emptySubtext: {
     color: '#666',
-    textAlign: 'center',
-    marginTop: 10,
+    marginTop: 15,
   },
   modalOverlay: {
     flex: 1,
@@ -414,118 +324,71 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: '#1a1a1a',
+    padding: 25,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    padding: 25,
     borderWidth: 1,
     borderColor: '#333',
   },
-  smallModalContent: {
+  smallModal: {
     backgroundColor: '#1a1a1a',
-    borderRadius: 20,
     padding: 25,
+    borderRadius: 20,
     width: '100%',
-    maxWidth: 340,
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: '#333',
-    alignItems: 'center',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 25,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#fff',
-    flex: 1,
+    marginBottom: 20,
   },
-  modalTitleSmall: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 10,
-  },
-  goalTitleSmall: {
+  selectedGoalTitle: {
     color: '#a3e635',
-    fontSize: 14,
-    marginBottom: 25,
-  },
-  label: {
-    color: '#999',
-    fontSize: 14,
-    marginBottom: 8,
+    marginBottom: 20,
   },
   input: {
     backgroundColor: '#0a0a0a',
-    borderRadius: 12,
     padding: 15,
+    borderRadius: 12,
     color: '#fff',
-    fontSize: 16,
-    marginBottom: 20,
+    marginBottom: 15,
     borderWidth: 1,
     borderColor: '#333',
   },
   row: {
     flexDirection: 'row',
   },
-  saveButton: {
+  saveBtn: {
     backgroundColor: '#a3e635',
-    padding: 18,
-    borderRadius: 15,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  saveButtonText: {
-    color: '#0a0a0a',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  incrementContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  incBtn: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#333',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  incInput: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
-    width: 100,
-    marginHorizontal: 20,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    width: '100%',
-  },
-  modalBtn: {
-    flex: 1,
     padding: 15,
     borderRadius: 12,
     alignItems: 'center',
-    marginHorizontal: 5,
+    marginTop: 10,
   },
-  cancelBtn: {
-    backgroundColor: '#2a2a2a',
-  },
-  confirmBtn: {
-    backgroundColor: '#a3e635',
-  },
-  cancelBtnText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  confirmBtnText: {
+  saveBtnText: {
     color: '#0a0a0a',
     fontWeight: 'bold',
   },
+  cancelBtn: {
+    padding: 15,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  cancelBtnText: {
+    color: '#999',
+  },
+  incInput: {
+    fontSize: 40,
+    color: '#fff',
+    fontWeight: 'bold',
+    marginBottom: 20,
+    width: 100,
+  },
+  modalBtn: {
+    flex: 1,
+    marginHorizontal: 5,
+  }
 });
