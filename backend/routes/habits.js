@@ -107,6 +107,10 @@ router.patch('/:id/check', async (req, res) => {
         habit.racha = 1;
       }
 
+      if (habit.racha > (habit.rachaMaxima || 0)) {
+        habit.rachaMaxima = habit.racha;
+      }
+
       habit.completadoHoy = true;
       habit.ultimaFecha = today;
       habit.historial.push(now);

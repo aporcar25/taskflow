@@ -69,43 +69,11 @@ app.get('/api/stats', authMiddleware, async (req, res) => {
     // Hábitos y sus rachas
     const habits = await Habit.find({ userId });
 
-    const calculateMaxStreak = (historial) => {
-      if (!historial || historial.length === 0) return 0;
-      const sortedDates = historial
-        .map(d => {
-          const date = new Date(d);
-          return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-        })
-        .sort((a, b) => a - b);
-
-      const uniqueDates = [...new Set(sortedDates)];
-
-      let max = 0;
-      let current = 0;
-      let lastDate = null;
-
-      uniqueDates.forEach(date => {
-        if (lastDate) {
-          const diff = (date - lastDate) / (1000 * 60 * 60 * 24);
-          if (Math.round(diff) === 1) {
-            current++;
-          } else {
-            current = 1;
-          }
-        } else {
-          current = 1;
-        }
-        if (current > max) max = current;
-        lastDate = date;
-      });
-      return max;
-    };
-
     const habitosDetalles = habits.map(h => ({
       nombre: h.nombre,
       icono: h.icono,
       rachaActual: h.racha,
-      rachaMaxima: calculateMaxStreak(h.historial)
+      rachaMaxima: h.rachaMaxima || 0
     }));
 
     let rachaMaximaHabitos = 0;

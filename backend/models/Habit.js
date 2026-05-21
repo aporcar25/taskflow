@@ -19,6 +19,10 @@ const HabitSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  rachaMaxima: {
+    type: Number,
+    default: 0
+  },
   completadoHoy: {
     type: Boolean,
     default: false
