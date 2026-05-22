@@ -5,17 +5,15 @@ const authMiddleware = require('../middleware/auth');
 
 router.use(authMiddleware);
 
-// GET / -> obtener todos los hábitos del usuario
 router.get('/', async (req, res) => {
   try {
-    const habits = await Habit.find({ userId: req.user.id }).sort({ createdAt: -1 });
+    const habits = await Habit.find({ userId: req.usuario.id }).sort({ createdAt: -1 });
 
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     let updatedHabits = false;
 
-    // Reseteamos completadoHoy si el hábito fue actualizado antes de hoy
     for (let habit of habits) {
       const lastUpdated = new Date(habit.updatedAt);
       if (habit.completadoHoy && lastUpdated < today) {
@@ -26,7 +24,7 @@ router.get('/', async (req, res) => {
     }
 
     if (updatedHabits) {
-      const updated = await Habit.find({ userId: req.user.id }).sort({ createdAt: -1 });
+      const updated = await Habit.find({ userId: req.usuario.id }).sort({ createdAt: -1 });
       return res.json(updated);
     }
 
@@ -37,7 +35,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST / -> crear nuevo hábito
 router.post('/', async (req, res) => {
   try {
     const { nombre, icono } = req.body;
@@ -47,7 +44,7 @@ router.post('/', async (req, res) => {
     }
 
     const newHabit = new Habit({
-      userId: req.user.id,
+      userId: req.usuario.id,
       nombre,
       icono: icono || '🌟'
     });
@@ -60,7 +57,6 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PATCH /:id/check -> marcar hábito como completado hoy, actualizar racha
 router.patch('/:id/check', async (req, res) => {
   try {
     const habit = await Habit.findById(req.params.id);
@@ -79,15 +75,10 @@ router.patch('/:id/check', async (req, res) => {
     yesterday.setDate(yesterday.getDate() - 1);
 
     if (habit.completadoHoy) {
-      // Desmarcar
       habit.completadoHoy = false;
       habit.racha = Math.max(0, habit.racha - 1);
-
-      // Ajustar ultimaFecha a ayer para permitir re-marcar hoy si se desea,
-      // o dejar que el cron lo resetee si no se marca.
       habit.ultimaFecha = yesterday;
 
-      // Remover hoy del historial
       const todayTime = today.getTime();
       habit.historial = habit.historial.filter(date => {
         const d = new Date(date);
@@ -95,14 +86,13 @@ router.patch('/:id/check', async (req, res) => {
         return dTime !== todayTime;
       });
     } else {
-      // Marcar
       const lastCompleted = habit.ultimaFecha ? new Date(habit.ultimaFecha) : null;
       const lastCompletedTime = lastCompleted ? new Date(lastCompleted.getFullYear(), lastCompleted.getMonth(), lastCompleted.getDate()).getTime() : null;
 
       if (lastCompletedTime === yesterday.getTime()) {
         habit.racha += 1;
       } else if (lastCompletedTime === today.getTime()) {
-        // Ya estaba marcado hoy (teóricamente no debería pasar por completadoHoy check)
+        // ya marcado
       } else {
         habit.racha = 1;
       }
@@ -124,7 +114,6 @@ router.patch('/:id/check', async (req, res) => {
   }
 });
 
-// PUT /:id -> editar hábito
 router.put('/:id', async (req, res) => {
   try {
     const { nombre, icono } = req.body;
@@ -135,7 +124,7 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ mensaje: 'Hábito no encontrado' });
     }
 
-    if (habit.userId.toString() !== req.user.id) {
+    if (habit.userId.toString() !== req.usuario.id) {
       return res.status(401).json({ mensaje: 'No autorizado' });
     }
 
@@ -150,7 +139,6 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /:id -> eliminar hábito
 router.delete('/:id', async (req, res) => {
   try {
     const habit = await Habit.findById(req.params.id);
@@ -159,7 +147,7 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ mensaje: 'Hábito no encontrado' });
     }
 
-    if (habit.userId.toString() !== req.user.id) {
+    if (habit.userId.toString() !== req.usuario.id) {
       return res.status(401).json({ mensaje: 'No autorizado' });
     }
 
@@ -171,7 +159,6 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// GET /fix-streaks -> migración para actualizar rachaMaxima en hábitos existentes
 router.get('/fix-streaks', async (req, res) => {
   try {
     const result = await Habit.updateMany(
