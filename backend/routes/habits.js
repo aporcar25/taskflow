@@ -9,7 +9,7 @@ router.use(authMiddleware);
 router.get('/', async (req, res) => {
   try {
     const habits = await Habit.find({ userId: req.user.id }).sort({ createdAt: -1 });
-
+    
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
@@ -69,7 +69,7 @@ router.patch('/:id/check', async (req, res) => {
       return res.status(404).json({ mensaje: 'Hábito no encontrado' });
     }
 
-    if (habit.userId.toString() !== req.usuario.id) {
+    if (habit.userId.toString() !== req.user.id) {
       return res.status(401).json({ mensaje: 'No autorizado' });
     }
 
@@ -82,7 +82,7 @@ router.patch('/:id/check', async (req, res) => {
       // Desmarcar
       habit.completadoHoy = false;
       habit.racha = Math.max(0, habit.racha - 1);
-
+      
       // Ajustar ultimaFecha a ayer para permitir re-marcar hoy si se desea,
       // o dejar que el cron lo resetee si no se marca.
       habit.ultimaFecha = yesterday;
