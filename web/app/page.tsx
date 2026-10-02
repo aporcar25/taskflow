@@ -215,7 +215,7 @@ export default function LandingPage() {
             </div>
             <span className="text-sm font-semibold text-dark-900 dark:text-white">TaskFlow</span>
           </div>
-          <p className="text-sm text-gray-500">© 2026 TaskFlow. Todos los derechos reservados.</p>
+          <p className="text-sm text-gray-500">© 2026 TaskFlow · Desarrollado por Antonio José Porcel Carvajal. Todos los derechos reservados.</p>
         </div>
       </footer>
     </div>

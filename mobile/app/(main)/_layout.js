@@ -1,11 +1,8 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/context/AuthContext';
-import { TouchableOpacity } from 'react-native';
 
 export default function MainLayout() {
-  const { logout } = useAuth();
-
   return (
     <Tabs screenOptions={{
       tabBarStyle: {
@@ -23,18 +20,13 @@ export default function MainLayout() {
         color: '#fff',
         fontWeight: 'bold',
       },
-      headerRight: () => (
-        <TouchableOpacity onPress={logout} style={{ marginRight: 15 }}>
-          <Ionicons name="log-out-outline" size={24} color="#ef4444" />
-        </TouchableOpacity>
-      ),
     }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Dashboard',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="grid" size={size} color={color} />
+            <Ionicons name="grid-outline" size={size} color={color} />
           ),
         }}
       />
@@ -43,7 +35,7 @@ export default function MainLayout() {
         options={{
           title: 'Tareas',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="list" size={size} color={color} />
+            <Ionicons name="checkbox-outline" size={size} color={color} />
           ),
         }}
       />
@@ -52,7 +44,25 @@ export default function MainLayout() {
         options={{
           title: 'Hábitos',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar" size={size} color={color} />
+            <Ionicons name="sparkles-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="notes"
+        options={{
+          title: 'Notas',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="document-text-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Perfil',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" size={size} color={color} />
           ),
         }}
       />

@@ -74,22 +74,45 @@ router.patch('/:id/check', async (req, res) => {
     }
 
     const now = new Date();
-    
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
     if (habit.completadoHoy) {
       // Desmarcar
       habit.completadoHoy = false;
       habit.racha = Math.max(0, habit.racha - 1);
       
+      // Ajustar ultimaFecha a ayer para permitir re-marcar hoy si se desea,
+      // o dejar que el cron lo resetee si no se marca.
+      habit.ultimaFecha = yesterday;
+
       // Remover hoy del historial
-      const todayStr = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      const todayTime = today.getTime();
       habit.historial = habit.historial.filter(date => {
-        const dStr = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-        return dStr !== todayStr;
+        const d = new Date(date);
+        const dTime = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+        return dTime !== todayTime;
       });
     } else {
       // Marcar
+      const lastCompleted = habit.ultimaFecha ? new Date(habit.ultimaFecha) : null;
+      const lastCompletedTime = lastCompleted ? new Date(lastCompleted.getFullYear(), lastCompleted.getMonth(), lastCompleted.getDate()).getTime() : null;
+
+      if (lastCompletedTime === yesterday.getTime()) {
+        habit.racha += 1;
+      } else if (lastCompletedTime === today.getTime()) {
+        // Ya estaba marcado hoy (teóricamente no debería pasar por completadoHoy check)
+      } else {
+        habit.racha = 1;
+      }
+
+      if (habit.racha > (habit.rachaMaxima || 0)) {
+        habit.rachaMaxima = habit.racha;
+      }
+
       habit.completadoHoy = true;
-      habit.racha += 1;
+      habit.ultimaFecha = today;
       habit.historial.push(now);
     }
 
@@ -145,6 +168,20 @@ router.delete('/:id', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ mensaje: 'Error al eliminar el hábito' });
+  }
+});
+
+// GET /fix-streaks -> migración para actualizar rachaMaxima en hábitos existentes
+router.get('/fix-streaks', async (req, res) => {
+  try {
+    const result = await Habit.updateMany(
+      { $or: [{ rachaMaxima: { $exists: false } }, { rachaMaxima: 0 }] },
+      [{ $set: { rachaMaxima: "$racha" } }]
+    );
+    res.json({ mensaje: 'Migración completada', result });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error en la migración' });
   }
 });
 

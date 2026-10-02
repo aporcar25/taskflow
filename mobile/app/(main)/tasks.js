@@ -1,15 +1,139 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert } from 'react-native';
+import React, { useState, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert, ActivityIndicator, ScrollView, Animated, Dimensions } from 'react-native';
 import api from '../../src/services/api';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { Swipeable } from 'react-native-gesture-handler';
+
+const { width } = Dimensions.get('window');
+
+const CATEGORIES = [
+  { label: 'Personal', value: 'personal', emoji: '👤' },
+  { label: 'Trabajo', value: 'trabajo', emoji: '💼' },
+  { label: 'Salud', value: 'salud', emoji: '❤️' },
+  { label: 'Hogar', value: 'hogar', emoji: '🏠' },
+  { label: 'Estudios', value: 'estudios', emoji: '📚' },
+];
+
+const PRIORITIES = [
+  { label: 'Baja', value: 'baja', color: '#3b82f6' },
+  { label: 'Media', value: 'media', color: '#f59e0b' },
+  { label: 'Alta', value: 'alta', color: '#ef4444' },
+];
+
+const TaskItem = ({ item, onToggle, onDelete }) => {
+  const cat = CATEGORIES.find(c => c.value === item.categoria) || CATEGORIES[0];
+  const prioColor = PRIORITIES.find(p => p.value === item.prioridad)?.color || '#3b82f6';
+  const isCompleted = item.estado === 'completada';
+
+  const popAnim = useRef(new Animated.Value(1)).current;
+
+  const handleToggle = () => {
+    if (!isCompleted) {
+      Animated.sequence([
+        Animated.timing(popAnim, { toValue: 1.4, duration: 150, useNativeDriver: true }),
+        Animated.timing(popAnim, { toValue: 1, duration: 150, useNativeDriver: true })
+      ]).start(() => onToggle(item._id, item.estado));
+    } else {
+      onToggle(item._id, item.estado);
+    }
+  };
+
+  const renderRightActions = (progress, dragX) => {
+    const trans = dragX.interpolate({
+      inputRange: [-100, 0],
+      outputRange: [0, 100],
+    });
+    return (
+      <TouchableOpacity onPress={() => onDelete(item._id)} style={styles.deleteAction}>
+        <Animated.View style={{ transform: [{ translateX: trans }] }}>
+          <Ionicons name="trash" size={24} color="#fff" />
+        </Animated.View>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderLeftActions = (progress, dragX) => {
+    const trans = dragX.interpolate({
+      inputRange: [0, 100],
+      outputRange: [-100, 0],
+    });
+    return (
+      <TouchableOpacity onPress={handleToggle} style={styles.completeAction}>
+        <Animated.View style={{ transform: [{ translateX: trans }] }}>
+          <Ionicons name={isCompleted ? "arrow-undo" : "checkmark-done"} size={24} color="#0a0a0a" />
+        </Animated.View>
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <Swipeable renderRightActions={renderRightActions} renderLeftActions={renderLeftActions}>
+      <View style={[styles.taskCard, { borderLeftColor: prioColor, borderLeftWidth: 5 }]}>
+        <TouchableOpacity
+          style={styles.checkbox}
+          onPress={handleToggle}
+        >
+          <Animated.View style={{ transform: [{ scale: popAnim }] }}>
+            <Ionicons
+              name={isCompleted ? "checkmark-circle" : "ellipse-outline"}
+              size={30}
+              color={isCompleted ? "#a3e635" : "#666"}
+            />
+          </Animated.View>
+        </TouchableOpacity>
+
+        <View style={styles.taskContent}>
+          <Text style={[styles.taskTitle, isCompleted && styles.completedText]}>
+            {item.titulo}
+          </Text>
+          <View style={styles.taskFooter}>
+            <Text style={styles.categoryBadge}>{cat.emoji} {cat.label}</Text>
+            {getDueDateBadge(item.fechaVencimiento)}
+          </View>
+        </View>
+      </View>
+    </Swipeable>
+  );
+};
+
+const getDueDateBadge = (dateStr) => {
+  if (!dateStr) return null;
+  const date = new Date(dateStr);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffTime = date - today;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  let color = '#a3e635';
+  if (diffDays < 0) color = '#ef4444';
+  else if (diffDays <= 2) color = '#f97316';
+  else if (diffDays <= 7) color = '#f59e0b';
+
+  return (
+    <View style={[styles.dateBadge, { backgroundColor: color + '22' }]}>
+      <Ionicons name="calendar-outline" size={12} color={color} />
+      <Text style={[styles.dateBadgeText, { color }]}>
+        {date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+      </Text>
+    </View>
+  );
+};
 
 export default function Tasks() {
   const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
-  const [newTitle, setNewTitle] = useState('');
-  const [newPriority, setNewPriority] = useState('media');
   const [refreshing, setRefreshing] = useState(false);
+  const [filter, setFilter] = useState('Todas');
+
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [priority, setPriority] = useState('media');
+  const [category, setCategory] = useState('personal');
+  const [dueDate, setDueDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const fetchTasks = async () => {
     try {
@@ -17,6 +141,8 @@ export default function Tasks() {
       setTasks(response.data);
     } catch (error) {
       console.error('Error fetching tasks:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -27,14 +153,24 @@ export default function Tasks() {
   );
 
   const handleCreateTask = async () => {
-    if (!newTitle.trim()) return;
+    if (!title.trim()) {
+      Alert.alert('Error', 'El título es obligatorio');
+      return;
+    }
     try {
       await api.post('/tasks', {
-        titulo: newTitle,
-        prioridad: newPriority,
+        titulo: title,
+        descripcion: description,
+        prioridad: priority,
+        categoria: category,
+        fechaVencimiento: dueDate.toISOString(),
         estado: 'pendiente'
       });
-      setNewTitle('');
+      setTitle('');
+      setDescription('');
+      setPriority('media');
+      setCategory('personal');
+      setDueDate(new Date());
       setModalVisible(false);
       fetchTasks();
     } catch (error) {
@@ -55,67 +191,58 @@ export default function Tasks() {
   const deleteTask = async (id) => {
     Alert.alert(
       "Eliminar tarea",
-      "¿Estás seguro de que quieres eliminar esta tarea?",
+      "¿Estás seguro?",
       [
         { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await api.delete(`/tasks/${id}`);
-              fetchTasks();
-            } catch (error) {
-              Alert.alert('Error', 'No se pudo eliminar la tarea');
-            }
+        { text: "Eliminar", style: "destructive", onPress: async () => {
+          try {
+            await api.delete(`/tasks/${id}`);
+            fetchTasks();
+          } catch (error) {
+            Alert.alert('Error', 'No se pudo eliminar');
           }
-        }
+        }}
       ]
     );
   };
 
-  const renderTask = ({ item }) => (
-    <View style={styles.taskCard}>
-      <TouchableOpacity
-        style={styles.checkbox}
-        onPress={() => toggleTask(item._id, item.estado)}
-      >
-        <Ionicons
-          name={item.estado === 'completada' ? "checkbox" : "square-outline"}
-          size={24}
-          color={item.estado === 'completada' ? "#a3e635" : "#666"}
-        />
-      </TouchableOpacity>
+  const filteredTasks = tasks.filter(t => {
+    if (filter === 'Pendientes') return t.estado !== 'completada';
+    if (filter === 'Completadas') return t.estado === 'completada';
+    return true;
+  });
 
-      <View style={styles.taskContent}>
-        <Text style={[styles.taskTitle, item.estado === 'completada' && styles.completedText]}>
-          {item.titulo}
-        </Text>
-        <View style={[styles.priorityBadge, { backgroundColor: item.prioridad === 'alta' ? '#ef444422' : item.prioridad === 'media' ? '#f59e0b22' : '#3b82f622' }]}>
-          <Text style={[styles.priorityText, { color: item.prioridad === 'alta' ? '#ef4444' : item.prioridad === 'media' ? '#f59e0b' : '#3b82f6' }]}>
-            {item.prioridad}
-          </Text>
-        </View>
-      </View>
-
-      <TouchableOpacity onPress={() => deleteTask(item._id)}>
-        <Ionicons name="trash-outline" size={20} color="#666" />
-      </TouchableOpacity>
-    </View>
-  );
+  const onDateChange = (event, selectedDate) => {
+    const currentDate = selectedDate || dueDate;
+    setShowDatePicker(false);
+    setDueDate(currentDate);
+  };
 
   return (
     <View style={styles.container}>
+      <View style={styles.filterContainer}>
+        {['Todas', 'Pendientes', 'Completadas'].map((f) => (
+          <TouchableOpacity
+            key={f}
+            style={[styles.filterBtn, filter === f && styles.filterBtnActive]}
+            onPress={() => setFilter(f)}
+          >
+            <Text style={[styles.filterBtnText, filter === f && styles.filterBtnTextActive]}>{f}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       <FlatList
-        data={tasks}
+        data={filteredTasks}
         keyExtractor={(item) => item._id}
-        renderItem={renderTask}
+        renderItem={({ item }) => <TaskItem item={item} onToggle={toggleTask} onDelete={deleteTask} />}
         contentContainerStyle={styles.listContent}
         refreshing={refreshing}
         onRefresh={fetchTasks}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No hay tareas pendientes</Text>
+            <Ionicons name="clipboard-outline" size={80} color="#333" />
+            <Text style={styles.emptyText}>No hay tareas aquí</Text>
           </View>
         }
       />
@@ -124,56 +251,72 @@ export default function Tasks() {
         style={styles.fab}
         onPress={() => setModalVisible(true)}
       >
-        <Ionicons name="add" size={30} color="#0a0a0a" />
+        <Ionicons name="add" size={32} color="#0a0a0a" />
       </TouchableOpacity>
 
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
+      <Modal animationType="slide" transparent={true} visible={modalVisible}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Nueva Tarea</Text>
-
-            <TextInput
-              style={styles.input}
-              placeholder="¿Qué tienes que hacer?"
-              placeholderTextColor="#666"
-              value={newTitle}
-              onChangeText={setNewTitle}
-              autoFocus
-            />
-
-            <View style={styles.prioritySelector}>
-              {['baja', 'media', 'alta'].map((p) => (
-                <TouchableOpacity
-                  key={p}
-                  style={[styles.priorityOption, newPriority === p && styles.priorityOptionSelected]}
-                  onPress={() => setNewPriority(p)}
-                >
-                  <Text style={[styles.priorityOptionText, newPriority === p && styles.priorityOptionTextSelected]}>
-                    {p}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton]}
-                onPress={handleCreateTask}
-              >
-                <Text style={styles.saveButtonText}>Guardar</Text>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Nueva Tarea</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#999" />
               </TouchableOpacity>
             </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={styles.label}>Título</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="¿Qué tienes que hacer?"
+                placeholderTextColor="#666"
+                value={title}
+                onChangeText={setTitle}
+              />
+              <Text style={styles.label}>Descripción</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Añade más detalles..."
+                placeholderTextColor="#666"
+                value={description}
+                onChangeText={setDescription}
+                multiline
+              />
+              <Text style={styles.label}>Prioridad</Text>
+              <View style={styles.selector}>
+                {PRIORITIES.map((p) => (
+                  <TouchableOpacity
+                    key={p.value}
+                    style={[styles.option, priority === p.value && { borderColor: p.color, backgroundColor: p.color + '22' }]}
+                    onPress={() => setPriority(p.value)}
+                  >
+                    <Text style={[styles.optionText, priority === p.value && { color: p.color, fontWeight: 'bold' }]}>{p.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <Text style={styles.label}>Categoría</Text>
+              <View style={styles.categorySelector}>
+                {CATEGORIES.map((c) => (
+                  <TouchableOpacity
+                    key={c.value}
+                    style={[styles.catOption, category === c.value && styles.catOptionSelected]}
+                    onPress={() => setCategory(c.value)}
+                  >
+                    <Text style={styles.catEmoji}>{c.emoji}</Text>
+                    <Text style={[styles.catLabel, category === c.value && styles.catLabelSelected]}>{c.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <Text style={styles.label}>Fecha de Vencimiento</Text>
+              <TouchableOpacity style={styles.datePickerBtn} onPress={() => setShowDatePicker(true)}>
+                <Ionicons name="calendar-outline" size={20} color="#a3e635" />
+                <Text style={styles.datePickerText}>{dueDate.toLocaleDateString()}</Text>
+              </TouchableOpacity>
+              {showDatePicker && <DateTimePicker value={dueDate} mode="date" onChange={onDateChange} />}
+              <TouchableOpacity style={styles.saveButton} onPress={handleCreateTask}>
+                <Text style={styles.saveButtonText}>Crear Tarea</Text>
+              </TouchableOpacity>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -186,6 +329,28 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0a0a0a',
   },
+  filterContainer: {
+    flexDirection: 'row',
+    padding: 15,
+  },
+  filterBtn: {
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 10,
+    backgroundColor: '#1a1a1a',
+  },
+  filterBtnActive: {
+    backgroundColor: '#a3e635',
+  },
+  filterBtnText: {
+    color: '#999',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  filterBtnTextActive: {
+    color: '#0a0a0a',
+  },
   listContent: {
     padding: 20,
     paddingBottom: 100,
@@ -195,7 +360,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 15,
-    borderRadius: 12,
+    borderRadius: 15,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: '#333',
@@ -209,23 +374,37 @@ const styles = StyleSheet.create({
   taskTitle: {
     fontSize: 16,
     color: '#fff',
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  taskFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  categoryBadge: {
+    fontSize: 12,
+    color: '#999',
+    backgroundColor: '#2a2a2a',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginRight: 10,
+  },
+  dateBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  dateBadgeText: {
+    fontSize: 12,
+    marginLeft: 4,
     fontWeight: '500',
   },
   completedText: {
     textDecorationLine: 'line-through',
     color: '#666',
-  },
-  priorityBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginTop: 4,
-  },
-  priorityText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
   },
   fab: {
     position: 'absolute',
@@ -237,95 +416,157 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    elevation: 8,
   },
   emptyContainer: {
     padding: 50,
     alignItems: 'center',
+    marginTop: 50,
   },
   emptyText: {
-    color: '#666',
-    fontSize: 16,
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 15,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.8)',
+    backgroundColor: 'rgba(0,0,0,0.85)',
     justifyContent: 'flex-end',
   },
   modalContent: {
     backgroundColor: '#1a1a1a',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     padding: 25,
-    borderWidth: 1,
-    borderColor: '#333',
+    maxHeight: '90%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 25,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 20,
+  },
+  label: {
+    color: '#999',
+    fontSize: 14,
+    marginBottom: 8,
   },
   input: {
-    backgroundColor: '#2a2a2a',
-    borderRadius: 8,
+    backgroundColor: '#0a0a0a',
+    borderRadius: 12,
     padding: 15,
     color: '#fff',
     fontSize: 16,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#333',
   },
-  prioritySelector: {
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  selector: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 25,
+    marginBottom: 20,
   },
-  priorityOption: {
+  option: {
     flex: 1,
-    padding: 10,
-    borderRadius: 8,
+    padding: 12,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#333',
     alignItems: 'center',
-    marginHorizontal: 5,
+    marginHorizontal: 4,
   },
-  priorityOptionSelected: {
-    backgroundColor: '#a3e63522',
+  optionText: {
+    color: '#666',
+    fontSize: 14,
+  },
+  categorySelector: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 10,
+  },
+  catOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0a0a0a',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  catOptionSelected: {
     borderColor: '#a3e635',
+    backgroundColor: '#a3e63511',
   },
-  priorityOptionText: {
-    color: '#999',
-    textTransform: 'capitalize',
+  catEmoji: {
+    fontSize: 16,
+    marginRight: 6,
   },
-  priorityOptionTextSelected: {
+  catLabel: {
+    color: '#666',
+    fontSize: 13,
+  },
+  catLabelSelected: {
     color: '#a3e635',
     fontWeight: 'bold',
   },
-  modalButtons: {
+  datePickerBtn: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  modalButton: {
-    flex: 1,
-    padding: 15,
-    borderRadius: 8,
     alignItems: 'center',
-    marginHorizontal: 5,
+    backgroundColor: '#0a0a0a',
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#333',
   },
-  cancelButton: {
-    backgroundColor: '#2a2a2a',
-  },
-  cancelButtonText: {
+  datePickerText: {
     color: '#fff',
+    marginLeft: 10,
+    fontSize: 16,
   },
   saveButton: {
     backgroundColor: '#a3e635',
+    padding: 18,
+    borderRadius: 15,
+    alignItems: 'center',
+    marginTop: 10,
   },
   saveButtonText: {
     color: '#0a0a0a',
+    fontSize: 16,
     fontWeight: 'bold',
   },
+  deleteAction: {
+    backgroundColor: '#ef4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    height: '100%',
+    borderRadius: 15,
+    marginBottom: 12,
+    marginLeft: -10,
+  },
+  completeAction: {
+    backgroundColor: '#a3e635',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    height: '100%',
+    borderRadius: 15,
+    marginBottom: 12,
+    marginRight: -10,
+  }
 });

@@ -28,7 +28,8 @@ export default function TutorialTooltip({ steps, pageKey }: TutorialTooltipProps
           dashboard: 'tutorialDashboard',
           tasks: 'tutorialTasks',
           habits: 'tutorialHabits',
-          stats: 'tutorialStats'
+          stats: 'tutorialStats',
+          goals: 'tutorialGoals'
         };
 
         const completed = user[fieldMap[pageKey]];

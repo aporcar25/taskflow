@@ -2,6 +2,7 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 function RootLayoutNav() {
   const { user, loading } = useAuth();
@@ -33,14 +34,24 @@ function RootLayoutNav() {
       <Stack.Screen name="login" />
       <Stack.Screen name="register" />
       <Stack.Screen name="(main)" />
+      <Stack.Screen name="stats" options={{
+        headerShown: false,
+        title: 'Estadísticas',
+      }} />
+      <Stack.Screen name="goals" options={{
+        headerShown: false,
+        title: 'Objetivos',
+      }} />
     </Stack>
   );
 }
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <RootLayoutNav />
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <RootLayoutNav />
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 }

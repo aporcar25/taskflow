@@ -5,10 +5,15 @@ const authMiddleware = require('../middleware/auth');
 
 router.use(authMiddleware);
 
-// GET / -> obtener todas las tareas del usuario autenticado
+// GET / -> obtener todas las tareas del usuario autenticado (incluidas las compartidas)
 router.get('/', async (req, res) => {
   try {
-    const tasks = await Task.find({ userId: req.user.id }).sort({ createdAt: -1 });
+    const tasks = await Task.find({
+      $or: [
+        { userId: req.user.id },
+        { 'compartidaCon.usuario': req.user.id }
+      ]
+    }).populate('userId', 'nombre email foto').populate('compartidaCon.usuario', 'nombre email foto').sort({ createdAt: -1 });
     res.json(tasks);
   } catch (error) {
     console.error(error);
@@ -49,7 +54,7 @@ router.post('/', async (req, res) => {
 // PUT /:id -> editar tarea
 router.put('/:id', async (req, res) => {
   try {
-    const { titulo, descripcion, prioridad, categoria, fechaLimite, completada, estado, archivada, tags, recurrencia } = req.body;
+    const { titulo, descripcion, prioridad, categoria, fechaLimite, completada, estado, archivada, tags, recurrencia, imagenes } = req.body;
 
     let task = await Task.findById(req.params.id);
 
@@ -57,8 +62,12 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ mensaje: 'Tarea no encontrada' });
     }
 
-    if (task.userId.toString() !== req.user.id) {
-      return res.status(401).json({ mensaje: 'No autorizado' });
+    const isOwner = task.userId.toString() === req.user.id;
+    const shareEntry = task.compartidaCon.find(c => c.usuario.toString() === req.user.id);
+    const hasEditPermission = shareEntry && shareEntry.permiso === 'editar';
+
+    if (!isOwner && !hasEditPermission) {
+      return res.status(401).json({ mensaje: 'No autorizado para editar esta tarea' });
     }
 
     task.titulo = titulo !== undefined ? titulo : task.titulo;
@@ -78,16 +87,18 @@ router.put('/:id', async (req, res) => {
     task.archivada = archivada !== undefined ? archivada : task.archivada;
     task.tags = tags !== undefined ? tags : task.tags;
     task.recurrencia = recurrencia !== undefined ? recurrencia : task.recurrencia;
+    task.imagenes = imagenes !== undefined ? imagenes : task.imagenes;
 
     await task.save();
-    res.json(task);
+    const populated = await Task.findById(task._id).populate('userId', 'nombre email foto').populate('compartidaCon.usuario', 'nombre email foto');
+    res.json(populated);
   } catch (error) {
     console.error(error);
     res.status(500).json({ mensaje: 'Error al actualizar la tarea' });
   }
 });
 
-// DELETE /:id -> eliminar tarea
+// DELETE /:id -> eliminar tarea (solo el dueño puede eliminar)
 router.delete('/:id', async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
@@ -97,7 +108,7 @@ router.delete('/:id', async (req, res) => {
     }
 
     if (task.userId.toString() !== req.user.id) {
-      return res.status(401).json({ mensaje: 'No autorizado' });
+      return res.status(401).json({ mensaje: 'No autorizado para eliminar esta tarea' });
     }
 
     await task.deleteOne();
@@ -123,7 +134,11 @@ router.patch('/:id/complete', async (req, res) => {
       return res.status(404).json({ mensaje: 'Tarea no encontrada' });
     }
 
-    if (task.userId.toString() !== req.user.id) {
+    const isOwner = task.userId.toString() === req.user.id;
+    const shareEntry = task.compartidaCon.find(c => c.usuario.toString() === req.user.id);
+    const hasEditPermission = shareEntry && shareEntry.permiso === 'editar';
+
+    if (!isOwner && !hasEditPermission) {
       return res.status(401).json({ mensaje: 'No autorizado' });
     }
 
@@ -131,7 +146,8 @@ router.patch('/:id/complete', async (req, res) => {
     task.estado = completada ? 'completada' : (task.estado === 'completada' ? 'pendiente' : task.estado);
     await task.save();
 
-    res.json(task);
+    const populated = await Task.findById(task._id).populate('userId', 'nombre email foto').populate('compartidaCon.usuario', 'nombre email foto');
+    res.json(populated);
   } catch (error) {
     console.error(error);
     res.status(500).json({ mensaje: 'Error al actualizar el estado de la tarea' });

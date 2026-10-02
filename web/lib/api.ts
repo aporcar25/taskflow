@@ -175,6 +175,130 @@ export const updateProfile = async (data: { nombre?: string; email?: string }) =
   return result;
 };
 
+export const shareTask = async (taskId: string, email: string, permiso: string) => {
+  const res = await fetch(`${API_URL}/sharing/${taskId}/share`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify({ email, permiso }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.mensaje || "Error al compartir tarea");
+  }
+  return res.json();
+};
+
+export const unshareTask = async (taskId: string, userId: string) => {
+  const res = await fetch(`${API_URL}/sharing/${taskId}/share/${userId}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw new Error("Error al dejar de compartir tarea");
+  return res.json();
+};
+
+export const getSharedTasks = async () => {
+  const res = await fetch(`${API_URL}/sharing/shared`, {
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw new Error("Error obteniendo tareas compartidas");
+  return res.json();
+};
+
+export const getNotes = async () => {
+  const res = await fetch(`${API_URL}/notes`, {
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw new Error("Error obteniendo notas");
+  return res.json();
+};
+
+export const createNote = async (data: unknown) => {
+  const res = await fetch(`${API_URL}/notes`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Error creando nota");
+  return res.json();
+};
+
+export const updateNote = async (id: string, data: unknown) => {
+  const res = await fetch(`${API_URL}/notes/${id}`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Error actualizando nota");
+  return res.json();
+};
+
+export const deleteNote = async (id: string) => {
+  const res = await fetch(`${API_URL}/notes/${id}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw new Error("Error eliminando nota");
+  return res.json();
+};
+
+export const pinNote = async (id: string) => {
+  const res = await fetch(`${API_URL}/notes/${id}/pin`, {
+    method: "PATCH",
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw new Error("Error al fijar nota");
+  return res.json();
+};
+
+export const getGoals = async (semana?: string) => {
+  const url = semana ? `${API_URL}/goals?semana=${semana}` : `${API_URL}/goals`;
+  const res = await fetch(url, {
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw new Error("Error obteniendo objetivos");
+  return res.json();
+};
+
+export const createGoal = async (data: unknown) => {
+  const res = await fetch(`${API_URL}/goals`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Error creando objetivo");
+  return res.json();
+};
+
+export const updateGoal = async (id: string, data: unknown) => {
+  const res = await fetch(`${API_URL}/goals/${id}`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Error actualizando objetivo");
+  return res.json();
+};
+
+export const deleteGoal = async (id: string) => {
+  const res = await fetch(`${API_URL}/goals/${id}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw new Error("Error eliminando objetivo");
+  return res.json();
+};
+
+export const updateGoalProgress = async (id: string, valor: string | number) => {
+  const res = await fetch(`${API_URL}/goals/${id}/progress`, {
+    method: "PATCH",
+    headers: getHeaders(),
+    body: JSON.stringify({ valor }),
+  });
+  if (!res.ok) throw new Error("Error actualizando progreso");
+  return res.json();
+};
+
 export const completeTutorial = async (page: string) => {
   const res = await fetch(`${API_URL}/auth/tutorial-complete`, {
     method: "PUT",

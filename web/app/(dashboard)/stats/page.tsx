@@ -40,6 +40,7 @@ interface TaskData {
 interface HabitData {
   _id: string;
   racha: number;
+  rachaMaxima: number;
   historial: string[];
 }
 
@@ -91,34 +92,8 @@ export default function StatsPage() {
   }, [tasks]);
 
   const streaksData = useMemo(() => {
-    let currentMax = 0;
-    let historicalMax = 0;
-    habits.forEach((h: HabitData) => {
-      if (h.racha > currentMax) currentMax = h.racha;
-
-      let maxH = 0;
-      let currentH = 0;
-      const sortedHistory = [...h.historial].sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-
-      if (sortedHistory.length > 0) {
-        currentH = 1;
-        maxH = 1;
-        for (let i = 1; i < sortedHistory.length; i++) {
-          const d1 = new Date(sortedHistory[i-1]);
-          const d2 = new Date(sortedHistory[i]);
-          d1.setHours(0,0,0,0);
-          d2.setHours(0,0,0,0);
-          const diff = (d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24);
-          if (diff === 1) {
-            currentH++;
-          } else if (diff > 1) {
-            currentH = 1;
-          }
-          if (currentH > maxH) maxH = currentH;
-        }
-      }
-      if (maxH > historicalMax) historicalMax = maxH;
-    });
+    const currentMax = habits.length > 0 ? Math.max(...habits.map(h => h.racha || 0)) : 0;
+    const historicalMax = habits.length > 0 ? Math.max(...habits.map(h => h.rachaMaxima || 0)) : 0;
     return { currentMax, historicalMax };
   }, [habits]);
 

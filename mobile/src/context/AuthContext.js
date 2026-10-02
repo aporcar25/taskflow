@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return {
         success: false,
-        message: error.response?.data?.mensaje || 'Error al iniciar sesión',
+        message: error.response?.data?.mensaje || error.response?.data?.message || 'Error al iniciar sesión',
       };
     }
   };
@@ -61,7 +61,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return {
         success: false,
-        message: error.response?.data?.mensaje || 'Error al registrarse',
+        message: error.response?.data?.mensaje || error.response?.data?.message || 'Error al registrarse',
       };
     }
   };
@@ -71,8 +71,13 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateUser = async (userData) => {
+    await AsyncStorage.setItem('taskflow_user', JSON.stringify(userData));
+    setUser(userData);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

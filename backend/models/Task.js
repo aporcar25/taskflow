@@ -52,7 +52,26 @@ const TaskSchema = new mongoose.Schema({
   recordatorioEnviado: {
     type: Boolean,
     default: false
-  }
+  },
+  imagenes: {
+    type: [String],
+    default: []
+  },
+  esCompartida: {
+    type: Boolean,
+    default: false
+  },
+  compartidaCon: [{
+    usuario: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    permiso: {
+      type: String,
+      enum: ['ver', 'editar'],
+      default: 'ver'
+    }
+  }]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Task', TaskSchema);
